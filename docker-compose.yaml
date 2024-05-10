@@ -1,0 +1,93 @@
+services:
+  php:
+    image: ghcr.io/eventpoints/php:main
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    container_name: php
+    platform: linux/amd64
+    volumes:
+      - .:/app:cached
+      - php_socket:/var/run/php
+      - ./docker/php/php.ini:/usr/local/etc/php/php.ini
+    networks:
+      - martial_arts_app
+    healthcheck:
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      - database
+
+  caddy:
+    image: ghcr.io/eventpoints/caddy:main
+    container_name: caddy
+    platform: linux/amd64
+    depends_on:
+      - php
+    environment:
+      SERVER_NAME: localhost, caddy:80
+      MERCURE_PUBLIC_URL: "https://localhost/.well-known/mercure"
+      MERCURE_PUBLISHER_JWT_KEY: secret
+      MERCURE_SUBSCRIBER_JWT_KEY: secret
+    volumes:
+      - php_socket:/var/run/php
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./public:/app/public
+    networks:
+      - martial_arts_app
+    ports:
+      # HTTP
+      - target: 80
+        published: 80
+        protocol: tcp
+      # HTTPS
+      - target: 443
+        published: 443
+        protocol: tcp
+      # HTTP/3
+      - target: 443
+        published: 443
+    #     protocol: udp
+    # command: --conf /etc/caddy/Caddyfile --log stdout --port 80
+
+  database:
+    image: postgres:16.2-alpine3.19
+    container_name: database
+    platform: linux/amd64
+    networks:
+      - martial_arts_app
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: martial_arts_db
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: test
+    volumes:
+      - martial_arts_data:/var/lib/postgresql/data:rw
+      # - ./docker/db/data:/var/lib/mysql/data:rw
+  
+  frontend:
+    container_name: frontend
+    working_dir: /app
+    # restart: always
+    build: ../frontend_martial_arts
+    networks:
+      - martial_arts_app
+    ports:
+      - '5173:5173'
+    volumes:
+      # - ./frontend_martial_arts/src:/app/src
+      - ../frontend_martial_arts:/app
+      - node_modules:/app/node_modules
+    stdin_open: true
+    tty: true
+
+volumes:
+  php_socket:
+  caddy_data:
+  caddy_config:
+  martial_arts_data:
+  node_modules:
+networks:
+  martial_arts_app:
