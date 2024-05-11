@@ -13,14 +13,14 @@ class RegistrationContoller extends AbstractController
     #[Route('/api/register', name: 'app_registration_contoller')]
     public function index(Request $request): JsonResponse
     {
-        $test = [
+        $data = [
             'name' => 'TestHttpRequest',
             'content' => $request->getContent()
         ];
 
         // dd($test);
         return new JsonResponse(
-            $test,
+            $data,
             200
         );
     }
