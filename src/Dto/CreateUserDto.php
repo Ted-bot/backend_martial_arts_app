@@ -52,18 +52,12 @@ class CreateUserDto
             min: 4,
             max: 6,
             minMessage: 'Your gender is either male or female',
-            maxMessage: 'Your gender identification cannot be longer than {{ limit }} characters',
+            maxMessage: 'Your gender identification cannot be longer than {{ limit }}, Your gender is either male or female!',
         )]
         public readonly string $gender,
 
         #[Assert\NotBlank]
         #[Assert\Date]
-        #[Assert\Length(
-            min: 10,
-            max: 11,
-            minMessage: 'Your date of birth must be at least {{ limit }} characters long',
-            maxMessage: 'Your date of birth cannot be longer than {{ limit }} characters',
-        )]
         public readonly string $date_of_birth,
 
         #[Assert\NotBlank]
