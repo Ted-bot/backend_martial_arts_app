@@ -63,7 +63,7 @@ abstract class AbstractJsonRequest
                 'value' => $violation->getInvalidValue(),
                 'message' => $violation->getMessage(),
             ];
-        }// dd($errors);
+        }
 
         // throw new InvalidJsonRequest($errors);
         $response = new JsonResponse(['errors' => $errors], 400);
