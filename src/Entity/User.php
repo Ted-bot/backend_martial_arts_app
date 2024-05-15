@@ -9,9 +9,10 @@ use DateTime;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
+
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
-#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL_PHONE', fields: ['email', 'phone'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -40,24 +41,43 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToOne(mappedBy: 'userUniq', targetEntity: UserProfile::class,cascade: ['persist', 'remove'])]
     private ?UserProfile $userProfile = null;
 
+    /**
+     * @var string Email of person
+     */
     #[ORM\Column(length: 25)]
     private ?string $firstName = null;
 
+    /**
+     * @var string Lastname of person
+     */
     #[ORM\Column(length: 25)]
     private ?string $lastName = null;
 
+    /**
+     * @var string Phonenumber of person
+     */
     #[ORM\Column(length: 15)]
     private ?string $phoneNumber = null;
 
-    #[ORM\Column(length: 10)]
+    /**
+     * @var string Gender of person
+     */
+    #[ORM\Column(length: 6)]
     private ?string $gender = null;
 
+    /**
+     * @var string Location of person
+     */
     #[ORM\Column(length: 50)]
     private ?string $location = null;
 
+    /**
+     * @var string Conversion of person
+     */
     #[ORM\Column(length: 255)]
     private ?string $conversion = null;
 
+    
     public function getId(): ?int
     {
         return $this->id;
