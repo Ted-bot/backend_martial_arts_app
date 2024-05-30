@@ -65,8 +65,7 @@ abstract class AbstractJsonRequest
             ];
         }
 
-        // throw new InvalidJsonRequest($errors);
-        $response = new JsonResponse(['errors' => $errors], 400);
+        $response = new JsonResponse(['errors' => $errors], 400, ['Content-Type' => 'application/json']);
         $response->send();
         exit;
     }

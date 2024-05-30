@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Request;
 
-// use App\Validator\CreditCard;
 use Symfony\Component\Validator\Constraints\Date;
 use Symfony\Component\Validator\Constraints\Type;
-// use Symfony\Component\Validator\Constraints\Positive;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;

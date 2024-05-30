@@ -22,6 +22,7 @@ class MainController extends AbstractController
         $user->setFirstName('John');
         $user->setLastName('van den heuvel');
         $user->setConversion('Ik wilde graag trainen :p');
+        $user->setDateOfBirth('1990-12-01');
         $user->setGender('man');
         $user->setLocation('Amsterdam');
         $user->setPhoneNumber(123456789);
