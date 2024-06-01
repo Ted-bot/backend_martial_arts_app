@@ -2,11 +2,14 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\PostEventRepository;
-use Doctrine\DBAL\Types\Types;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PostEventRepository::class)]
+#[ApiResource]
 class PostEvent
 {
     #[ORM\Id]
@@ -14,14 +17,22 @@ class PostEvent
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 50)]
     private ?string $title = null;
 
-    #[ORM\Column(length: 1024)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $description = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $created = null;
+    /**
+     * @var Collection<int, UserProfile>
+     */
+    #[ORM\OneToMany(targetEntity: UserProfile::class, mappedBy: 'postEvent')]
+    private Collection $user_profile_create_post_event;
+
+    public function __construct()
+    {
+        $this->user_profile_create_post_event = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -33,7 +44,7 @@ class PostEvent
         return $this->title;
     }
 
-    public function setTitle(?string $title): static
+    public function setTitle(string $title): static
     {
         $this->title = $title;
 
@@ -45,11 +56,6 @@ class PostEvent
         return $this->description;
     }
 
-    public function __toString()
-    {
-        return $this->description;
-    }
-
     public function setDescription(?string $description): static
     {
         $this->description = $description;
@@ -57,14 +63,32 @@ class PostEvent
         return $this;
     }
 
-    public function getCreated(): ?\DateTimeInterface
+    /**
+     * @return Collection<int, UserProfile>
+     */
+    public function getUserProfileCreatePostEvent(): Collection
     {
-        return $this->created;
+        return $this->user_profile_create_post_event;
     }
 
-    public function setCreated(?\DateTimeInterface $created): static
+    public function addUserProfileCreatePostEvent(UserProfile $userProfileCreatePostEvent): static
     {
-        $this->created = $created;
+        if (!$this->user_profile_create_post_event->contains($userProfileCreatePostEvent)) {
+            $this->user_profile_create_post_event->add($userProfileCreatePostEvent);
+            $userProfileCreatePostEvent->setPostEvent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUserProfileCreatePostEvent(UserProfile $userProfileCreatePostEvent): static
+    {
+        if ($this->user_profile_create_post_event->removeElement($userProfileCreatePostEvent)) {
+            // set the owning side to null (unless already changed)
+            if ($userProfileCreatePostEvent->getPostEvent() === $this) {
+                $userProfileCreatePostEvent->setPostEvent(null);
+            }
+        }
 
         return $this;
     }

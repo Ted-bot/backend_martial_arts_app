@@ -2,38 +2,68 @@
 
 namespace App\Entity;
 
+use DateTimeZone;
 use App\Class\Roles;
+use DateTimeImmutable;
 use App\Entity\UserProfile;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
 use App\Request\CreateUserRequest;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USER', fields: ['email', 'phone_number'])]
+#[ApiResource(
+    description: 'User Entity',
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(),
+        new Patch(),
+        new Put(),
+        new Delete(),
+    ],
+    normalizationContext: [
+        'groups' => ['user:read']
+    ],
+    denormalizationContext: [
+        'groups' => ['user:write']
+    ],
+    
+)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['user:read','profile:read'])]
     private ?int $id = null;
 
     /**
-     * @var string Email of person
+     * @var string Email of user
      */
     #[ORM\Column(length: 180)]
+    #[Groups(['user:read', 'user:write','profile:read'])]
     private ?string $email = null;
 
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
+    #[Groups(['user:read', 'user:write','profile:read'])]
     private array $roles = [];
 
     /**
@@ -42,65 +72,70 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
+    #[Groups(['user:read'])]
     #[ORM\OneToOne(mappedBy: 'userUniq', targetEntity: UserProfile::class,cascade: ['persist', 'remove'])]
     private ?UserProfile $userProfile = null;
 
     /**
-     * @var string Email of person
+     * @var string Email of user
      */
     #[ORM\Column(length: 25)]
+    #[Groups(['user:read', 'user:write','profile:read'])]
     private ?string $firstName = null;
 
     /**
-     * @var string Lastname of person
+     * @var string Lastname of user
      */
     #[ORM\Column(length: 25)]
+    #[Groups(['user:read', 'user:write','profile:read'])]
     private ?string $lastName = null;
 
     /**
-     * @var string Phonenumber of person
+     * @var string Phonenumber of user
      */
     #[ORM\Column(length: 15)]
+    #[Groups(['user:read', 'user:write','profile:read'])]
     private ?string $phoneNumber = null;
 
     /**
      * @var string A "Y-m-d H:i:s" formatted value
      */
     #[ORM\Column(length: 10)]
+    #[Groups(['user:read', 'user:write','profile:read'])]
     private ?string $dateOfBirth = null;
         
     /**
-     * @var string Gender of person
+     * @var string Gender of user
      */
     #[ORM\Column(length: 6)]
+    #[Groups(['user:read', 'user:write','profile:read'])]
     private ?string $gender = null;
 
     /**
-     * @var string Location of person
+     * @var string Location of user
      */
     #[ORM\Column(length: 50)]
+    #[Groups(['user:read', 'user:write', 'profile:read'])]
     private ?string $location = null;
 
     /**
-     * @var string Conversion of person
+     * @var string Conversion of user
      */
     #[ORM\Column(length: 255)]
+    #[Groups(['user:read', 'user:write', 'profile:read'])]
     private ?string $conversion = null;
 
     /**
-     * @var Collection<int, AccessToken>
+     * @var string datetime created account of user
      */
-    #[ORM\OneToMany(targetEntity: AccessToken::class, mappedBy: 'owendBy')]
-    private Collection $accessTokens;
-
-    /** 
-     * @var string data of person
-     */
-    private ?array $newUserObject = null;
+    #[ORM\Column(length: 25)]
+    #[Groups(['user:read', 'user:write', 'profile:read'])]
+    private ?DateTimeImmutable $createdAt;
 
     public function __construct()
     {
-        $this->accessTokens = new ArrayCollection();
+        $dateTime = new DateTimeImmutable();
+        $this->createdAt = $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
     }
 
     public function createNewUserObj(CreateUserRequest $user)
@@ -121,7 +156,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    
     public function getId(): ?int
     {
         return $this->id;
@@ -132,6 +166,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return (string) $this->email;
     }
 
+    #[Groups('user:write')]
     public function setEmail(string $email): static
     {
         $this->email = (string) $email;
@@ -166,6 +201,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @param list<string> $roles
      */
+    #[Groups('user:write')]
     public function setRoles(array $roles): static
     {
         $this->roles = $roles;
@@ -181,6 +217,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->password;
     }
 
+    #[Groups('user:write')]
     public function setPassword(string $password): static
     {
         $this->password = $password;
@@ -202,6 +239,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->userProfile;
     }
 
+    #[Groups('user:write')]
     public function setUserProfile(?UserProfile $userProfile): static
     {
         // unset the owning side of the relation if necessary
@@ -229,6 +267,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->firstName;
     }
 
+    #[Groups('user:write')]
     public function setFirstName(string $firstName): static
     {
         $this->firstName = $firstName;
@@ -241,6 +280,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->lastName;
     }
 
+    #[Groups('user:write')]
     public function setLastName(string $lastName): static
     {
         $this->lastName = $lastName;
@@ -253,6 +293,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->phoneNumber;
     }
 
+    #[Groups('user:write')]
     public function setPhoneNumber(string $phoneNumber): static
     {
         $this->phoneNumber = $phoneNumber;
@@ -265,6 +306,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->gender;
     }
 
+    #[Groups('user:write')]
     public function setGender(string $gender): static
     {
         $this->gender = $gender;
@@ -277,6 +319,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->location;
     }
 
+    #[Groups('user:write')]
     public function setLocation(string $location): static
     {
         $this->location = $location;
@@ -289,53 +332,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->conversion;
     }
 
+    #[Groups('user:write')]
     public function setConversion(string $conversion): static
     {
         $this->conversion = $conversion;
 
         return $this;
-    }
-
-    /**
-     * @return Collection<int, AccessToken>
-     */
-    public function getAccessTokens(): Collection
-    {
-        return $this->accessTokens;
-    }
-
-    public function addAccessToken(AccessToken $accessToken): static
-    {
-        if (!$this->accessTokens->contains($accessToken)) {
-            $this->accessTokens->add($accessToken);
-            $accessToken->setOwendBy($this);
-        }
-
-        return $this;
-    }
-
-    public function removeAccessToken(AccessToken $accessToken): static
-    {
-        if ($this->accessTokens->removeElement($accessToken)) {
-            // set the owning side to null (unless already changed)
-            if ($accessToken->getOwendBy() === $this) {
-                $accessToken->setOwendBy(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getValidTokenStrings(): array
-    {
-        return $this->getAccessTokens()
-            ->filter(fn (AccessToken $token) => $token->isValid())
-            ->map(fn (AccessToken $token) => $token->getToken())
-            ->toArray()
-        ;
     }
 
     /**
@@ -351,6 +353,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      *
      * @return  self
      */ 
+    #[Groups('user:write')]
     public function setDateOfBirth($dateOfBirth)
     {
         $this->dateOfBirth = $dateOfBirth;
