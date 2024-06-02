@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use DateTimeZone;
+use Carbon\Carbon;
 use App\Class\Roles;
 use DateTimeImmutable;
 use App\Entity\UserProfile;
@@ -23,6 +24,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Serializer\Attribute\SerializedName;
+
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USER', fields: ['email', 'phone_number'])]
@@ -332,10 +335,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->conversion;
     }
 
-    #[Groups('user:write')]
     public function setConversion(string $conversion): static
     {
-        $this->conversion = $conversion;
+        $this->conversion = nl2br($conversion);
+
+        return $this;
+    }
+
+    #[Groups('user:write')]
+    #[SerializedName('conversion')]
+    public function setTextConversion(string $conversion): static
+    {
+        $this->conversion = nl2br($conversion);
 
         return $this;
     }
@@ -359,5 +370,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->dateOfBirth = $dateOfBirth;
 
         return $this;
+    }
+
+    #[Groups('user:read')]
+    public function getCreatedAt()
+    {
+        return $this->createdAt;
+    }
+
+    #[Groups('user:read')]
+    public function getCreatedAtAgo()
+    {
+        return Carbon::parse($this->createdAt)->diffForHumans();
     }
 }

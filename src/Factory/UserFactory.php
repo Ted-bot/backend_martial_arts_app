@@ -2,10 +2,12 @@
 
 namespace App\Factory;
 
+use Carbon\Carbon;
+use App\Class\Roles;
 use App\Entity\User;
+use Zenstruck\Foundry\Proxy;
 use App\Repository\UserRepository;
 use Zenstruck\Foundry\ModelFactory;
-use Zenstruck\Foundry\Proxy;
 use Zenstruck\Foundry\RepositoryProxy;
 
 /**
@@ -47,15 +49,16 @@ final class UserFactory extends ModelFactory
     protected function getDefaults(): array
     {
         return [
-            'conversion' => self::faker()->text(255),
-            'email' => self::faker()->text(180),
-            'firstName' => self::faker()->text(25),
+            'firstName' => self::faker()->firstName(),
+            'lastName' => self::faker()->lastName(),
+            'email' => self::faker()->unique()->email(),
+            'phoneNumber' => substr(self::faker()->phoneNumber(), 1, 15),
+            'dateOfBirth' => Carbon::parse(self::faker()->dateTimeBetween('-30 years', '-8 years'))->format('d-m-Y'),
             'gender' => self::faker()->text(6),
-            'lastName' => self::faker()->text(25),
-            'location' => self::faker()->text(50),
-            'password' => self::faker()->text(),
-            'phoneNumber' => self::faker()->text(15),
-            'roles' => [],
+            'location' => self::faker()->city(),
+            'password' => self::faker()->password(),
+            'conversion' => self::faker()->sentences(2, true),
+            'roles' => [Roles::ROLE_USER_STUDENT],
         ];
     }
 

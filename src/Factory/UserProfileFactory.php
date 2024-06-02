@@ -47,10 +47,11 @@ final class UserProfileFactory extends ModelFactory
     protected function getDefaults(): array
     {
         return [
-            'userUniq' => UserFactory::new(),
             'username' => self::faker()->userName(),
-            'description' => self::faker()->sentences(4, true),
+            'description' => self::faker()->sentences(2, true),
             'websiteUrl' => self::faker()->url(),
+            'group_student' => null,
+            'userUniq' => UserFactory::random()
         ];
     }
 

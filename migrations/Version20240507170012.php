@@ -27,7 +27,7 @@ final class Version20240507170012 extends AbstractMigration
             WHERE contype = 'f' AND connamespace = 'public'::regnamespace AND pg_get_constraintdef(oid) LIKE '%user_uniq_id%';
                 IF NOT FOUND THEN
                     ALTER TABLE user_profile ADD user_uniq_id INT DEFAULT NULL;
-                    ALTER TABLE user_profile ADD CONSTRAINT FK_D95AB405976E9E35 FOREIGN KEY (user_uniq_id) REFERENCES 'user' (id) NOT DEFERRABLE INITIALLY IMMEDIATE;
+                    ALTER TABLE user_profile ADD CONSTRAINT FK_D95AB405976E9E35 FOREIGN KEY (user_uniq_id) REFERENCES \"user\" (id) NOT DEFERRABLE INITIALLY IMMEDIATE;
                     CREATE UNIQUE INDEX UNIQ_D95AB405976E9E35 ON user_profile (user_uniq_id);
                 END IF;
         END;
