@@ -3,10 +3,11 @@
 namespace App\Factory;
 
 use App\Entity\PostEvent;
-use App\Repository\PostEventRepository;
-use Zenstruck\Foundry\ModelFactory;
 use Zenstruck\Foundry\Proxy;
+use App\Factory\UserProfileFactory;
+use Zenstruck\Foundry\ModelFactory;
 use Zenstruck\Foundry\RepositoryProxy;
+use App\Repository\PostEventRepository;
 
 /**
  * @extends ModelFactory<PostEvent>
@@ -47,8 +48,9 @@ final class PostEventFactory extends ModelFactory
     protected function getDefaults(): array
     {
         return [
-            'description' => self::faker()->text(1024),
-            'title' => self::faker()->text(255),
+            'title' => self::faker()->title(),
+            'description' => self::faker()->sentence(2, true),
+            'relatedUser' => UserProfileFactory::random(),
         ];
     }
 

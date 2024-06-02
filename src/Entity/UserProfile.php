@@ -5,6 +5,8 @@ namespace App\Entity;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
@@ -12,8 +14,10 @@ use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use App\Repository\UserProfileRepository;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ApiResource(
+    shortName: 'profile',
     description: 'Profile Entity',
     operations: [
         new Get(),
@@ -31,6 +35,10 @@ use App\Repository\UserProfileRepository;
     ],
     
 )]
+// #[ApiResource(
+//     uriTemplate: '/profile/{profile_id}/trainingsession/.{_format}',
+//     operations: [new GetCollection]
+// )]
 #[ORM\Entity(repositoryClass: UserProfileRepository::class)]
 class UserProfile
 {
@@ -40,8 +48,7 @@ class UserProfile
     private ?int $id = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $name = null;
-
+    private ?string $username = null;
 
     #[ORM\Column(length: 1024, nullable: true)]
     private ?string $description = null;
@@ -54,34 +61,52 @@ class UserProfile
     private ?User $userUniq = null;
 
     #[ORM\ManyToOne(inversedBy: 'profileGroup')]
-    private ?Group $group_student = null;
+    private ?Group $groupStudent = null;
 
-    #[ORM\ManyToOne(inversedBy: 'user_profile_create_post_event')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?PostEvent $postEvent = null;
+    /**
+     * @var Collection<int, PostEvent>
+     */
+    #[ORM\OneToMany(targetEntity: PostEvent::class, mappedBy: 'relatedUser')]
+    private Collection $postEvents;
+
+    public function __construct()
+    {
+        $this->postEvents = new ArrayCollection();
+    }
+
+    // #[ORM\ManyToOne(inversedBy: 'user_profile_create_post_event')]
+    // #[ORM\JoinColumn(nullable: true)]
+    // private ?PostEvent $getAllPostEvents = null;
+
+    // #[ORM\OneToOne(mappedBy: 'relatedUser', cascade: ['persist', 'remove'])]
+    // private ?PostEvent $singlePostEvent = null;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getName(): ?string
+    #[Groups('profile:read')]
+    public function getUserName(): ?string
     {
-        return $this->name;
+        return $this->username;
     }
 
-    public function setName(?string $name): static
+    #[Groups('profile:write')]
+    public function setUserName(?string $username): static
     {
-        $this->name = $name;
+        $this->username = $username;
 
         return $this;
     }
 
+    #[Groups('profile:read')]
     public function getDescription(): ?string
     {
         return $this->description;
     }
 
+    #[Groups('profile:write')]
     public function setDescription(?string $description): static
     {
         $this->description = $description;
@@ -89,11 +114,13 @@ class UserProfile
         return $this;
     }
 
+    #[Groups('profile:write')]
     public function getWebsiteUrl(): ?string
     {
         return $this->websiteUrl;
     }
 
+    #[Groups('profile:write')]
     public function setWebsiteUrl(?string $websiteUrl): static
     {
         $this->websiteUrl = $websiteUrl;
@@ -101,11 +128,13 @@ class UserProfile
         return $this;
     }
 
+    #[Groups('profile:read')]
     public function getUserUniq(): ?User
     {
         return $this->userUniq;
     }
 
+    #[Groups('profile:write')]
     public function setUserUniq(?User $userUniq): static
     {
         $this->userUniq = $userUniq;
@@ -113,26 +142,77 @@ class UserProfile
         return $this;
     }
 
-    public function getGroupStudent(): ?Group
+    public function getgroupStudent(): ?Group
     {
-        return $this->group_student;
+        return $this->groupStudent;
     }
 
-    public function setGroupStudent(?Group $group_student): static
+    public function setgroupStudent(?Group $groupStudent): static
     {
-        $this->group_student = $group_student;
+        $this->groupStudent = $groupStudent;
 
         return $this;
     }
 
-    public function getPostEvent(): ?PostEvent
+    // #[Groups('profile:read')]
+    // public function getAllPostEvents(): ?PostEvent
+    // {
+    //     return $this->getAllPostEvents;
+    // }
+
+    // #[Groups('profile:write')] //? function might be removable
+    // public function setAllPostEvents(?PostEvent $getAllPostEvents): static
+    // {
+    //     $this->getAllPostEvents = $getAllPostEvents;
+
+    //     return $this;
+    // }
+
+    // #[Groups('profile:read')]
+    // public function getSinglePostEvent(): ?PostEvent
+    // {
+    //     return $this->singlePostEvent;
+    // }
+
+    // #[Groups('profile:write')]
+    // public function setSinglePostEvent(PostEvent $singlePostEvent): static
+    // {
+    //     // set the owning side of the relation if necessary
+    //     if ($singlePostEvent->getRelatedUser() !== $this) {
+    //         $singlePostEvent->setRelatedUser($this);
+    //     }
+
+    //     $this->singlePostEvent = $singlePostEvent;
+
+    //     return $this;
+    // }
+
+    /**
+     * @return Collection<int, PostEvent>
+     */
+    public function getPostEvents(): Collection
     {
-        return $this->postEvent;
+        return $this->postEvents;
     }
 
-    public function setPostEvent(?PostEvent $postEvent): static
+    public function addPostEvent(PostEvent $postEvent): static
     {
-        $this->postEvent = $postEvent;
+        if (!$this->postEvents->contains($postEvent)) {
+            $this->postEvents->add($postEvent);
+            $postEvent->setRelatedUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removePostEvent(PostEvent $postEvent): static
+    {
+        if ($this->postEvents->removeElement($postEvent)) {
+            // set the owning side to null (unless already changed)
+            if ($postEvent->getRelatedUser() === $this) {
+                $postEvent->setRelatedUser(null);
+            }
+        }
 
         return $this;
     }

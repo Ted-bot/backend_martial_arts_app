@@ -2,14 +2,40 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use App\Repository\PostEventRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use DateTimeZone;
+use DateTimeImmutable;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Delete;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
+use App\Repository\PostEventRepository;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: PostEventRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    shortName: 'trainingsession',
+    description: 'Calendar Post Entity',
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(),
+        new Patch(),
+        new Put(),
+        new Delete(),
+    ],
+    normalizationContext: [
+        'groups' => ['trainingsession:read']
+    ],
+    denormalizationContext: [
+        'groups' => ['trainingsession:write']
+    ],
+    
+)]
 class PostEvent
 {
     #[ORM\Id]
@@ -18,20 +44,42 @@ class PostEvent
     private ?int $id = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
     private ?string $title = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
     private ?string $description = null;
 
-    /**
-     * @var Collection<int, UserProfile>
-     */
-    #[ORM\OneToMany(targetEntity: UserProfile::class, mappedBy: 'postEvent')]
-    private Collection $user_profile_create_post_event;
+    #[ORM\Column]
+    #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
+    private ?bool $isPublished = true;
+
+    #[ORM\ManyToOne(inversedBy: 'postEvents')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['trainingsession:read', 'profile:read'])]
+    private ?UserProfile $relatedUser = null;
+
+    #[ORM\Column]
+    #[Groups(['trainingsession:read', 'profile:read'])]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    private ?\DateTimeInterface $eventDate = null;
+
+    #[ORM\Column(type: Types::TIME_MUTABLE)]
+    private ?\DateTimeInterface $eventStart = null;
+    
+    #[ORM\Column(type: Types::TIME_MUTABLE)]
+    private ?\DateTimeInterface $eventEnd = null;
+
+    #[ORM\Column]
+    private ?bool $eventRegular = null;
 
     public function __construct()
     {
-        $this->user_profile_create_post_event = new ArrayCollection();
+        $dateTime = new DateTimeImmutable();
+        $this->createdAt = $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
     }
 
     public function getId(): ?int
@@ -63,32 +111,86 @@ class PostEvent
         return $this;
     }
 
-    /**
-     * @return Collection<int, UserProfile>
-     */
-    public function getUserProfileCreatePostEvent(): Collection
+    public function isPublished(): ?bool
     {
-        return $this->user_profile_create_post_event;
+        return $this->isPublished;
     }
 
-    public function addUserProfileCreatePostEvent(UserProfile $userProfileCreatePostEvent): static
+    public function setPublished(bool $isPublished): static
     {
-        if (!$this->user_profile_create_post_event->contains($userProfileCreatePostEvent)) {
-            $this->user_profile_create_post_event->add($userProfileCreatePostEvent);
-            $userProfileCreatePostEvent->setPostEvent($this);
-        }
+        $this->isPublished = $isPublished;
 
         return $this;
     }
 
-    public function removeUserProfileCreatePostEvent(UserProfile $userProfileCreatePostEvent): static
+    public function getRelatedUser(): ?UserProfile
     {
-        if ($this->user_profile_create_post_event->removeElement($userProfileCreatePostEvent)) {
-            // set the owning side to null (unless already changed)
-            if ($userProfileCreatePostEvent->getPostEvent() === $this) {
-                $userProfileCreatePostEvent->setPostEvent(null);
-            }
-        }
+        return $this->relatedUser;
+    }
+
+    public function setRelatedUser(?UserProfile $relatedUser): static
+    {
+        $this->relatedUser = $relatedUser;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getEventDate(): ?\DateTimeInterface
+    {
+        return $this->eventDate;
+    }
+
+    public function setEventDate(\DateTimeInterface $eventDate): static
+    {
+        $this->eventDate = $eventDate;
+
+        return $this;
+    }
+
+    public function getEventStart(): ?\DateTimeInterface
+    {
+        return $this->eventStart;
+    }
+    
+    public function getEventEnd(): ?\DateTimeInterface
+    {
+        return $this->eventEnd;
+    }
+
+    public function setEventStart(\DateTimeInterface $eventStart): static
+    {
+        $this->eventStart = $eventStart;
+
+        return $this;
+    }
+    
+    public function setEventEnd(\DateTimeInterface $eventEnd): static
+    {
+        $this->eventEnd = $eventEnd;
+
+        return $this;
+    }
+
+    public function isEventRegular(): ?bool
+    {
+        return $this->eventRegular;
+    }
+
+    public function setEventRegular(bool $eventRegular): static
+    {
+        $this->eventRegular = $eventRegular;
 
         return $this;
     }
