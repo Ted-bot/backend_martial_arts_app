@@ -34,24 +34,9 @@ final class Version20240601115059 extends AbstractMigration
                 END IF;
         END;
         $$ language PLPGSQL");
-        // $this->addSql("do $$
-        // BEGIN 
-        //     perform conrelid::regclass AS table_name, conname AS foreignKey, pg_get_constraintdef(oid) 
-        //     FROM pg_constraint 
-        //     WHERE contype = 'f' AND connamespace = 'public'::regnamespace AND pg_get_constraintdef(oid) LIKE '%get_all_post_event_id%';
-        //         IF NOT FOUND THEN
-        //             ALTER TABLE user_profile ADD get_all_post_event_id INT NULL;
-        //             ALTER TABLE user_profile ADD CONSTRAINT FK_D95AB405CE1A612A FOREIGN KEY (get_all_post_event_id) REFERENCES post_event (id) NOT DEFERRABLE INITIALLY IMMEDIATE;
-        //             CREATE INDEX IDX_D95AB405CE1A612A ON user_profile (get_all_post_event_id);
-        //         END IF;
-        // END;
-        // $$ language PLPGSQL");
         // $this->addSql('ALTER TABLE user_profile ADD group_student_id INT DEFAULT NULL');
-        // $this->addSql('ALTER TABLE user_profile ADD post_event_id INT NOT NULL');
         // $this->addSql('ALTER TABLE user_profile ADD CONSTRAINT FK_D95AB4051C592EA8 FOREIGN KEY (group_student_id) REFERENCES "group" (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
-        // $this->addSql('ALTER TABLE user_profile ADD CONSTRAINT FK_D95AB405CE1A612A FOREIGN KEY (post_event_id) REFERENCES post_event (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
         // $this->addSql('CREATE INDEX IDX_D95AB4051C592EA8 ON user_profile (group_student_id)');
-        // $this->addSql('CREATE INDEX IDX_D95AB405CE1A612A ON user_profile (post_event_id)');
     }
 
     public function down(Schema $schema): void
@@ -59,12 +44,8 @@ final class Version20240601115059 extends AbstractMigration
         // this down() migration is auto-generated, please modify it to your needs
         $this->addSql('CREATE SCHEMA public');
         $this->addSql('DROP TABLE "group"');
-        // $this->addSql('DROP TABLE post_event');
         $this->addSql('ALTER TABLE user_profile DROP CONSTRAINT FK_D95AB4051C592EA8');
-        // $this->addSql('ALTER TABLE user_profile DROP CONSTRAINT FK_D95AB405CE1A612A');
         $this->addSql('DROP INDEX IDX_D95AB4051C592EA8');
-        // $this->addSql('DROP INDEX IDX_D95AB405CE1A612A');
         $this->addSql('ALTER TABLE user_profile DROP group_student_id');
-        // $this->addSql('ALTER TABLE user_profile DROP post_event_id');
     }
 }
