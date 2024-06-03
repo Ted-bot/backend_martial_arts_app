@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\Api;
 
 use Symfony\Component\HttpFoundation\Response;
 
@@ -9,6 +9,6 @@ final class GetTokenController
     public function __invoke(): Response
     {
         // return new Response('', Response::HTTP_NO_CONTENT);
-        return new Response('GangGang', Response::HTTP_OK);
+        return new Response('Testing', Response::HTTP_OK);
     }
 }
