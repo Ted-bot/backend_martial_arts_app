@@ -58,6 +58,7 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
+        - { path: '^/forgot-password', role: PUBLIC_ACCESS }
         # - { path: ^/api,       roles: [ROLE_USER_STUDENT, ROLE_USER_EXPERT, ROLE_USER_SIFU] }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
