@@ -31,7 +31,7 @@ final class ForgotPasswordEventSubscriber implements EventSubscriberInterface
         $message = (new Email())
             ->from('no-reply@example.com')
             ->to($user->getEmail())
-            ->cc('tkbotch@gmail.com')
+            ->cc('tkay_@live.nl')
             ->subject('Reset your password')
             ->html($this->twig->render(
                 'App:ResetPassword:mail.html.twig',
