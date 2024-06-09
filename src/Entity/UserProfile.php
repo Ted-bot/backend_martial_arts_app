@@ -114,7 +114,7 @@ class UserProfile
         return $this;
     }
 
-    #[Groups('profile:write')]
+    #[Groups('profile:read')]
     public function getWebsiteUrl(): ?string
     {
         return $this->websiteUrl;

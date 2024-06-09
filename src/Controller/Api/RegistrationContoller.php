@@ -103,7 +103,7 @@ class RegistrationContoller extends AbstractController
 
     #[Route(
         '/api/v1/login', 
-        name: '',
+        name: 'api_login',
         methods: 'POST',
         )]
     public function v1Login(
@@ -112,13 +112,12 @@ class RegistrationContoller extends AbstractController
         AuthenticationUtils $authenticationUtils
         ): Response
     {
-        // dd($user);
         if (null === $user) {
             return new Response($authenticationUtils->getLastAuthenticationError(),
             Response::HTTP_UNAUTHORIZED);
         }
 
-        return new Response($authenticationSuccessHandler->handleAuthenticationSuccess($user), 200);
+        return $authenticationSuccessHandler->handleAuthenticationSuccess($user);
     }
 
     #[Route(

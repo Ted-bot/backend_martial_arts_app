@@ -19,11 +19,16 @@ services:
             - '../src/DependencyInjection/'
             # - '../src/Entity/'
             - '../src/Kernel.php'
+    App\http_kernel\cors_subscriber:
+                class: App\EventSubscriber\HttpKernel\CorsSubscriber
+                tags:
+                    - { name: kernel.event_subscriber }
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-    # acme_api.encoder.nixilla_jwt_encoder:
-    #     class: App\Encoder\NixillaJWTEncoder
+    acme_api.encoder.nixilla_jwt_encoder:
+        class: App\Encoder\NixillaJWTEncoder
+        
     jwt_token_authenticator:
         class: App\Security\ApiKeyAuthenticator
         autowire:  true

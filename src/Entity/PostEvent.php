@@ -65,12 +65,15 @@ class PostEvent
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['trainingsession:read', 'profile:read'])]
     private ?\DateTimeInterface $eventDate = null;
 
     #[ORM\Column(type: Types::TIME_MUTABLE)]
+    #[Groups(['trainingsession:read', 'profile:read'])]
     private ?\DateTimeInterface $eventStart = null;
     
     #[ORM\Column(type: Types::TIME_MUTABLE)]
+    #[Groups(['trainingsession:read', 'profile:read'])]
     private ?\DateTimeInterface $eventEnd = null;
 
     #[ORM\Column]
