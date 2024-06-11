@@ -6,11 +6,18 @@ framework:
     # Note that the session will be started ONLY if you read or write from it.
     session: true
 
+    mailer:
+        dsn: '%env(MAILER_DSN)%'
     #esi: true
     #fragments: true
+    # webhook:
+    #     routing:
+    #         sendgrid:
+    #             service: mailer.webhook.request_parser.sendgrid
 
 when@test:
     framework:
         test: true
         session:
             storage_factory_id: session.storage.factory.mock_file
+

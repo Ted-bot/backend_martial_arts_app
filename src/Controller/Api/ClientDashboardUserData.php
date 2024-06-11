@@ -49,13 +49,7 @@ class ClientDashboardUserData extends AbstractController
         );
 
         $token = $extractor->extract($request);
-
-        // dd($token);
-
         $decodeToken = $this->jwtEncoder->decode($token);
-        
-        // dd($decodeToken['username']);
-        
         $user = $this->userRepository->findOneBy(array('email'=> $decodeToken['username']));
 
         // dd($user);  
@@ -67,7 +61,7 @@ class ClientDashboardUserData extends AbstractController
 
         // return new Response($this->getUser());
         // return new Response('testing!!');
-        return $this->json(array('id' => $id,'name'=> $name), 200, ['token' => $token]);
+        return $this->json(array('id' => $id,'first_name'=> $name, 'email' => $user->email, 'last_name' => $user->lastName ), 200, ['token' => $token]);
     }
 
     /**

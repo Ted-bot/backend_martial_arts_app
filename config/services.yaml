@@ -32,3 +32,21 @@ services:
     jwt_token_authenticator:
         class: App\Security\ApiKeyAuthenticator
         autowire:  true
+    
+    CoopTilleuls\ForgotPasswordBundle\Manager\ForgotPasswordManager:
+        class: CoopTilleuls\ForgotPasswordBundle\Manager\ForgotPasswordManager
+        arguments:
+            $passwordTokenManager: '@coop_tilleuls_forgot_password.manager.password_token'
+            # $manager: '@coop_tilleuls_forgot_password.manager.doctrine'
+            # $userClass: App\Entity\Tuser
+
+    CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface:
+        class: CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface
+    
+    coop_tilleuls_forgot_password.controller.update_password:
+        class: CoopTilleuls\ForgotPasswordBundle\Controller\UpdatePassword
+        tags: ['controller.service_arguments']
+        
+    # coop_tilleuls_forgot_password.create_token:
+    #     class: CoopTilleuls\ForgotPasswordBundle\Event\CreateToken
+    #     tags: ['controller.service_arguments']
