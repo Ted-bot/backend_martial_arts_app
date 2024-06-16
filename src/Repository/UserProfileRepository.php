@@ -2,9 +2,11 @@
 
 namespace App\Repository;
 
+use App\Entity\User;
 use App\Entity\UserProfile;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 /**
  * @extends ServiceEntityRepository<UserProfile>
@@ -14,6 +16,16 @@ class UserProfileRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, UserProfile::class);
+    }
+
+    public function upgradePassword(User $user, string $newHashedPassword): void
+    {
+        // set the new hashed password on the User object
+        $user->setPassword($newHashedPassword);
+
+        $this->getEntityManager()->persist($user);
+        // execute the queries on the database
+        $this->getEntityManager()->flush();
     }
 
     // public function add(UserProfile $entity, bool $flush = false): void

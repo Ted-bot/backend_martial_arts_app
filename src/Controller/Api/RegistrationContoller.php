@@ -35,7 +35,6 @@ class RegistrationContoller extends AbstractController
             'email' => $createUser->email,
             'phone' => $createUser->phone_number,
             'gender' => $createUser->gender,
-            // 'date_of_birth' => (new DateTimeImmutable('now'))->format('Y-m-d H:i:s'),
             'date_of_birth' => $createUser->date_of_birth,
             'location' => $createUser->location,
             'password' => $createUser->password,
@@ -83,7 +82,7 @@ class RegistrationContoller extends AbstractController
 
             return $this->json([
                 'errors' => [
-                    'me' => $e->getMessage(),
+                    'error' => $e->getMessage(),
                     'property' => $field,
                     'sql_state' => $sqlState,
                     'message' => $message
@@ -104,7 +103,7 @@ class RegistrationContoller extends AbstractController
 
     #[Route(
         '/api/v1/login', 
-        name: '',
+        name: 'api_login',
         methods: 'POST',
         )]
     public function v1Login(
@@ -113,13 +112,12 @@ class RegistrationContoller extends AbstractController
         AuthenticationUtils $authenticationUtils
         ): Response
     {
-        // dd($user);
         if (null === $user) {
             return new Response($authenticationUtils->getLastAuthenticationError(),
             Response::HTTP_UNAUTHORIZED);
         }
 
-        return new Response($authenticationSuccessHandler->handleAuthenticationSuccess($user), 200);
+        return $authenticationSuccessHandler->handleAuthenticationSuccess($user);
     }
 
     #[Route(
@@ -127,6 +125,15 @@ class RegistrationContoller extends AbstractController
         name: 'api_logout'
         )]
     public function v1Logout()
+    {
+
+    }
+
+    #[Route(
+        '/api/v1/reset-password', 
+        name: 'api_reset_password'
+        )]
+    public function v1ResetPassword()
     {
 
     }

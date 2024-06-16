@@ -19,11 +19,43 @@ services:
             - '../src/DependencyInjection/'
             # - '../src/Entity/'
             - '../src/Kernel.php'
+    App\http_kernel\cors_subscriber:
+        class: App\EventSubscriber\HttpKernel\CorsSubscriber
+        tags:
+            - { name: kernel.event_subscriber }
+    
+    App\http_kernel\forgot_password_event_subscriber:
+        class: App\EventSubscriber\ForgotPasswordEventSubscriber
+        tags:
+            - { name: kernel.event_subscriber }
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-    # acme_api.encoder.nixilla_jwt_encoder:
-    #     class: App\Encoder\NixillaJWTEncoder
+    acme_api.encoder.nixilla_jwt_encoder:
+        class: App\Encoder\NixillaJWTEncoder
+        
     jwt_token_authenticator:
         class: App\Security\ApiKeyAuthenticator
         autowire:  true
+    
+    # CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface:
+        # class: CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface
+    
+    CoopTilleuls\ForgotPasswordBundle\Manager\ForgotPasswordManager:
+        class: CoopTilleuls\ForgotPasswordBundle\Manager\ForgotPasswordManager
+        arguments:
+            $passwordTokenManager: '@coop_tilleuls_forgot_password.manager.password_token'
+            $providerChain: '@coop_tilleuls_forgot_password.provider_chain'
+            # $manager: '@coop_tilleuls_forgot_password.manager.doctrine'
+            # $userClass: App\Entity\user
+
+    
+    coop_tilleuls_forgot_password.controller.update_password:
+        class: CoopTilleuls\ForgotPasswordBundle\Controller\UpdatePassword
+        # arguments:
+            # $forgotPasswordManager: '@coop_tilleuls_forgot_password.controller.update_password'
+        tags: ['controller.service_arguments']
+        
+    # coop_tilleuls_forgot_password.create_token:insta
+    #     class: CoopTilleuls\ForgotPasswordBundle\Event\CreateToken
+    #     tags: ['controller.service_arguments']

@@ -3,10 +3,11 @@
 namespace App\DataFixtures;
 
 use DateTime;
-use DateTimeImmutable;
+use DateInterval;
 use Carbon\Carbon;
 use App\Class\Roles;
 use App\Entity\User;
+use DateTimeImmutable;
 use App\Entity\PostEvent;
 use App\Entity\UserProfile;
 use App\Factory\UserFactory;
@@ -14,13 +15,13 @@ use App\Factory\GroupFactory;
 use Zenstruck\Foundry\Factory;
 use App\Factory\PostEventFactory;
 use App\Factory\UserProfileFactory;
+use function Zenstruck\Foundry\faker;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Symfony\Component\Clock\ClockInterface;
+
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-
-use function Zenstruck\Foundry\faker;
 
 class AppFixtures extends Fixture
 {
@@ -33,7 +34,7 @@ class AppFixtures extends Fixture
     {        
         UserFactory::createSequence(
             function() {
-                foreach (range(1, 10) as $i) {
+                foreach (range(1, 20) as $i) {
                     // yield [new UserFactory()];
                     yield [
                         'firstName' => Factory::faker()->firstName(),
@@ -61,18 +62,21 @@ class AppFixtures extends Fixture
             }
         );
 
+        
         PostEventFactory::createSequence(
             function() {
                 foreach (range(1, 10) as $i) {
+                    $startDate = Carbon::createFromTimeStamp(Factory::faker()->dateTimeBetween('-1 days', '+30 days')->getTimestamp());
+                    $endDate = Carbon::createFromFormat('Y-m-d H:i:s', $startDate)->addHour();
                     yield [
                         'title' => Factory::faker()->title(),
                         'description' => Factory::faker()->sentences(2, true),
                         'relatedUser' => UserProfileFactory::first(),
-                        'createdAt' => Factory::faker()->dateTimeBetween('-1 years','now'),
-                        'eventDate' => date_create(Factory::faker()->date()),
-                        'eventStart' => Factory::faker()->datetime(),
-                        'eventEnd' => Factory::faker()->datetime(),
-                        'eventRegular' => true
+                        'createdAt' => Factory::faker()->dateTimeBetween('-1 month','now'),
+                        'isPublished' => true,
+                        'startDate' => $startDate,
+                        'endDate' => $endDate,
+                        'allDay' => Factory::faker()->boolean()
                     ];
                 }
             }

@@ -53,21 +53,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[Groups(['user:read','profile:read'])]
-    private ?int $id = null;
+    public ?int $id = null;
 
     /**
      * @var string Email of user
      */
     #[ORM\Column(length: 180)]
     #[Groups(['user:read', 'user:write','profile:read'])]
-    private ?string $email = null;
+    public ?string $email = null;
 
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
     #[Groups(['user:read', 'user:write','profile:read'])]
-    private array $roles = [];
+    public array $roles = [];
 
     /**
      * @var string The hashed password
@@ -77,63 +77,63 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[Groups(['user:read'])]
     #[ORM\OneToOne(mappedBy: 'userUniq', targetEntity: UserProfile::class,cascade: ['persist', 'remove'])]
-    private ?UserProfile $userProfile = null;
+    public ?UserProfile $userProfile = null;
 
     /**
      * @var string Email of user
      */
     #[ORM\Column(length: 25)]
     #[Groups(['user:read', 'user:write','profile:read'])]
-    private ?string $firstName = null;
+    public ?string $firstName = null;
 
     /**
      * @var string Lastname of user
      */
     #[ORM\Column(length: 25)]
     #[Groups(['user:read', 'user:write','profile:read'])]
-    private ?string $lastName = null;
+    public ?string $lastName = null;
 
     /**
      * @var string Phonenumber of user
      */
     #[ORM\Column(length: 15)]
     #[Groups(['user:read', 'user:write','profile:read'])]
-    private ?string $phoneNumber = null;
+    public ?string $phoneNumber = null;
 
     /**
      * @var string A "Y-m-d H:i:s" formatted value
      */
     #[ORM\Column(length: 10)]
     #[Groups(['user:read', 'user:write','profile:read'])]
-    private ?string $dateOfBirth = null;
+    public ?string $dateOfBirth = null;
         
     /**
      * @var string Gender of user
      */
     #[ORM\Column(length: 6)]
     #[Groups(['user:read', 'user:write','profile:read'])]
-    private ?string $gender = null;
+    public ?string $gender = null;
 
     /**
      * @var string Location of user
      */
     #[ORM\Column(length: 50)]
     #[Groups(['user:read', 'user:write', 'profile:read'])]
-    private ?string $location = null;
+    public ?string $location = null;
 
     /**
      * @var string Conversion of user
      */
     #[ORM\Column(length: 255)]
     #[Groups(['user:read', 'user:write', 'profile:read'])]
-    private ?string $conversion = null;
+    protected ?string $conversion = null;
 
     /**
      * @var string datetime created account of user
      */
     #[ORM\Column(length: 25)]
     #[Groups(['user:read', 'user:write', 'profile:read'])]
-    private ?DateTimeImmutable $createdAt;
+    public ?DateTimeImmutable $createdAt;
 
     public function __construct()
     {

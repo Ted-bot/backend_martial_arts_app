@@ -1,5 +1,6 @@
 api_platform:
-    title: Hello API Platform
+    title: Amsterdam Martial Arts API Platform
+    description: API for martial arts school
     version: 1.0.0
     formats:
         jsonld: ['application/ld+json']
@@ -10,7 +11,7 @@ api_platform:
     defaults:
         stateless: true
         cache_headers:
-            vary: ['Content-Type', 'Authorization', 'Origin']
+            vary: ['Content-Type', 'X-Authorization', 'Origin']
         extra_properties:
             standard_put: false
             rfc_7807_compliant_errors: true
