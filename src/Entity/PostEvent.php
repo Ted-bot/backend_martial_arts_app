@@ -41,43 +41,40 @@ class PostEvent
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    public ?int $id = null;
 
     #[ORM\Column(length: 50)]
     #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
-    private ?string $title = null;
+    public ?string $title = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
-    private ?string $description = null;
+    public ?string $description = null;
 
     #[ORM\Column]
     #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
-    private ?bool $isPublished = true;
+    public ?bool $isPublished = true;
 
     #[ORM\ManyToOne(inversedBy: 'postEvents')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['trainingsession:read', 'profile:read'])]
-    private ?UserProfile $relatedUser = null;
+    public ?UserProfile $relatedUser = null;
 
     #[ORM\Column]
     #[Groups(['trainingsession:read', 'profile:read'])]
-    private ?\DateTimeImmutable $createdAt = null;
+    public ?\DateTimeImmutable $createdAt = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Groups(['trainingsession:read', 'profile:read'])]
-    private ?\DateTimeInterface $eventDate = null;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    public ?\DateTimeInterface $startDate = null;
 
-    #[ORM\Column(type: Types::TIME_MUTABLE)]
     #[Groups(['trainingsession:read', 'profile:read'])]
-    private ?\DateTimeInterface $eventStart = null;
-    
-    #[ORM\Column(type: Types::TIME_MUTABLE)]
-    #[Groups(['trainingsession:read', 'profile:read'])]
-    private ?\DateTimeInterface $eventEnd = null;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    public ?\DateTimeInterface $endDate = null;
 
-    #[ORM\Column]
-    private ?bool $eventRegular = null;
+    #[Groups(['trainingsession:read', 'profile:read'])]
+    #[ORM\Column(nullable: true)]
+    public ?bool $allDay = null;
 
     public function __construct()
     {
@@ -119,6 +116,7 @@ class PostEvent
         return $this->isPublished;
     }
 
+    #[Groups('trainingsession:write')]
     public function setPublished(bool $isPublished): static
     {
         $this->isPublished = $isPublished;
@@ -126,11 +124,17 @@ class PostEvent
         return $this;
     }
 
+    public function getPublished()
+    {
+        return $this->isPublished;
+    }
+
     public function getRelatedUser(): ?UserProfile
     {
         return $this->relatedUser;
     }
 
+    #[Groups('trainingsession:write')]
     public function setRelatedUser(?UserProfile $relatedUser): static
     {
         $this->relatedUser = $relatedUser;
@@ -150,50 +154,41 @@ class PostEvent
         return $this;
     }
 
-    public function getEventDate(): ?\DateTimeInterface
+    public function getStartDate(): ?\DateTimeInterface
     {
-        return $this->eventDate;
+        return $this->startDate;
     }
 
-    public function setEventDate(\DateTimeInterface $eventDate): static
+    #[Groups('trainingsession:write')]
+    public function setStartDate(?\DateTimeInterface $startDate): static
     {
-        $this->eventDate = $eventDate;
+        $this->startDate = $startDate;
 
         return $this;
     }
 
-    public function getEventStart(): ?\DateTimeInterface
+    public function getEndDate(): ?\DateTimeInterface
     {
-        return $this->eventStart;
-    }
-    
-    public function getEventEnd(): ?\DateTimeInterface
-    {
-        return $this->eventEnd;
+        return $this->endDate;
     }
 
-    public function setEventStart(\DateTimeInterface $eventStart): static
+    #[Groups('trainingsession:write')]
+    public function setEndDate(?\DateTimeInterface $endDate): static
     {
-        $this->eventStart = $eventStart;
-
-        return $this;
-    }
-    
-    public function setEventEnd(\DateTimeInterface $eventEnd): static
-    {
-        $this->eventEnd = $eventEnd;
+        $this->endDate = $endDate;
 
         return $this;
     }
 
-    public function isEventRegular(): ?bool
+    public function isAllDay(): ?bool
     {
-        return $this->eventRegular;
+        return $this->allDay;
     }
 
-    public function setEventRegular(bool $eventRegular): static
+    #[Groups('trainingsession:write')]
+    public function setAllDay(?bool $allDay): static
     {
-        $this->eventRegular = $eventRegular;
+        $this->allDay = $allDay;
 
         return $this;
     }
