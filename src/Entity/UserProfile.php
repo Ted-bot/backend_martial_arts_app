@@ -45,41 +45,48 @@ class UserProfile
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    protected ?int $id = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $username = null;
+    protected ?string $username = null;
 
     #[ORM\Column(length: 1024, nullable: true)]
-    private ?string $description = null;
+    protected ?string $description = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $websiteUrl = null;
+    protected ?string $websiteUrl = null;
 
     #[ORM\OneToOne(inversedBy: 'userProfile', targetEntity: User::class, cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $userUniq = null;
+    protected ?User $userUniq = null;
 
     #[ORM\ManyToOne(inversedBy: 'profileGroup')]
-    private ?Group $groupStudent = null;
+    protected ?Group $groupStudent = null;
 
     /**
      * @var Collection<int, PostEvent>
      */
     #[ORM\OneToMany(targetEntity: PostEvent::class, mappedBy: 'relatedUser')]
-    private Collection $postEvents;
+    protected Collection $postEvents;
+
+    /**
+     * @var Collection<int, PostEvent>
+     */
+    #[ORM\ManyToMany(targetEntity: PostEvent::class, mappedBy: 'subscribe')]
+    protected Collection $subscribeToEvents;
 
     public function __construct()
     {
         $this->postEvents = new ArrayCollection();
+        $this->subscribeToEvents = new ArrayCollection();
     }
 
     // #[ORM\ManyToOne(inversedBy: 'user_profile_create_post_event')]
     // #[ORM\JoinColumn(nullable: true)]
-    // private ?PostEvent $getAllPostEvents = null;
+    // public ?PostEvent $getAllPostEvents = null;
 
     // #[ORM\OneToOne(mappedBy: 'relatedUser', cascade: ['persist', 'remove'])]
-    // private ?PostEvent $singlePostEvent = null;
+    // public ?PostEvent $singlePostEvent = null;
 
     public function getId(): ?int
     {
@@ -187,31 +194,58 @@ class UserProfile
     //     return $this;
     // }
 
+    // /**
+    //  * @return Collection<int, PostEvent>
+    //  */
+    // public function getPostEvents(): Collection
+    // {
+    //     return $this->postEvents;
+    // }
+
+    // public function addPostEvent(PostEvent $postEvent): static
+    // {
+    //     if (!$this->postEvents->contains($postEvent)) {
+    //         $this->postEvents->add($postEvent);
+    //         $postEvent->setRelatedUser($this);
+    //     }
+
+    //     return $this;
+    // }
+
+    // public function removePostEvent(PostEvent $postEvent): static
+    // {
+    //     if ($this->postEvents->removeElement($postEvent)) {
+    //         // set the owning side to null (unless already changed)
+    //         if ($postEvent->getRelatedUser() === $this) {
+    //             $postEvent->setRelatedUser(null);
+    //         }
+    //     }
+
+    //     return $this;
+    // }
+
     /**
      * @return Collection<int, PostEvent>
      */
-    public function getPostEvents(): Collection
+    public function getSubscribeToEvents(): Collection
     {
-        return $this->postEvents;
+        return $this->subscribeToEvents;
     }
 
-    public function addPostEvent(PostEvent $postEvent): static
+    public function addSubscribeToEvent(PostEvent $subscribeToEvent): static
     {
-        if (!$this->postEvents->contains($postEvent)) {
-            $this->postEvents->add($postEvent);
-            $postEvent->setRelatedUser($this);
+        if (!$this->subscribeToEvents->contains($subscribeToEvent)) {
+            $this->subscribeToEvents->add($subscribeToEvent);
+            $subscribeToEvent->addSubscribe($this);
         }
 
         return $this;
     }
 
-    public function removePostEvent(PostEvent $postEvent): static
+    public function removeSubscribeToEvent(PostEvent $subscribeToEvent): static
     {
-        if ($this->postEvents->removeElement($postEvent)) {
-            // set the owning side to null (unless already changed)
-            if ($postEvent->getRelatedUser() === $this) {
-                $postEvent->setRelatedUser(null);
-            }
+        if ($this->subscribeToEvents->removeElement($subscribeToEvent)) {
+            $subscribeToEvent->removeSubscribe($this);
         }
 
         return $this;

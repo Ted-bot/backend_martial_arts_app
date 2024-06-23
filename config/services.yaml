@@ -34,9 +34,9 @@ services:
     acme_api.encoder.nixilla_jwt_encoder:
         class: App\Encoder\NixillaJWTEncoder
         
-    jwt_token_authenticator:
+    App\Security\ApiKeyAuthenticator:
         class: App\Security\ApiKeyAuthenticator
-        autowire:  true
+        autowire: true
     
     # CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface:
         # class: CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface

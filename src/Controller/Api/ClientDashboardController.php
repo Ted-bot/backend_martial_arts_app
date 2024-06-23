@@ -12,16 +12,17 @@ use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\TokenExtractor\AuthorizationHeaderTokenExtractor;
+use Symfony\Bundle\SecurityBundle\Security;
 
 #[AsController]
-class ClientDashboardUserData extends AbstractController
+class ClientDashboardController extends AbstractController
 {
     public $userRepository;
     public $jwtEncoder;
     
     public function __construct(
-        UserRepository $userRepository,
-        JWTEncoderInterface $jwtEncoder
+            UserRepository $userRepository,
+            JWTEncoderInterface $jwtEncoder
         )
         {
             $this->userRepository = $userRepository;
@@ -51,6 +52,7 @@ class ClientDashboardUserData extends AbstractController
         $token = $extractor->extract($request);
         $decodeToken = $this->jwtEncoder->decode($token);
         $user = $this->userRepository->findOneBy(array('email'=> $decodeToken['username']));
+        $getUser = '';
 
         // dd($user);  
 
@@ -61,7 +63,7 @@ class ClientDashboardUserData extends AbstractController
 
         // return new Response($this->getUser());
         // return new Response('testing!!');
-        return $this->json(array('id' => $id,'first_name'=> $name, 'email' => $user->email, 'last_name' => $user->lastName ), 200, ['token' => $token]);
+        return $this->json(array('id' => $id,'first_name'=> $name, 'email' => $user->email, 'last_name' => $user->lastName, 'user' => $getUser ), 200, ['token' => $token]);
     }
 
     /**

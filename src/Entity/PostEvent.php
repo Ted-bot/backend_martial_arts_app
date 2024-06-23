@@ -9,6 +9,8 @@ use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
@@ -41,6 +43,7 @@ class PostEvent
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['trainingsession:read', 'profile:read'])]
     public ?int $id = null;
 
     #[ORM\Column(length: 50)]
@@ -64,22 +67,30 @@ class PostEvent
     #[Groups(['trainingsession:read', 'profile:read'])]
     public ?\DateTimeImmutable $createdAt = null;
 
-    #[Groups(['trainingsession:read', 'profile:read'])]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[Groups(['trainingsession:read', 'profile:read'])]
     public ?\DateTimeInterface $startDate = null;
 
-    #[Groups(['trainingsession:read', 'profile:read'])]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[Groups(['trainingsession:read', 'profile:read'])]
     public ?\DateTimeInterface $endDate = null;
 
-    #[Groups(['trainingsession:read', 'profile:read'])]
     #[ORM\Column(nullable: true)]
+    #[Groups(['trainingsession:read', 'profile:read'])]
     public ?bool $allDay = null;
+
+    /**
+     * @var Collection<int, UserProfile>
+     */
+    #[ORM\ManyToMany(targetEntity: UserProfile::class, inversedBy: 'subscribeToEvents')]
+    #[Groups(['trainingsession:read', 'profile:read'])]
+    private Collection $subscribe;
 
     public function __construct()
     {
         $dateTime = new DateTimeImmutable();
         $this->createdAt = $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
+        $this->subscribe = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -189,6 +200,40 @@ class PostEvent
     public function setAllDay(?bool $allDay): static
     {
         $this->allDay = $allDay;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, UserProfile>
+     */
+    public function getSubscribe(): Collection
+    {
+        return $this->subscribe;
+    }
+
+    public function addSubscribe(UserProfile $subscribe): static
+    {
+        if (!$this->subscribe->contains($subscribe)) {
+            $this->subscribe->add($subscribe);
+        }
+
+        return $this;
+    }
+
+    // #Foundry setter function
+    // public function setSubscribe(UserProfile $subscribe): static
+    // {
+    //     if (!$this->subscribe->contains($subscribe)) {
+    //         $this->subscribe->add($subscribe);
+    //     }
+
+    //     return $this;
+    // }
+
+    public function removeSubscribe(UserProfile $subscribe): static
+    {
+        $this->subscribe->removeElement($subscribe);
 
         return $this;
     }
