@@ -3,7 +3,7 @@
 namespace App\Factory;
 
 use Carbon\Carbon;
-use App\Class\Roles;
+use App\Class\Role;
 use App\Entity\User;
 use Zenstruck\Foundry\Proxy;
 use App\Repository\UserRepository;
@@ -58,7 +58,7 @@ final class UserFactory extends ModelFactory
             'location' => self::faker()->city(),
             'password' => self::faker()->password(),
             'conversion' => self::faker()->sentences(2, true),
-            'roles' => [Roles::ROLE_USER_STUDENT],
+            'roles' => [Role::ROLE_USER_STUDENT],
         ];
     }
 

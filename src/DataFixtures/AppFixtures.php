@@ -2,10 +2,12 @@
 
 namespace App\DataFixtures;
 
+use App\Repository\PostEventRepository;
+use App\Repository\UserProfileRepository;
 use DateTime;
 use DateInterval;
 use Carbon\Carbon;
-use App\Class\Roles;
+use App\Class\Role;
 use App\Entity\User;
 use DateTimeImmutable;
 use App\Entity\PostEvent;
@@ -27,11 +29,37 @@ class AppFixtures extends Fixture
 {
     public function __construct(
         private UserPasswordHasherInterface $userPasswordHasher,
-        protected ClockInterface $time
-    ) {}
+        protected ClockInterface $time,
+        protected UserPasswordHasherInterface $userPasswordHasherInterface,
+        protected UserProfileRepository $userProfileRepository,
+        protected PostEventRepository $postEvent,
+    ) {
+        // $this->userPasswordHasherInterface = $userPasswordHasherInterface;
+    }
 
     public function load(ObjectManager $manager): void
     {        
+        $user = new User();
+        $user->setEmail("tkbotch@gmail.com");
+        //$user->setPassword("test_pass");
+        $user->setPassword(
+            $this->userPasswordHasherInterface->hashPassword(
+                $user, "test_pass"
+            )
+        );
+
+        $user->setFirstName("Mr.X");
+        $user->setLastName("FutureX");
+        $user->setPhoneNumber("0621212121");
+        $user->setGender("Man");
+        $user->setLocation("Amsterdam");
+        $user->setDateOfBirth("12-03-1990");
+        $user->setConversion("Ik ga iedereen slopen let maar op!");
+        $user->setRoles([Role::ROLE_USER_STUDENT]);
+
+        $manager->persist($user);
+        // $manager->flush();
+
         UserFactory::createSequence(
             function() {
                 foreach (range(1, 20) as $i) {
@@ -44,6 +72,7 @@ class AppFixtures extends Fixture
                         'dateOfBirth' => Carbon::parse(Factory::faker()->dateTimeBetween('-30 years', '-8 years'))->format('d-m-Y'),
                         'gender' => Factory::faker()->text(6),
                         'location' => Factory::faker()->city(),
+                        // 'password' => 'test',
                         'password' => Factory::faker()->password(),
                         'conversion' => Factory::faker()->sentences(2, true),
                     ];
@@ -63,7 +92,7 @@ class AppFixtures extends Fixture
         );
 
         
-        PostEventFactory::createSequence(
+        $trainingSessions = PostEventFactory::createSequence(
             function() {
                 foreach (range(1, 10) as $i) {
                     $startDate = Carbon::createFromTimeStamp(Factory::faker()->dateTimeBetween('-1 days', '+30 days')->getTimestamp());
@@ -81,5 +110,18 @@ class AppFixtures extends Fixture
                 }
             }
         );
+
+        $postAll = $this->postEvent->findAll();
+            foreach($postAll as $trainingSession){
+                foreach($this->userProfileRepository->findAll() as $userProfile) {
+                    if(Factory::faker()->boolean()){                        
+                        $trainingSession->addSubscribe($userProfile);
+
+                        $manager->persist($trainingSession);
+                    }
+                }
+            }
+
+            $manager->flush();
     }
 }

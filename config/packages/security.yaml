@@ -15,39 +15,37 @@ security:
                 class: App\Entity\User
                 property: email
     firewalls:
+        # register:
+        #     pattern: ^/api/v2/register
+        login:
+            json_login:
+                check_path: api_login
+                # login_path: api_login
+                # username_path: email
+                # password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+        api:
+            pattern: ^/api/
+            stateless: true
+            # provider: app_user_provider
+            jwt: ~
+            # custom_authenticators:
+            #     - App\Security\ApiKeyAuthenticator
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-        register:
-            pattern: ^/api/v2/register
-        login:
-            custom_authenticator: App\Security\ApiKeyAuthenticator
-            pattern: ^/api/v1/login
-            json_login:
-                check_path: api_login
-                login_path: api_login
-                username_path: email
-                password_path: password
-                # username_path: security.credentials.login
-                # password_path: security.credentials.password
         main:
             lazy: true
-            stateless: true
             provider: app_user_provider
+            # access_token:
+            #     token_handler: App\Security\ApiTokenHandler
+            # jwt: ~
         # logout:
         #     path: api_logout
             # target: api_login
-        api:
-            pattern:   ^/api
-            custom_authenticator: App\Security\ApiKeyAuthenticator
-            stateless: false
-            jwt: ~
-            # http_basic:
-            #     realm: Secured Area
         # access_token:
         #     token_handler: App\Security\ApiKeyAuthenticator
-        #     success_handler: lexik_jwt_authentication.handler.authentication_success
-        #     failure_handler: lexik_jwt_authentication.handler.authentication_failure
             
 
             # activate different ways to authenticate
@@ -61,6 +59,10 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
         - { path: '^/forgot-password', role: PUBLIC_ACCESS }
+        - { path: ^/api/dashboard/login, roles: PUBLIC_ACCESS  }
+        - { path: ^/api/dashboard, roles: IS_AUTHENTICATED_FULLY  }
+        - { path: ^/api/register, roles: PUBLIC_ACCESS  }
+        # - { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }
         # - { path: ^/api,       roles: [ROLE_USER_STUDENT, ROLE_USER_EXPERT, ROLE_USER_SIFU] }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }

@@ -4,7 +4,7 @@ namespace App\Entity;
 
 use DateTimeZone;
 use Carbon\Carbon;
-use App\Class\Roles;
+use App\Class\Role;
 use DateTimeImmutable;
 use App\Entity\UserProfile;
 use ApiPlatform\Metadata\Get;
@@ -139,6 +139,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $dateTime = new DateTimeImmutable();
         $this->createdAt = $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
+        $this->setRoles([Role::ROLE_USER_STUDENT]);
+        // $this->roles = ;
     }
 
     public function createNewUserObj(CreateUserRequest $user)
@@ -154,7 +156,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->setGender($user->gender);
         $this->setLocation($user->location);
         $this->setConversion($user->conversion);
-        $this->setRoles([Roles::ROLE_USER_STUDENT]);
+        $this->setRoles([Role::ROLE_USER_STUDENT]);
 
         return $this;
     }
@@ -192,11 +194,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      *
      * @return list<string>
      */
+
+    
     public function getRoles(): array
     {
         $roles = $this->roles;
         // guarantee every user at least has ROLE_USER
-        $roles[] = 'ROLE_USER';
+        // $roles[] = Role::ROLE_USER_STUDENT;
 
         return array_unique($roles);
     }

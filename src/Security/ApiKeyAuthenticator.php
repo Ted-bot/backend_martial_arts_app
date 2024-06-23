@@ -46,6 +46,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
         // dd($request->getPathInfo());
         return $pathV1Valid === 0 || $pathV2Valid === 0  && $request->isMethod('POST');
     }
+    
     public function getCredentials(Request $request)
     {
         $extractor = new AuthorizationHeaderTokenExtractor(
@@ -58,6 +59,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
         if(!$token) {
             throw new BadCredentialsException();            
         }
+        dd(['token' => $token]);
 
         return $token;
     }
@@ -85,12 +87,14 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
     public function authenticate(Request $request): Passport
     {
         $data = $request->toArray();
-        $email = $data['email'];
-        // dd($email);
+        $email = $data['username'];
         $password = $data['password'];
+        // dd($email);
+        $user = $this->userRepository->findOneBy(['email' => $email]);
+        $user->getUserIdentifier();
 
         return new Passport(
-            new UserBadge($email, function($userIdentifier){
+            new UserBadge($user->email, function($userIdentifier){
                 $user = $this->userRepository->findOneBy(['email' => $userIdentifier]);
                 // var_dump($user);
 

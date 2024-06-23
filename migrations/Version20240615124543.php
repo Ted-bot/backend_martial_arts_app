@@ -20,9 +20,22 @@ final class Version20240615124543 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE post_event ADD start_date TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL');
-        $this->addSql('ALTER TABLE post_event ADD end_date TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL');
-        $this->addSql('ALTER TABLE post_event ADD all_day BOOLEAN DEFAULT NULL');
+        $this->addSql("do $$
+        BEGIN 
+            perform conrelid::regclass AS table_name, conname AS foreignKey, pg_get_constraintdef(oid) 
+            FROM pg_constraint 
+            WHERE contype = 'f' AND connamespace = 'public'::regnamespace AND pg_get_constraintdef(oid) LIKE '%related_user_id%';
+                IF NOT FOUND THEN
+                    ALTER TABLE post_event ADD start_date TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL;
+                    ALTER TABLE post_event ADD end_date TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL;
+                    ALTER TABLE post_event ADD all_day BOOLEAN DEFAULT NULL;
+                END IF;
+        END;
+        $$ language PLPGSQL"
+        );
+        // $this->addSql('ALTER TABLE post_event ADD start_date TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL');
+        // $this->addSql('ALTER TABLE post_event ADD end_date TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL');
+        // $this->addSql('ALTER TABLE post_event ADD all_day BOOLEAN DEFAULT NULL');
     }
 
     public function down(Schema $schema): void
