@@ -15,23 +15,15 @@ security:
                 class: App\Entity\User
                 property: email
     firewalls:
-        # register:
-        #     pattern: ^/api/v2/register
         login:
             json_login:
                 check_path: api_login
-                # login_path: api_login
-                # username_path: email
-                # password_path: password
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
         api:
             pattern: ^/api/
             stateless: true
-            # provider: app_user_provider
             jwt: ~
-            # custom_authenticators:
-            #     - App\Security\ApiKeyAuthenticator
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
@@ -59,13 +51,9 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
         - { path: '^/forgot-password', role: PUBLIC_ACCESS }
-        - { path: ^/api/dashboard/login, roles: PUBLIC_ACCESS  }
-        - { path: ^/api/dashboard, roles: IS_AUTHENTICATED_FULLY  }
-        - { path: ^/api/register, roles: PUBLIC_ACCESS  }
-        # - { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }
-        # - { path: ^/api,       roles: [ROLE_USER_STUDENT, ROLE_USER_EXPERT, ROLE_USER_SIFU] }
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/api/dashboard/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/dashboard, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/register, roles: PUBLIC_ACCESS }
 
 when@test:
     security:
