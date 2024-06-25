@@ -2,10 +2,12 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use App\Repository\ProductRepository;
+use DateTimeZone;
+use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use App\Repository\ProductRepository;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ApiResource]
@@ -24,7 +26,7 @@ class Product
 
     #[ORM\ManyToOne(inversedBy: 'products')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Category $categoryId = null;
+    private ?Category $category = null;
 
     #[ORM\Column(length: 510)]
     private ?string $description = null;
@@ -33,18 +35,28 @@ class Product
     private ?array $images = null;
 
     #[ORM\Column]
-    private ?bool $isPublished = null;
+    private ?bool $isPublished = true;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'relatedProducts')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?CurrencyType $currencyId = null;
+    private ?CurrencyType $currency = null;
 
     #[ORM\ManyToOne(inversedBy: 'relatedSubscriptions')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?SubscriptionType $durationId = null;
+    private ?SubscriptionType $duration = null;
+
+    #[ORM\ManyToOne(inversedBy: 'products')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $relatedUser = null;
+
+    public function __construct()
+    {
+        $dateTime = new DateTimeImmutable();
+        $this->createdAt = $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
+    }
 
     public function getId(): ?int
     {
@@ -75,14 +87,14 @@ class Product
         return $this;
     }
 
-    public function getCategoryId(): ?Category
+    public function getCategory(): ?Category
     {
-        return $this->categoryId;
+        return $this->category;
     }
 
-    public function setCategoryId(?Category $categoryId): static
+    public function setCategory(?Category $category): static
     {
-        $this->categoryId = $categoryId;
+        $this->category = $category;
 
         return $this;
     }
@@ -135,26 +147,38 @@ class Product
         return $this;
     }
 
-    public function getCurrencyId(): ?CurrencyType
+    public function getCurrencyType(): ?CurrencyType
     {
-        return $this->currencyId;
+        return $this->currency;
     }
 
-    public function setCurrencyId(?CurrencyType $currencyId): static
+    public function setCurrencyType(?CurrencyType $currency): static
     {
-        $this->currencyId = $currencyId;
+        $this->currency = $currency;
 
         return $this;
     }
 
-    public function getDurationId(): ?SubscriptionType
+    public function getDuration(): ?SubscriptionType
     {
-        return $this->durationId;
+        return $this->duration;
     }
 
-    public function setDurationId(?SubscriptionType $durationId): static
+    public function setDuration(?SubscriptionType $duration): static
     {
-        $this->durationId = $durationId;
+        $this->duration = $duration;
+
+        return $this;
+    }
+
+    public function getRelatedUser(): ?User
+    {
+        return $this->relatedUser;
+    }
+
+    public function setRelatedUser(?User $relatedUser): static
+    {
+        $this->relatedUser = $relatedUser;
 
         return $this;
     }

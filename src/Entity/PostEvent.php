@@ -44,40 +44,40 @@ class PostEvent
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[Groups(['trainingsession:read', 'profile:read'])]
-    public ?int $id = null;
+    private ?int $id = null;
 
     #[ORM\Column(length: 50)]
     #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
-    public ?string $title = null;
+    private ?string $title = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
-    public ?string $description = null;
+    private ?string $description = null;
 
     #[ORM\Column]
     #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
-    public ?bool $isPublished = true;
+    private ?bool $isPublished = true;
 
     #[ORM\ManyToOne(inversedBy: 'postEvents')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['trainingsession:read', 'profile:read'])]
-    public ?UserProfile $relatedUser = null;
+    private ?UserProfile $relatedUser = null;
 
     #[ORM\Column]
     #[Groups(['trainingsession:read', 'profile:read'])]
-    public ?\DateTimeImmutable $createdAt = null;
+    private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     #[Groups(['trainingsession:read', 'profile:read'])]
-    public ?\DateTimeInterface $startDate = null;
+    private ?\DateTimeInterface $startDate = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     #[Groups(['trainingsession:read', 'profile:read'])]
-    public ?\DateTimeInterface $endDate = null;
+    private ?\DateTimeInterface $endDate = null;
 
     #[ORM\Column(nullable: true)]
     #[Groups(['trainingsession:read', 'profile:read'])]
-    public ?bool $allDay = null;
+    private ?bool $allDay = null;
 
     /**
      * @var Collection<int, UserProfile>
@@ -91,6 +91,7 @@ class PostEvent
         $dateTime = new DateTimeImmutable();
         $this->createdAt = $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
         $this->subscribe = new ArrayCollection();
+        $this->setPublished(true);
     }
 
     public function getId(): ?int

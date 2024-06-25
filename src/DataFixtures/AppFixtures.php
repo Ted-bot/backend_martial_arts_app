@@ -2,27 +2,33 @@
 
 namespace App\DataFixtures;
 
-use App\Repository\PostEventRepository;
-use App\Repository\UserProfileRepository;
-use DateTime;
 use DateInterval;
 use Carbon\Carbon;
 use App\Class\Role;
 use App\Entity\User;
-use DateTimeImmutable;
-use App\Entity\PostEvent;
-use App\Entity\UserProfile;
+use App\Entity\Product;
+use App\Entity\Category;
+use App\Entity\CurrencyType;
 use App\Factory\UserFactory;
-use App\Factory\GroupFactory;
 use Zenstruck\Foundry\Factory;
+use App\Factory\ProductFactory;
+use App\Entity\SubscriptionType;
+use App\Factory\CategoryFactory;
 use App\Factory\PostEventFactory;
+use App\Repository\UserRepository;
 use App\Factory\UserProfileFactory;
-use function Zenstruck\Foundry\faker;
+use App\Factory\CurrencyTypeFactory;
+use App\Repository\CategoryRepository;
+use App\Repository\PostEventRepository;
+
 use Doctrine\Persistence\ObjectManager;
+use App\Factory\SubscriptionTypeFactory;
+use App\Repository\UserProfileRepository;
+use App\Repository\CurrencyTypeRepository;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Symfony\Component\Clock\ClockInterface;
-
-use Doctrine\Common\DataFixtures\DependentFixtureInterface;
+use App\Repository\SubscriptionTypeRepository;
+use Symfony\Component\Validator\Constraints\Currency;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class AppFixtures extends Fixture
@@ -31,14 +37,21 @@ class AppFixtures extends Fixture
         private UserPasswordHasherInterface $userPasswordHasher,
         protected ClockInterface $time,
         protected UserPasswordHasherInterface $userPasswordHasherInterface,
+        protected UserRepository $userRepository,
         protected UserProfileRepository $userProfileRepository,
         protected PostEventRepository $postEvent,
+        protected SubscriptionTypeRepository $subscriptionTypeRepository,
+        protected CategoryRepository $categoryRepository,
+        protected CurrencyTypeRepository $currencyTypeRepository,
+        protected User $user,
     ) {
         // $this->userPasswordHasherInterface = $userPasswordHasherInterface;
     }
 
     public function load(ObjectManager $manager): void
     {        
+        $allUsers = [];
+
         $user = new User();
         $user->setEmail("tkbotch@gmail.com");
         //$user->setPassword("test_pass");
@@ -58,32 +71,34 @@ class AppFixtures extends Fixture
         $user->setRoles([Role::ROLE_USER_STUDENT]);
 
         $manager->persist($user);
-        // $manager->flush();
+       
+        foreach (range(1, 20) as $i) {
+            $user = new User();
+            $user->setEmail(Factory::faker()->unique()->email());
+            $user->setPassword(
+                $this->userPasswordHasherInterface->hashPassword(
+                    $user, "test_pass"
+                )
+            );
+            $gender = Factory::faker()->boolean() ? 'man' : 'woman';
+            $user->setFirstName(Factory::faker()->firstName());
+            $user->setLastName(Factory::faker()->lastName());
+            $user->setPhoneNumber(substr(Factory::faker()->phoneNumber(), 1, 15));
+            $user->setGender($gender);
+            $user->setLocation(Factory::faker()->city());
+            $user->setDateOfBirth(Carbon::parse(Factory::faker()->dateTimeBetween('-30 years', '-8 years'))->format('d-m-Y'));
+            $user->setConversion(Factory::faker()->sentences(2, true));
 
-        UserFactory::createSequence(
-            function() {
-                foreach (range(1, 20) as $i) {
-                    // yield [new UserFactory()];
-                    yield [
-                        'firstName' => Factory::faker()->firstName(),
-                        'lastName' => Factory::faker()->lastName(),
-                        'email' => Factory::faker()->unique()->email(),
-                        'phoneNumber' => substr(Factory::faker()->phoneNumber(), 1, 15),
-                        'dateOfBirth' => Carbon::parse(Factory::faker()->dateTimeBetween('-30 years', '-8 years'))->format('d-m-Y'),
-                        'gender' => Factory::faker()->text(6),
-                        'location' => Factory::faker()->city(),
-                        // 'password' => 'test',
-                        'password' => Factory::faker()->password(),
-                        'conversion' => Factory::faker()->sentences(2, true),
-                    ];
-                }
-            }
-        );
+            $allUsers[$i] = $user;
+            $manager->persist($user);
+        }
+
+        $manager->flush();
 
         UserProfileFactory::createSequence(
-            function() {
-                foreach (UserFactory::all() as $user) {
-                    // yield [new UserFactory()];
+            function() use ($allUsers)  {
+                foreach ($allUsers as $user) {
+
                     yield [
                         'userUniq' => $user
                     ];
@@ -91,10 +106,9 @@ class AppFixtures extends Fixture
             }
         );
 
-        
-        $trainingSessions = PostEventFactory::createSequence(
+        PostEventFactory::createSequence(
             function() {
-                foreach (range(1, 10) as $i) {
+                foreach (range(0, 14) as $i) {
                     $startDate = Carbon::createFromTimeStamp(Factory::faker()->dateTimeBetween('-1 days', '+30 days')->getTimestamp());
                     $endDate = Carbon::createFromFormat('Y-m-d H:i:s', $startDate)->addHour();
                     yield [
@@ -102,7 +116,6 @@ class AppFixtures extends Fixture
                         'description' => Factory::faker()->sentences(2, true),
                         'relatedUser' => UserProfileFactory::first(),
                         'createdAt' => Factory::faker()->dateTimeBetween('-1 month','now'),
-                        'isPublished' => true,
                         'startDate' => $startDate,
                         'endDate' => $endDate,
                         'allDay' => Factory::faker()->boolean()
@@ -112,16 +125,58 @@ class AppFixtures extends Fixture
         );
 
         $postAll = $this->postEvent->findAll();
-            foreach($postAll as $trainingSession){
-                foreach($this->userProfileRepository->findAll() as $userProfile) {
-                    if(Factory::faker()->boolean()){                        
-                        $trainingSession->addSubscribe($userProfile);
+        foreach($postAll as $trainingSession){
+            foreach($this->userProfileRepository->findAll() as $userProfile) {
+                if(Factory::faker()->boolean()){                        
+                    $trainingSession->addSubscribe($userProfile);
 
-                        $manager->persist($trainingSession);
-                    }
+                    $manager->persist($trainingSession);
                 }
             }
+        }
 
-            $manager->flush();
+        $category = new Category();
+        
+        $category->setName('subscription');
+
+        $manager->persist($category);
+
+        $currency = new CurrencyType();
+
+        $currency->setName('euro');
+
+        $manager->persist($currency);
+
+        $typesSubscription = ['one_week','one_month','no_duration'];
+        
+        foreach($typesSubscription as $i) {
+            $subscriptionType = new SubscriptionType();
+            $subscriptionType->setDuration($i);
+            $manager->persist($subscriptionType);
+        }
+        
+        $manager->flush();
+
+        $subscriptionNames = ['try_out_once','try_out_five','full_month'];
+        $productPrices = [8000,15000,25000];
+        
+        foreach ($this->subscriptionTypeRepository->findAll() as $key => $subscriptionType) {
+            $product = new Product();
+            $product->setName($subscriptionNames[$key]);
+            $product->setPrice($productPrices[$key]);
+            $product->setDescription(Factory::faker()->sentences(2, true));
+            // $product->setCreatedAt(Factory::faker()->dateTimeBetween('-1 month','now'));
+            $product->setCategory($this->categoryRepository->findOneBy(['name'=> 'subscription']));
+            $product->setCurrencyType($this->currencyTypeRepository->findOneBy(['name'=> 'euro']));
+            $product->setDuration($this->subscriptionTypeRepository->find($subscriptionType->getId()));
+            $product->setRelatedUser($this->userRepository->findOneBy(['email'=> 'tkbotch@gmail.com']));
+
+            $manager->persist($product);
+        }
+
+        $manager->flush();
+
+
+        
     }
 }

@@ -22,9 +22,8 @@ final class Version20240615124543 extends AbstractMigration
         // this up() migration is auto-generated, please modify it to your needs
         $this->addSql("do $$
         BEGIN 
-            perform conrelid::regclass AS table_name, conname AS foreignKey, pg_get_constraintdef(oid) 
-            FROM pg_constraint 
-            WHERE contype = 'f' AND connamespace = 'public'::regnamespace AND pg_get_constraintdef(oid) LIKE '%related_user_id%';
+            perform table_name FROM information_schema.tables
+            WHERE table_name='post_event';
                 IF NOT FOUND THEN
                     ALTER TABLE post_event ADD start_date TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL;
                     ALTER TABLE post_event ADD end_date TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL;

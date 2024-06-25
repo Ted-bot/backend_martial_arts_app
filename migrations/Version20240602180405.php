@@ -33,6 +33,17 @@ final class Version20240602180405 extends AbstractMigration
                 END IF;
         END;
         $$ language PLPGSQL");
+
+        // $this->addSql("do $$
+        // BEGIN 
+        //     perform conrelid::regclass AS table_name, conname AS foreignKey, pg_get_constraintdef(oid) 
+        //     FROM pg_constraint 
+        //     WHERE contype = 'f' AND connamespace = 'public'::regnamespace AND pg_get_constraintdef(oid) LIKE '%group_student_id%';
+        //         IF NOT FOUND THEN
+        //             CREATE INDEX IDX_D95AB4051C592EA8 ON user_profile (group_student_id);
+        //         END IF;
+        // END;
+        // $$ language PLPGSQL");
         // $this->addSql('CREATE INDEX IDX_ACB5864898771930 ON post_event (related_user_id)');
         // $this->addSql('ALTER TABLE post_event ADD CONSTRAINT FK_ACB5864898771930 FOREIGN KEY (related_user_id) REFERENCES user_profile (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
     }
