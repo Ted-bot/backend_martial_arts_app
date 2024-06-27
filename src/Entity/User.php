@@ -53,21 +53,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[Groups(['user:read','profile:read'])]
-    public ?int $id = null;
+    private ?int $id = null;
 
     /**
      * @var string Email of user
      */
     #[ORM\Column(length: 180)]
     #[Groups(['user:read', 'user:write','profile:read'])]
-    public ?string $email = null;
+    private ?string $email = null;
 
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
     #[Groups(['user:read', 'user:write','profile:read'])]
-    public array $roles = [];
+    private array $roles = [];
 
     /**
      * @var string The hashed password
@@ -77,49 +77,49 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[Groups(['user:read'])]
     #[ORM\OneToOne(mappedBy: 'userUniq', targetEntity: UserProfile::class,cascade: ['persist', 'remove'])]
-    public ?UserProfile $userProfile = null;
+    private ?UserProfile $userProfile = null;
 
     /**
      * @var string Email of user
      */
     #[ORM\Column(length: 25)]
     #[Groups(['user:read', 'user:write','profile:read'])]
-    public ?string $firstName = null;
+    private ?string $firstName = null;
 
     /**
      * @var string Lastname of user
      */
     #[ORM\Column(length: 25)]
     #[Groups(['user:read', 'user:write','profile:read'])]
-    public ?string $lastName = null;
+    private ?string $lastName = null;
 
     /**
      * @var string Phonenumber of user
      */
     #[ORM\Column(length: 15)]
     #[Groups(['user:read', 'user:write','profile:read'])]
-    public ?string $phoneNumber = null;
+    private ?string $phoneNumber = null;
 
     /**
      * @var string A "Y-m-d H:i:s" formatted value
      */
     #[ORM\Column(length: 10)]
     #[Groups(['user:read', 'user:write','profile:read'])]
-    public ?string $dateOfBirth = null;
+    private ?string $dateOfBirth = null;
         
     /**
      * @var string Gender of user
      */
     #[ORM\Column(length: 6)]
     #[Groups(['user:read', 'user:write','profile:read'])]
-    public ?string $gender = null;
+    private ?string $gender = null;
 
     /**
      * @var string Location of user
      */
     #[ORM\Column(length: 50)]
     #[Groups(['user:read', 'user:write', 'profile:read'])]
-    public ?string $location = null;
+    private ?string $location = null;
 
     /**
      * @var string Conversion of user
@@ -133,7 +133,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column(length: 25)]
     #[Groups(['user:read', 'user:write', 'profile:read'])]
-    public ?DateTimeImmutable $createdAt;
+    private ?DateTimeImmutable $createdAt;
+
+    /**
+     * @var Collection<int, Product>
+     */
+    #[ORM\OneToMany(targetEntity: Product::class, mappedBy: 'userUniq')]
+    private Collection $products;
 
     public function __construct()
     {
@@ -141,6 +147,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->createdAt = $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
         $this->setRoles([Role::ROLE_USER_STUDENT]);
         // $this->roles = ;
+        $this->products = new ArrayCollection();
     }
 
     public function createNewUserObj(CreateUserRequest $user)
@@ -386,5 +393,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getCreatedAtAgo()
     {
         return Carbon::parse($this->createdAt)->diffForHumans();
+    }
+
+    /**
+     * @return Collection<int, Product>
+     */
+    public function getProducts(): Collection
+    {
+        return $this->products;
+    }
+
+    public function addProduct(Product $product): static
+    {
+        if (!$this->products->contains($product)) {
+            $this->products->add($product);
+            $product->setUserUniq($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProduct(Product $product): static
+    {
+        if ($this->products->removeElement($product)) {
+            // set the owning side to null (unless already changed)
+            if ($product->getUserUniq() === $this) {
+                $product->setUserUniq(null);
+            }
+        }
+
+        return $this;
     }
 }

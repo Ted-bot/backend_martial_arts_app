@@ -45,35 +45,35 @@ class UserProfile
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    protected ?int $id = null;
+    private ?int $id = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    protected ?string $username = null;
+    private ?string $username = null;
 
     #[ORM\Column(length: 1024, nullable: true)]
-    protected ?string $description = null;
+    private ?string $description = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    protected ?string $websiteUrl = null;
+    private ?string $websiteUrl = null;
 
     #[ORM\OneToOne(inversedBy: 'userProfile', targetEntity: User::class, cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
-    protected ?User $userUniq = null;
+    private ?User $userUniq = null;
 
     #[ORM\ManyToOne(inversedBy: 'profileGroup')]
-    protected ?Group $groupStudent = null;
+    private ?Group $groupStudent = null;
 
     /**
      * @var Collection<int, PostEvent>
      */
     #[ORM\OneToMany(targetEntity: PostEvent::class, mappedBy: 'relatedUser')]
-    protected Collection $postEvents;
+    private Collection $postEvents;
 
     /**
      * @var Collection<int, PostEvent>
      */
     #[ORM\ManyToMany(targetEntity: PostEvent::class, mappedBy: 'subscribe')]
-    protected Collection $subscribeToEvents;
+    private Collection $subscribeToEvents;
 
     public function __construct()
     {
