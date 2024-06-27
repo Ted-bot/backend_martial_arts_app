@@ -6,27 +6,43 @@ use DateInterval;
 use Carbon\Carbon;
 use App\Class\Role;
 use App\Entity\User;
+use App\Entity\Address;
+use App\Entity\Country;
 use App\Entity\Product;
+use App\Entity\VatRate;
 use App\Entity\Category;
+use App\Entity\ProductVat;
+use App\Entity\UserAddress;
 use App\Entity\CurrencyType;
 use App\Factory\UserFactory;
 use Zenstruck\Foundry\Factory;
+use App\Factory\AddressFactory;
+use App\Factory\CountryFactory;
 use App\Factory\ProductFactory;
+use App\Factory\VatRateFactory;
 use App\Entity\SubscriptionType;
 use App\Factory\CategoryFactory;
 use App\Factory\PostEventFactory;
 use App\Repository\UserRepository;
+use App\Factory\UserAddressFactory;
 use App\Factory\UserProfileFactory;
 use App\Factory\CurrencyTypeFactory;
+use App\Entity\ProductVatRateFactory;
+
+use App\Repository\AddressRepository;
+use App\Repository\CountryRepository;
+use App\Repository\ProductRepository;
+use App\Repository\VatRateRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\PostEventRepository;
-
 use Doctrine\Persistence\ObjectManager;
 use App\Factory\SubscriptionTypeFactory;
+use App\Repository\ProductVatRepository;
 use App\Repository\UserProfileRepository;
 use App\Repository\CurrencyTypeRepository;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Symfony\Component\Clock\ClockInterface;
+
 use App\Repository\SubscriptionTypeRepository;
 use Symfony\Component\Validator\Constraints\Currency;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -42,8 +58,14 @@ class AppFixtures extends Fixture
         protected PostEventRepository $postEvent,
         protected SubscriptionTypeRepository $subscriptionTypeRepository,
         protected CategoryRepository $categoryRepository,
+        protected ProductRepository $productRepository,
         protected CurrencyTypeRepository $currencyTypeRepository,
         protected User $user,
+        protected ProductVat $prVat,
+        protected VatRateRepository $vatRepo,
+        protected ProductVatRepository $prVatRepo,
+        protected CountryRepository $countryRepo,
+        protected AddressRepository $addressRepo,
     ) {
         // $this->userPasswordHasherInterface = $userPasswordHasherInterface;
     }
@@ -154,13 +176,18 @@ class AppFixtures extends Fixture
             $subscriptionType->setDuration($i);
             $manager->persist($subscriptionType);
         }
-        
-        $manager->flush();
 
+        $vat = new VatRate();
+        $vat->setProcent(9.00);
+
+        $manager->persist($vat);
+
+        $manager->flush();
+        
         $subscriptionNames = ['try_out_once','try_out_five','full_month'];
         $productPrices = [8000,15000,25000];
-        
         foreach ($this->subscriptionTypeRepository->findAll() as $key => $subscriptionType) {
+            $prVatRate = new ProductVat();
             $product = new Product();
             $product->setName($subscriptionNames[$key]);
             $product->setPrice($productPrices[$key]);
@@ -171,12 +198,65 @@ class AppFixtures extends Fixture
             $product->setDuration($this->subscriptionTypeRepository->find($subscriptionType->getId()));
             $product->setRelatedUser($this->userRepository->findOneBy(['email'=> 'tkbotch@gmail.com']));
 
+            $setVatRate = $this->vatRepo->findOneBy(['procent' => 9.00]);
+            $tax = (($productPrices[$key] / 100) * $setVatRate->getProcent() ) / 100;
+            $prVatRate->setVatAmount($tax);
+            $prVatRate->setProduct($product);
+            $prVatRate->setVatRate($setVatRate);
+
+            $manager->persist($prVatRate);
             $manager->persist($product);
+        } 
+        
+        $country = new Country();
+        $country->setCode('NL');
+        $manager->persist($country);
+        
+        $manager->flush();
+
+        foreach(range(0,19) as $i) {
+            $address = new Address();
+            $address->setCity('Amsterdam');
+            $address->setCountry($this->countryRepo->findOneBy(['code' => 'NL']));
+            $address->setPostalCode(Factory::faker()->postcode());
+            $address->setAddressLine(Factory::faker()->address());
+            $address->setStreetNumber(Factory::faker()->numberBetween(0, 5000));
+            
+            $manager->persist($address);
+            
         }
 
         $manager->flush();
 
+        foreach($this->userRepository->findAll() as $key => $user){
 
+            $userAddress = new UserAddress();
+            $randomAddress = AddressFactory::random();
+            $address = $this->addressRepo->findOneBy(['id' => $randomAddress->getId()]);
+
+            $userAddress->setRelatedUser($user);
+            $userAddress->setAddress($address);
+            $userAddress->setDefault(true);
+
+            $manager->persist($userAddress);
+
+        }
+
+        foreach($this->userRepository->findAll() as $key => $user){
+
+            $userAddress = new UserAddress();
+            $randomAddress = AddressFactory::random();
+            $address = $this->addressRepo->findOneBy(['id' => $randomAddress->getId()]);
+
+            $userAddress->setRelatedUser($user);
+            $userAddress->setAddress($address);
+            $userAddress->setDefault(false);
+
+            $manager->persist($userAddress);
+
+        }
+
+        $manager->flush();
         
     }
 }

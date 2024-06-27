@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use DateTimeZone;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
@@ -52,10 +54,17 @@ class Product
     #[ORM\JoinColumn(nullable: false)]
     private ?User $relatedUser = null;
 
+    /**
+     * @var Collection<int, ProductVat>
+     */
+    #[ORM\OneToMany(targetEntity: ProductVat::class, mappedBy: 'product')]
+    private Collection $productVats;
+
     public function __construct()
     {
         $dateTime = new DateTimeImmutable();
         $this->createdAt = $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
+        $this->productVats = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -179,6 +188,36 @@ class Product
     public function setRelatedUser(?User $relatedUser): static
     {
         $this->relatedUser = $relatedUser;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ProductVat>
+     */
+    public function getProductVats(): Collection
+    {
+        return $this->productVats;
+    }
+
+    public function setProductVat(ProductVat $productVat): static
+    {
+        if (!$this->productVats->contains($productVat)) {
+            $this->productVats->add($productVat);
+            $productVat->setProduct($this);
+        }
+
+        return $this;
+    }
+
+    public function deleteProductVat(ProductVat $productVat): static
+    {
+        if ($this->productVats->removeElement($productVat)) {
+            // set the owning side to null (unless already changed)
+            if ($productVat->getProduct() === $this) {
+                $productVat->setProduct(null);
+            }
+        }
 
         return $this;
     }
