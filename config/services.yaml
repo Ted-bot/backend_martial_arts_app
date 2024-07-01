@@ -10,6 +10,9 @@ services:
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        bind: 
+            $eventSubscriptionLogger: '@monolog.logger.M.A.Event'
+
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -37,6 +40,10 @@ services:
     App\Security\ApiKeyAuthenticator:
         class: App\Security\ApiKeyAuthenticator
         autowire: true
+
+    app.custom_authenticator:
+        class: App\Security\CustomAuthenticator
+        parent: lexik_jwt_authentication.security.jwt_authenticator
     
     # CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface:
         # class: CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface

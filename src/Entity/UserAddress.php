@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserAddressRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: UserAddressRepository::class)]
@@ -23,6 +25,17 @@ class UserAddress
 
     #[ORM\Column]
     private ?bool $isDefault = null;
+
+    /**
+     * @var Collection<int, ShopOrder>
+     */
+    #[ORM\OneToMany(targetEntity: ShopOrder::class, mappedBy: 'shippingAddress')]
+    private Collection $shopOrders;
+
+    public function __construct()
+    {
+        $this->shopOrders = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -61,6 +74,36 @@ class UserAddress
     public function setDefault(bool $isDefault): static
     {
         $this->isDefault = $isDefault;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ShopOrder>
+     */
+    public function getShopOrders(): Collection
+    {
+        return $this->shopOrders;
+    }
+
+    public function addShopOrder(ShopOrder $shopOrder): static
+    {
+        if (!$this->shopOrders->contains($shopOrder)) {
+            $this->shopOrders->add($shopOrder);
+            $shopOrder->setShippingAddress($this);
+        }
+
+        return $this;
+    }
+
+    public function removeShopOrder(ShopOrder $shopOrder): static
+    {
+        if ($this->shopOrders->removeElement($shopOrder)) {
+            // set the owning side to null (unless already changed)
+            if ($shopOrder->getShippingAddress() === $this) {
+                $shopOrder->setShippingAddress(null);
+            }
+        }
 
         return $this;
     }

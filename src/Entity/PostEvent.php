@@ -48,7 +48,7 @@ class PostEvent
 
     #[ORM\Column(length: 50)]
     #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
-    private ?string $title = null;
+    public ?string $title = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]

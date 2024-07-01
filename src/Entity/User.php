@@ -148,6 +148,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: UserAddress::class, mappedBy: 'relatedUser')]
     private Collection $userAddresses;
 
+    /**
+     * @var Collection<int, ShopOrder>
+     */
+    #[ORM\OneToMany(targetEntity: ShopOrder::class, mappedBy: 'ownedBy')]
+    private Collection $shopOrders;
+
     public function __construct()
     {
         $dateTime = new DateTimeImmutable();
@@ -156,6 +162,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         // $this->roles = ;
         $this->products = new ArrayCollection();
         $this->userAddresses = new ArrayCollection();
+        $this->shopOrders = new ArrayCollection();
     }
 
     public function createNewUserObj(CreateUserRequest $user)
@@ -457,6 +464,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($userAddress->getRelatedUser() === $this) {
                 $userAddress->setRelatedUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ShopOrder>
+     */
+    public function getShopOrders(): Collection
+    {
+        return $this->shopOrders;
+    }
+
+    public function addShopOrder(ShopOrder $shopOrder): static
+    {
+        if (!$this->shopOrders->contains($shopOrder)) {
+            $this->shopOrders->add($shopOrder);
+            $shopOrder->setOwnedBy($this);
+        }
+
+        return $this;
+    }
+
+    public function removeShopOrder(ShopOrder $shopOrder): static
+    {
+        if ($this->shopOrders->removeElement($shopOrder)) {
+            // set the owning side to null (unless already changed)
+            if ($shopOrder->getOwnedBy() === $this) {
+                $shopOrder->setOwnedBy(null);
             }
         }
 

@@ -2,7 +2,11 @@
 
 namespace App\DataFixtures;
 
+use Brick\Math\BigDecimal;
 use DateInterval;
+// use Doctrine\DBAL\Types\DecimalType
+use Brick\Math\BigInteger;
+use Brick\Math\RoundingMode;
 use Carbon\Carbon;
 use App\Class\Role;
 use App\Entity\User;
@@ -11,7 +15,10 @@ use App\Entity\Country;
 use App\Entity\Product;
 use App\Entity\VatRate;
 use App\Entity\Category;
+use App\Entity\OrderLine;
+use App\Entity\ShopOrder;
 use App\Entity\ProductVat;
+use App\Entity\OrderStatus;
 use App\Entity\UserAddress;
 use App\Entity\CurrencyType;
 use App\Factory\UserFactory;
@@ -26,9 +33,9 @@ use App\Factory\PostEventFactory;
 use App\Repository\UserRepository;
 use App\Factory\UserAddressFactory;
 use App\Factory\UserProfileFactory;
+
 use App\Factory\CurrencyTypeFactory;
 use App\Entity\ProductVatRateFactory;
-
 use App\Repository\AddressRepository;
 use App\Repository\CountryRepository;
 use App\Repository\ProductRepository;
@@ -38,11 +45,13 @@ use App\Repository\PostEventRepository;
 use Doctrine\Persistence\ObjectManager;
 use App\Factory\SubscriptionTypeFactory;
 use App\Repository\ProductVatRepository;
+use App\Repository\OrderStatusRepository;
+use App\Repository\UserAddressRepository;
+
 use App\Repository\UserProfileRepository;
 use App\Repository\CurrencyTypeRepository;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Symfony\Component\Clock\ClockInterface;
-
 use App\Repository\SubscriptionTypeRepository;
 use Symfony\Component\Validator\Constraints\Currency;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -66,6 +75,8 @@ class AppFixtures extends Fixture
         protected ProductVatRepository $prVatRepo,
         protected CountryRepository $countryRepo,
         protected AddressRepository $addressRepo,
+        protected OrderStatusRepository $orderStatusRepo,
+        protected UserAddressRepository $userAddressRepo,
     ) {
         // $this->userPasswordHasherInterface = $userPasswordHasherInterface;
     }
@@ -130,11 +141,13 @@ class AppFixtures extends Fixture
 
         PostEventFactory::createSequence(
             function() {
-                foreach (range(0, 14) as $i) {
-                    $startDate = Carbon::createFromTimeStamp(Factory::faker()->dateTimeBetween('-1 days', '+30 days')->getTimestamp());
+                foreach (range(0, 50) as $i) {
+                    $startDate = Carbon::createFromTimeStamp(Factory::faker()->dateTimeBetween('-10 days', '+30 days')->getTimestamp());
                     $endDate = Carbon::createFromFormat('Y-m-d H:i:s', $startDate)->addHour();
+                    $titles = ['training', 'expeditie', 'training', 'special', 'training'];
+                    
                     yield [
-                        'title' => Factory::faker()->title(),
+                        'title' => $titles[array_rand($titles)],
                         'description' => Factory::faker()->sentences(2, true),
                         'relatedUser' => UserProfileFactory::first(),
                         'createdAt' => Factory::faker()->dateTimeBetween('-1 month','now'),
@@ -185,7 +198,7 @@ class AppFixtures extends Fixture
         $manager->flush();
         
         $subscriptionNames = ['try_out_once','try_out_five','full_month'];
-        $productPrices = [8000,15000,25000];
+        $productPrices = [80,150,250];
         foreach ($this->subscriptionTypeRepository->findAll() as $key => $subscriptionType) {
             $prVatRate = new ProductVat();
             $product = new Product();
@@ -199,7 +212,11 @@ class AppFixtures extends Fixture
             $product->setRelatedUser($this->userRepository->findOneBy(['email'=> 'tkbotch@gmail.com']));
 
             $setVatRate = $this->vatRepo->findOneBy(['procent' => 9.00]);
-            $tax = (($productPrices[$key] / 100) * $setVatRate->getProcent() ) / 100;
+            $tax = BigDecimal::ofUnscaledValue($productPrices[$key])
+            ->dividedBy(100, 2, RoundingMode::UP)
+            ->multipliedBy($setVatRate->getProcent());
+            // $tax = (($productPrices[$key] / 100) * $setVatRate->getProcent() );
+
             $prVatRate->setVatAmount($tax);
             $prVatRate->setProduct($product);
             $prVatRate->setVatRate($setVatRate);
@@ -213,6 +230,14 @@ class AppFixtures extends Fixture
         $manager->persist($country);
         
         $manager->flush();
+
+        $arrayStatusses= ['saved','in_process','paid'];
+        foreach($arrayStatusses as $status) {
+            $orderStatus = new OrderStatus();
+            $orderStatus->setStatus($status);
+
+            $manager->persist($orderStatus);
+        }
 
         foreach(range(0,19) as $i) {
             $address = new Address();
@@ -228,6 +253,7 @@ class AppFixtures extends Fixture
 
         $manager->flush();
 
+        // Create addresses for Users
         foreach($this->userRepository->findAll() as $key => $user){
 
             $userAddress = new UserAddress();
@@ -257,6 +283,38 @@ class AppFixtures extends Fixture
         }
 
         $manager->flush();
-        
+
+        // Create Shop Orders
+        foreach($this->userRepository->findAll() as $key => $user){
+            $shopOrder = new ShopOrder();
+            $orderLine = new OrderLine();
+
+            // if necessary loop multiProducts
+            $product = $this->productRepository->findOneBy(['name'=> 'full_month']);
+            $productTax = $this->prVatRepo->findOneBy(['product'=> $product->getId()]);
+            $statusOrder = $this->orderStatusRepo->findOneBy(['status' => 'saved']);
+            $shippingAddress = $this->userAddressRepo->findOneBy(['relatedUser'=> $user->getId(), 'isDefault' => true ]);
+
+            $orderLine->setQty(1);
+            $totalTaxQtyProducts = $productTax->getVatAmount() * $orderLine->getQty();
+            $totalProductPriceWithQty = $product->getPrice() * $orderLine->getQty();
+            $totalAmountOrder = $totalProductPriceWithQty + $totalTaxQtyProducts;
+            
+            $orderLine->setShopOrder($shopOrder);
+            $orderLine->setPrice($totalProductPriceWithQty);
+            $orderLine->setProduct($product);
+            // end loop for products
+
+            $shopOrder->setOwnedBy($user);
+            $shopOrder->setTotalAmount($totalAmountOrder);  // includes tax, Qty of product, ?shippingPrice
+            $shopOrder->setOrderDate(Factory::faker()->dateTimeBetween('-2 month','now'));
+            $shopOrder->setOrderStatus($statusOrder);
+            $shopOrder->setShippingAddress($shippingAddress);
+
+            $manager->persist($shopOrder);
+            $manager->persist($orderLine);
+        }
+
+        $manager->flush();        
     }
 }
