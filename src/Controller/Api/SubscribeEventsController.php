@@ -2,8 +2,13 @@
 
 namespace App\Controller\Api;
 
+use Throwable;
+use DateTimeZone;
 use App\Class\Role;
+use DateTimeImmutable;
 use App\Entity\PostEvent;
+use Doctrine\DBAL\Exception;
+use Psr\Log\LoggerInterface;
 use App\Repository\PostEventRepository;
 use App\Repository\UserProfileRepository;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -12,92 +17,155 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Doctrine\ORM\EntityManagerInterface as EntityManager;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Doctrine\Persistence\ManagerRegistry;
 
 class SubscribeEventsController extends AbstractController
 {
+    private $logger;
+    private $managerRegister;
     public function __construct(
         private Security $security,
-    ){}
+        private PostEventRepository $eventRepo,
+        // public PostEvent $manageUpcomingEventSubscrUser,
+        private EntityManager $entityManager,
+        LoggerInterface $eventSubscriptionLogger,
+        ManagerRegistry $managerRegistry,
+    ){
+        $this->logger = $eventSubscriptionLogger;
+        $this->managerRegistry = $managerRegistry;
+    }
 
-    #[Route('/api/subscribe/events/{id}', name: 'api_subscribe_events')]
+    #[Route('/api/subscribe/events', 
+    name: 'api_subscribe_events',
+    methods: 'POST',)]
     public function subscribe(
-        PostEvent $event,
-        EntityManager $post, 
+        Request $request,
         UserProfileRepository $userProfileRepository,
-        Request $request
+        LoggerInterface $loggerInt,
     ): Response
     {
-        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
 
-        // dd($event->startDate);
+        // dd($this->getUser());
+        $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
 
-        $currentUser = $this->getUser();
-        $userProfile = $userProfileRepository->find($currentUser->getId());
-        $event->addSubscribe($userProfile);
-        $post->persist($event);
+        $eventId = $request->get('event_id');        
+        $eventIsNumber = is_numeric($eventId);
 
-        $timeEvent = date_format($event->startDate,'d-M H:m');
+        if(!$eventIsNumber){
+            return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
+        } 
+        
+        if(!$this->eventRepo->findOneBy(['id' => $eventId])){
+            return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
+        } 
+        
+        $findEvent = $this->eventRepo->findOneBy(['id' => $eventId]);
+        $timeEvent = date_format($findEvent->getStartDate(),'d-M H:m');
+        $datetime = new DateTimeImmutable();
+        $currentTimeEvent = $datetime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
+        
+        // dd([
+        //     'currentTime' => $currentTimeEvent,
+        //     'SelectedTimeEvent'=> $findEvent->getStartDate(),
+        //     'DeniedAccess' => ($currentTimeEvent > $findEvent->getStartDate())
+        // ]);        
 
-        try {
-            $post->flush();
-
-            return new Response("You have assigned to {$event->title} \n on {$timeEvent}, Cant wait to se you there !", Response::HTTP_CREATED);
-        } catch (UniqueConstraintViolationException $e) {
-
-            dd($e->getMessage());
-            // $sqlState = 0;
-            // $sqlState = $e->getSQLState();
-
-            // $field = [];
-            // $message = 'Please check your input and make sure email and phone are unique to our database';
-
-            // if($e->getSQLState() == 23505){
-            //     array_push($field, 'email');
-            //     $message = 'Your email address is known to our database, please reset password if you forgot';
-            // }
-
-            // return $this->json([
-            //     'errors' => [
-            //         'error' => $e->getMessage(),
-            //         'property' => $field,
-            //         'sql_state' => $sqlState,
-            //         'message' => $message
-            //     ]
-            // ], 
-            // 400,
-            // [
-            //     'Content-Type' =>  'application/json'
-            // ]);
+        if(!$findEvent->isPublished()){
+            return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
         }
-    }
 
-    #[Route('/api/subscribe/events/{id}/delete', name: 'api_unsubscribe_events')]
-    public function unscubscribe(PostEvent $event, EntityManager $post, UserProfileRepository $userProfileRepository): Response
-    {
+        if($currentTimeEvent > $findEvent->getStartDate()){
+            return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
+        }
+        
         $currentUser = $this->getUser();
         $userProfile = $userProfileRepository->find($currentUser->getId());
-        $event->removeSubscribe($userProfile);
-        $post->persist($event);
-        $post->flush();
+        $manageUpcomingEvent = $findEvent->addSubscribe($userProfile);
+
+        $this->entityManager->beginTransaction();
         
-        return new Response('deleted subscribed EVent');
+        try {            
+            $this->entityManager->persist($manageUpcomingEvent);
+            $this->entityManager->flush();
+            $this->entityManager->commit();
+
+            return new JsonResponse(['success' => "You have assigned to {$findEvent->title} \n on {$timeEvent}, Cant wait to se you there !"], Response::HTTP_CREATED);
+            
+        } catch (Throwable $e) {
+
+            $this->entityManager->rollback();
+            $this->managerRegister->resetManager();
+            $this->entityManager->flush();
+            $this->entityManager->commit();
+            
+            $this->logger->debug('An error occurred when signin up for a event!', [
+                'user' => $currentUser->getId(),
+                'profile' => $userProfile->getId(),
+                'time' => $currentTimeEvent,
+                'error' => $e->getMessage()
+            ]);
+
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);    
+        }        
     }
 
-    #[Route('/api/subscribe/events/{id}/test', name: 'api_unsubscribe_events')]
-    public function test(Request $request, PostEventRepository $post, UserProfileRepository $userProfileRepository): JsonResponse
+    #[Route('/api/subscribe/events/delete',
+    name: 'api_unsubscribe_events',
+    methods: 'POST',)]
+    public function unscubscribe(Request $request, EntityManager $post, UserProfileRepository $userProfileRepository): Response
     {
+        $eventId = $request->get('event_id');        
+        $eventIsNumber = is_numeric($eventId);
+
+        if(!$eventIsNumber){
+            return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
+        } 
         
-        // dd();
-        $getAll =$post->findSubscribtionIdsByEventId($request->get('event_id'));
-        // $post->findAllSubscribtions($event->id);
-        // $currentUser = $this->getUser();
-        // $userProfile = $userProfileRepository->find($currentUser->getId());
-        // $event->removeSubscribe($userProfile);
-        // $post->persist($event);
-        // $post->flush();
+        if(!$this->eventRepo->findOneBy(['id' => $eventId])){
+            return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
+        } 
         
-        return new JsonResponse(['deleted subscribed EVent'=> $getAll], Response::HTTP_OK);
+        $findEvent = $this->eventRepo->findOneBy(['id' => $eventId]);
+        $timeEvent = date_format($findEvent->getStartDate(),'d-M H:m');
+        $datetime = new DateTimeImmutable();
+        $currentTimeEvent = $datetime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
+
+        if(!$findEvent->isPublished()){
+            return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
+        }
+
+        if($currentTimeEvent > $findEvent->getStartDate()){
+            return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
+        }
+
+        $currentUser = $this->getUser();
+        $userProfile = $userProfileRepository->find($currentUser->getId());
+        $unassignToEvent = $findEvent->removeSubscribe($userProfile);
+        $this->entityManager->beginTransaction();
+
+        try {            
+            $this->entityManager->persist($unassignToEvent);
+            $this->entityManager->flush();
+            $this->entityManager->commit();
+            
+            return new JsonResponse(['success' => "You have un-assigned to upcoming event:{$findEvent->title} \n on {$timeEvent}, Hope to see you soon!"], Response::HTTP_CREATED);
+            
+        } catch (Throwable $e) {
+
+            $this->entityManager->rollback();
+            $this->managerRegister->resetManager();
+            $this->entityManager->flush();
+            $this->entityManager->commit();
+            
+            $this->logger->debug('An error occurred when signin up for a event!', [
+                'user' => $currentUser->getId(),
+                'profile' => $userProfile->getId(),
+                'time' => $currentTimeEvent,
+                'error' => $e->getMessage()
+            ]);
+
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);    
+        } 
     }
 }

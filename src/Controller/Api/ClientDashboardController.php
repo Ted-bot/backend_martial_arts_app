@@ -2,17 +2,21 @@
 
 namespace App\Controller\Api;
 
+use App\Class\Role;
 use App\Class\Roles;
+use App\Entity\User;
 use App\Repository\UserRepository;
-use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\AsController;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\TokenExtractor\AuthorizationHeaderTokenExtractor;
-use Symfony\Bundle\SecurityBundle\Security;
 
 #[AsController]
 class ClientDashboardController extends AbstractController
@@ -42,28 +46,11 @@ class ClientDashboardController extends AbstractController
             name: 'app_client_dashboard',
             methods: 'GET'
         )]
-        public function dashboardData(Request $request, JWTTokenManagerInterface $jwtTokenManager): Response
+        public function dashboardData(#[CurrentUser] ?User $user, Request $request, JWTTokenManagerInterface $jwtTokenManager): JsonResponse
     {
-        $extractor = new AuthorizationHeaderTokenExtractor(
-            'Bearer',
-            'X-Authorization'
-        );
+        $user = $this->getUser();
 
-        $token = $extractor->extract($request);
-        $decodeToken = $this->jwtEncoder->decode($token);
-        $user = $this->userRepository->findOneBy(array('email'=> $decodeToken['username']));
-        $getUser = '';
-
-        // dd($user);  
-
-        // $this->denyAccessUnlessGranted(Roles::ROLE_USER_STUDENT);
-        // dd($this->getUser());
-        $name = $user->firstName;
-        $id = $user->getId();
-
-        // return new Response($this->getUser());
-        // return new Response('testing!!');
-        return $this->json(array('id' => $id,'first_name'=> $name, 'email' => $user->email, 'last_name' => $user->lastName, 'user' => $getUser ), 200, ['token' => $token]);
+        return $this->json(array('id' => $user->getId(),'first_name'=> $user->getFirstName(), 'email' => $user->getEmail(), 'last_name' => $user->getLastName()), 200);
     }
 
     /**

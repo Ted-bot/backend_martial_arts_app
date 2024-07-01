@@ -4,6 +4,6 @@ controllers:
         namespace: App\Controller
     type: attribute
 api_login_check:
-    path: /api_login
-    methods: ['POST']
-    # stateless: false 
+    path: /api/login_check
+api_refresh_token:
+    path: /api/token/refresh

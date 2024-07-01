@@ -101,24 +101,24 @@ class RegistrationContoller extends AbstractController
         ]);
     }
 
-    #[Route(
-        '/api/v1/login', 
-        name: 'api_login',
-        methods: 'POST',
-        )]
-    public function v1Login(
-        #[CurrentUser] ?User $user,
-        AuthenticationSuccessHandler $authenticationSuccessHandler,
-        AuthenticationUtils $authenticationUtils
-        ): Response
-    {
-        if (null === $user) {
-            return new Response($authenticationUtils->getLastAuthenticationError(),
-            Response::HTTP_UNAUTHORIZED);
-        }
+    // #[Route(
+    //     '/api/v1/login', 
+    //     name: 'api_login',
+    //     methods: 'POST',
+    //     )]
+    // public function v1Login(
+    //     #[CurrentUser] ?User $user,
+    //     AuthenticationSuccessHandler $authenticationSuccessHandler,
+    //     AuthenticationUtils $authenticationUtils
+    //     ): Response
+    // {
+    //     if (null === $user) {
+    //         return new Response($authenticationUtils->getLastAuthenticationError(),
+    //         Response::HTTP_UNAUTHORIZED);
+    //     }
 
-        return $authenticationSuccessHandler->handleAuthenticationSuccess($user);
-    }
+    //     return $authenticationSuccessHandler->handleAuthenticationSuccess($user);
+    // }
 
     #[Route(
         '/api/v1/logout', 

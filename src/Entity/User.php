@@ -6,6 +6,7 @@ use DateTimeZone;
 use Carbon\Carbon;
 use App\Class\Role;
 use DateTimeImmutable;
+use App\Entity\Product;
 use App\Entity\UserProfile;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
@@ -22,9 +23,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Serializer\Attribute\SerializedName;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -141,6 +142,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Product::class, mappedBy: 'userUniq')]
     private Collection $products;
 
+    /**
+     * @var Collection<int, UserAddress>
+     */
+    #[ORM\OneToMany(targetEntity: UserAddress::class, mappedBy: 'relatedUser')]
+    private Collection $userAddresses;
+
+    /**
+     * @var Collection<int, ShopOrder>
+     */
+    #[ORM\OneToMany(targetEntity: ShopOrder::class, mappedBy: 'ownedBy')]
+    private Collection $shopOrders;
+
     public function __construct()
     {
         $dateTime = new DateTimeImmutable();
@@ -148,6 +161,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->setRoles([Role::ROLE_USER_STUDENT]);
         // $this->roles = ;
         $this->products = new ArrayCollection();
+        $this->userAddresses = new ArrayCollection();
+        $this->shopOrders = new ArrayCollection();
     }
 
     public function createNewUserObj(CreateUserRequest $user)
@@ -407,7 +422,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->products->contains($product)) {
             $this->products->add($product);
-            $product->setUserUniq($this);
+            $product->setRelatedUser($this);
         }
 
         return $this;
@@ -417,11 +432,72 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if ($this->products->removeElement($product)) {
             // set the owning side to null (unless already changed)
-            if ($product->getUserUniq() === $this) {
-                $product->setUserUniq(null);
+            if ($product->getRelatedUser() === $this) {
+                $product->setRelatedUser(null);
             }
         }
 
         return $this;
     }
+
+    /**
+     * @return Collection<int, UserAddress>
+     */
+    public function getUserAddresses(): Collection
+    {
+        return $this->userAddresses;
+    }
+
+    public function addUserAddress(UserAddress $userAddress): static
+    {
+        if (!$this->userAddresses->contains($userAddress)) {
+            $this->userAddresses->add($userAddress);
+            $userAddress->setRelatedUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUserAddress(UserAddress $userAddress): static
+    {
+        if ($this->userAddresses->removeElement($userAddress)) {
+            // set the owning side to null (unless already changed)
+            if ($userAddress->getRelatedUser() === $this) {
+                $userAddress->setRelatedUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ShopOrder>
+     */
+    public function getShopOrders(): Collection
+    {
+        return $this->shopOrders;
+    }
+
+    public function addShopOrder(ShopOrder $shopOrder): static
+    {
+        if (!$this->shopOrders->contains($shopOrder)) {
+            $this->shopOrders->add($shopOrder);
+            $shopOrder->setOwnedBy($this);
+        }
+
+        return $this;
+    }
+
+    public function removeShopOrder(ShopOrder $shopOrder): static
+    {
+        if ($this->shopOrders->removeElement($shopOrder)) {
+            // set the owning side to null (unless already changed)
+            if ($shopOrder->getOwnedBy() === $this) {
+                $shopOrder->setOwnedBy(null);
+            }
+        }
+
+        return $this;
+    }
+
 }

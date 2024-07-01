@@ -46,7 +46,7 @@ class PostEventRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('p')
         ->select('p.id')
         ->where('subscribe.id = :id')
-        ->leftJoin('p.subscribe','subscribe')
+        ->leftJoin('p.subscribe','subscribe') // subscribe is relation table UserProfile
         ->setParameter('id', $id)
         ->getQuery()
         ->getResult();

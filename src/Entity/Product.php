@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use DateTimeZone;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
@@ -52,10 +54,24 @@ class Product
     #[ORM\JoinColumn(nullable: false)]
     private ?User $relatedUser = null;
 
+    /**
+     * @var Collection<int, ProductVat>
+     */
+    #[ORM\OneToMany(targetEntity: ProductVat::class, mappedBy: 'product')]
+    private Collection $productVats;
+
+    /**
+     * @var Collection<int, OrderLine>
+     */
+    #[ORM\OneToMany(targetEntity: OrderLine::class, mappedBy: 'product')]
+    private Collection $orderLines;
+
     public function __construct()
     {
         $dateTime = new DateTimeImmutable();
         $this->createdAt = $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
+        $this->productVats = new ArrayCollection();
+        $this->orderLines = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -179,6 +195,66 @@ class Product
     public function setRelatedUser(?User $relatedUser): static
     {
         $this->relatedUser = $relatedUser;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ProductVat>
+     */
+    public function getProductVats(): Collection
+    {
+        return $this->productVats;
+    }
+
+    public function setProductVat(ProductVat $productVat): static
+    {
+        if (!$this->productVats->contains($productVat)) {
+            $this->productVats->add($productVat);
+            $productVat->setProduct($this);
+        }
+
+        return $this;
+    }
+
+    public function deleteProductVat(ProductVat $productVat): static
+    {
+        if ($this->productVats->removeElement($productVat)) {
+            // set the owning side to null (unless already changed)
+            if ($productVat->getProduct() === $this) {
+                $productVat->setProduct(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, OrderLine>
+     */
+    public function getOrderLines(): Collection
+    {
+        return $this->orderLines;
+    }
+
+    public function addOrderLine(OrderLine $orderLine): static
+    {
+        if (!$this->orderLines->contains($orderLine)) {
+            $this->orderLines->add($orderLine);
+            $orderLine->setProduct($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOrderLine(OrderLine $orderLine): static
+    {
+        if ($this->orderLines->removeElement($orderLine)) {
+            // set the owning side to null (unless already changed)
+            if ($orderLine->getProduct() === $this) {
+                $orderLine->setProduct(null);
+            }
+        }
 
         return $this;
     }
