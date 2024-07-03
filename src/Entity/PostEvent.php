@@ -65,7 +65,7 @@ class PostEvent
 
     #[ORM\Column]
     #[Groups(['trainingsession:read', 'profile:read'])]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     #[Groups(['trainingsession:read', 'profile:read'])]

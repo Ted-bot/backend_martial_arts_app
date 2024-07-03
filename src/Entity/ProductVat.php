@@ -14,14 +14,14 @@ class ProductVat
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    protected ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'relatedProductVat')]
     #[ORM\JoinColumn(nullable: false)]
     private ?VatRate $VatRate = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 17, scale: 2)]
-    private ?string $VatAmount = null;
+    protected ?string $VatAmount = null;
 
     #[ORM\ManyToOne(inversedBy: 'productVats')]
     #[ORM\JoinColumn(nullable: false)]

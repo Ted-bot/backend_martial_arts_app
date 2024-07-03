@@ -33,6 +33,35 @@ class ShopOrderRepository extends ServiceEntityRepository
 
        public function findUserLatestOrder($user): ?array
        {
+      //   $testQb = $this->createQueryBuilder("so")
+      //           ->join('so.orderLines','orderLines')
+      //           ->join('orderLines.product','product')
+      //           ->join('product.productVats','prTax')
+      //           ->addSelect('product.price * orderLines.qty as totalPriceExlAmount')
+      //           ->where('so.ownedBy = :user')
+      //           ->andWhere('orderLines.shopOrder = so.id')
+      //           ->andWhere("so.orderStatus != 3") // status = paid
+      //           ->setParameter('user', $user)
+      //           // ->setParameter('calcPrices',  $testQb)
+      //           ->orderBy('so.orderDate','DESC')
+      //          ->getQuery()
+      //          ->getResult();
+
+      //       $testQbSec = $this->createQueryBuilder("so")
+      //          ->join('so.orderLines','orderLines')
+      //          ->join('orderLines.product','product')
+      //          ->join('product.productVats','prTax')
+      //          ->addSelect('prTax.VatAmount * orderLines.qty as totalProdTaxAmount')
+      //          ->where('so.ownedBy = :user')
+      //          ->andWhere('orderLines.shopOrder = so.id')
+      //          ->andWhere("so.orderStatus != 3") // status = paid
+      //          ->setParameter('user', $user)
+      //          // ->setParameter('calcPrices',  $testQb)
+      //          ->orderBy('so.orderDate','DESC')
+      //         ->getQuery()
+      //         ->getResult();
+            $qb = $this->createQueryBuilder('so');
+
            return $this->createQueryBuilder('so')
                 ->select('so.id')
                 // ->addSelect('so.totalAmount')
@@ -43,7 +72,7 @@ class ShopOrderRepository extends ServiceEntityRepository
                 ->addSelect('prTax.VatAmount as singleProdPriceTax')
                 ->addSelect('prTax.VatAmount * orderLines.qty as totalProdTaxAmount')
                 ->addSelect('product.price * orderLines.qty as totalPriceExlAmount')
-                // ->addSelect('COALESCE(totalPriceExlAmount) * COALESCE(totalProdTaxAmount) as totalProdPriceAmount')
+               //  ->addSelect($qb->expr()->sum('product.name','product.name'))
                 ->addSelect('taxRate.procent as taxPercent')
                 ->join('so.orderLines','orderLines')
                 ->join('orderLines.product','product')
@@ -53,11 +82,15 @@ class ShopOrderRepository extends ServiceEntityRepository
                 ->andWhere('orderLines.shopOrder = so.id')
                 ->andWhere("so.orderStatus != 3") // status = paid
                 ->setParameter('user', $user)
+                // ->setParameter('calcPrices',  $testQb)
                ->orderBy('so.orderDate','DESC')
                ->getQuery()
             //    ->getSingleResult()
+            // ->getSingleScalarResult()
                ->getResult()
             //    ->getOneOrNullResult()
-           ;
+         //   ,
+      //   'test' => $testQb[0]['totalPriceExlAmount'] + $testQbSec[0]['totalProdTaxAmount']]
+        ;
        }
 }

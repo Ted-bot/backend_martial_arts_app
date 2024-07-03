@@ -13,35 +13,35 @@ class Address
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    protected ?int $id = null;
 
     #[ORM\Column(length: 10, nullable: true)]
-    private ?string $unitNumber = null;
+    protected ?string $unitNumber = null;
 
     #[ORM\Column]
-    private ?int $streetNumber = null;
+    protected ?int $streetNumber = null;
 
     #[ORM\Column(length: 100)]
-    private ?string $addressLine = null;
+    protected ?string $addressLine = null;
 
     #[ORM\Column(length: 100)]
-    private ?string $city = null;
+    protected ?string $city = null;
 
     #[ORM\Column(length: 100, nullable: true)]
-    private ?string $region = null;
+    protected ?string $region = null;
 
     #[ORM\Column(length: 10)]
-    private ?string $postalCode = null;
+    protected ?string $postalCode = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Country $country = null;
+    protected ?Country $country = null;
 
     /**
      * @var Collection<int, UserAddress>
      */
     #[ORM\OneToMany(targetEntity: UserAddress::class, mappedBy: 'address')]
-    private Collection $userAddresses;
+    protected Collection $userAddresses;
 
     public function __construct()
     {

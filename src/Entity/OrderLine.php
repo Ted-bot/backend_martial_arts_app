@@ -2,31 +2,60 @@
 
 namespace App\Entity;
 
-use App\Repository\OrderLineRepository;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
+use ApiPlatform\Metadata\Patch;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\ApiResource;
+use App\Repository\OrderLineRepository;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: OrderLineRepository::class)]
+#[ApiResource(
+    shortName: 'orderline',
+    description: 'User ShopOrder',
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(),
+        new Put(),
+        new Patch(),
+    ],
+    normalizationContext: [
+        'groups' => ['orderline:read']
+    ],
+    denormalizationContext: [
+        'groups' => ['orderline:write']
+    ],
+)]
 class OrderLine
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    #[Groups('orderline:read')]
+    protected ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'orderLines')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?ShopOrder $shopOrder = null;
+    #[Groups(['shopOrder:read', 'orderline:read'])]
+    protected ?ShopOrder $shopOrder = null;
 
     #[ORM\ManyToOne(inversedBy: 'orderLines')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Product $product = null;
+    #[Groups(['shopOrder:read', 'orderline:read'])]
+    protected ?Product $product = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 17, scale: 2)]
-    private ?string $price = null;
+    #[Groups(['shopOrder:read', 'orderline:read'])]
+    protected ?string $price = null;
 
     #[ORM\Column]
-    private ?int $qty = null;
+    #[Groups(['shopOrder:read', 'orderline:read'])]
+    protected ?int $qty = null;
 
     public function getId(): ?int
     {

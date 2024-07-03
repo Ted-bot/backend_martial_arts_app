@@ -21,14 +21,14 @@ class Product
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
-    private ?string $name = null;
+    protected ?string $name = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 17, scale: 2)]
-    private ?string $price = null;
+    protected ?string $price = null;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Category $category = null;
+    protected ?Category $category = null;
 
     #[ORM\Column(length: 510)]
     private ?string $description = null;
@@ -37,14 +37,14 @@ class Product
     private ?array $images = null;
 
     #[ORM\Column]
-    private ?bool $isPublished = true;
+    protected ?bool $isPublished = true;
 
     #[ORM\Column]
     private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'relatedProducts')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?CurrencyType $currency = null;
+    protected ?CurrencyType $currency = null;
 
     #[ORM\ManyToOne(inversedBy: 'relatedSubscriptions')]
     #[ORM\JoinColumn(nullable: false)]
@@ -58,7 +58,7 @@ class Product
      * @var Collection<int, ProductVat>
      */
     #[ORM\OneToMany(targetEntity: ProductVat::class, mappedBy: 'product')]
-    private Collection $productVats;
+    protected Collection $productVats;
 
     /**
      * @var Collection<int, OrderLine>

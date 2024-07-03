@@ -171,15 +171,12 @@ class AppFixtures extends Fixture
         }
 
         $category = new Category();
+        $currency = new CurrencyType();
         
         $category->setName('subscription');
-
-        $manager->persist($category);
-
-        $currency = new CurrencyType();
-
         $currency->setName('euro');
 
+        $manager->persist($category);
         $manager->persist($currency);
 
         $typesSubscription = ['one_week','one_month','no_duration'];
@@ -247,8 +244,7 @@ class AppFixtures extends Fixture
             $address->setAddressLine(Factory::faker()->address());
             $address->setStreetNumber(Factory::faker()->numberBetween(0, 5000));
             
-            $manager->persist($address);
-            
+            $manager->persist($address);            
         }
 
         $manager->flush();
@@ -279,40 +275,46 @@ class AppFixtures extends Fixture
             $userAddress->setDefault(false);
 
             $manager->persist($userAddress);
-
         }
 
         $manager->flush();
 
         // Create Shop Orders
         foreach($this->userRepository->findAll() as $key => $user){
-            $shopOrder = new ShopOrder();
-            $orderLine = new OrderLine();
-
-            // if necessary loop multiProducts
-            $product = $this->productRepository->findOneBy(['name'=> 'full_month']);
-            $productTax = $this->prVatRepo->findOneBy(['product'=> $product->getId()]);
-            $statusOrder = $this->orderStatusRepo->findOneBy(['status' => 'saved']);
-            $shippingAddress = $this->userAddressRepo->findOneBy(['relatedUser'=> $user->getId(), 'isDefault' => true ]);
-
-            $orderLine->setQty(1);
-            $totalTaxQtyProducts = $productTax->getVatAmount() * $orderLine->getQty();
-            $totalProductPriceWithQty = $product->getPrice() * $orderLine->getQty();
-            $totalAmountOrder = $totalProductPriceWithQty + $totalTaxQtyProducts;
             
-            $orderLine->setShopOrder($shopOrder);
-            $orderLine->setPrice($totalProductPriceWithQty);
-            $orderLine->setProduct($product);
+            $shopOrder = new ShopOrder();
+            $productNames = ['full_month', 'try_out_five', 'try_out_once'];
+            
+            // if necessary loop multiProducts
+            foreach($productNames as $name) {
+                $orderLine = new OrderLine();
+                $product = $this->productRepository->findOneBy(['name'=> $name]);
+
+                $productTax = $this->prVatRepo->findOneBy(['product'=> $product->getId()]);
+                $statusOrder = $this->orderStatusRepo->findOneBy(['status' => 'saved']);
+                $shippingAddress = $this->userAddressRepo->findOneBy(['relatedUser'=> $user->getId(), 'isDefault' => true ]);
+
+                $quantity = [1,2,3];
+                $orderLine->setQty($quantity[array_rand($quantity)]);
+                $totalTaxQtyProducts = $productTax->getVatAmount() * $orderLine->getQty();
+                $totalProductPriceWithQty = $product->getPrice() * $orderLine->getQty();
+                $totalAmountOrder = $totalProductPriceWithQty + $totalTaxQtyProducts;
+                
+                $orderLine->setShopOrder($shopOrder); // maakt niewe order
+                $orderLine->setPrice($totalProductPriceWithQty);
+                $orderLine->setProduct($product);
+                
+                $shopOrder->setOwnedBy($user);
+                $shopOrder->setTotalAmount($totalAmountOrder);  // includes tax, Qty of product, ?shippingPrice
+                $shopOrder->setOrderDate(Factory::faker()->dateTimeBetween('-2 month','now'));
+                $shopOrder->setOrderStatus($statusOrder);
+                $shopOrder->setShippingAddress($shippingAddress);
+                
+                $manager->persist($shopOrder);
+                $manager->persist($orderLine);
+            }
+            $manager->flush();
             // end loop for products
-
-            $shopOrder->setOwnedBy($user);
-            $shopOrder->setTotalAmount($totalAmountOrder);  // includes tax, Qty of product, ?shippingPrice
-            $shopOrder->setOrderDate(Factory::faker()->dateTimeBetween('-2 month','now'));
-            $shopOrder->setOrderStatus($statusOrder);
-            $shopOrder->setShippingAddress($shippingAddress);
-
-            $manager->persist($shopOrder);
-            $manager->persist($orderLine);
         }
 
         $manager->flush();        
