@@ -204,7 +204,7 @@ class AppFixtures extends Fixture
             $product->setDescription(Factory::faker()->sentences(2, true));
             // $product->setCreatedAt(Factory::faker()->dateTimeBetween('-1 month','now'));
             $product->setCategory($this->categoryRepository->findOneBy(['name'=> 'subscription']));
-            $product->setCurrencyType($this->currencyTypeRepository->findOneBy(['name'=> 'euro']));
+            $product->setCurrencyType($this->currencyTypeRepository->findOneBy(['name'=> 'EUR']));
             $product->setDuration($this->subscriptionTypeRepository->find($subscriptionType->getId()));
             $product->setRelatedUser($this->userRepository->findOneBy(['email'=> 'tkbotch@gmail.com']));
 
@@ -282,6 +282,8 @@ class AppFixtures extends Fixture
         // Create Shop Orders
         foreach($this->userRepository->findAll() as $key => $user){
             
+            $totalAmountOrder = BigDecimal::ofUnscaledValue(0);
+            // $productLineArray = array();
             $shopOrder = new ShopOrder();
             $productNames = ['full_month', 'try_out_five', 'try_out_once'];
             
@@ -298,8 +300,10 @@ class AppFixtures extends Fixture
                 $orderLine->setQty($quantity[array_rand($quantity)]);
                 $totalTaxQtyProducts = $productTax->getVatAmount() * $orderLine->getQty();
                 $totalProductPriceWithQty = $product->getPrice() * $orderLine->getQty();
-                $totalAmountOrder = $totalProductPriceWithQty + $totalTaxQtyProducts;
+                $totalAmountOrderInclTax = BigDecimal::ofUnscaledValue($totalProductPriceWithQty)->plus($totalTaxQtyProducts);
                 
+                $totalAmountOrder = $totalAmountOrder->plus($totalAmountOrderInclTax);
+
                 $orderLine->setShopOrder($shopOrder); // maakt niewe order
                 $orderLine->setPrice($totalProductPriceWithQty);
                 $orderLine->setProduct($product);
@@ -313,6 +317,10 @@ class AppFixtures extends Fixture
                 $manager->persist($shopOrder);
                 $manager->persist($orderLine);
             }
+            // foreach ($productLineArray as $orderLine) {
+            //     $totalAmountOrder->plus((string)$orderLine);
+            // }
+
             $manager->flush();
             // end loop for products
         }
