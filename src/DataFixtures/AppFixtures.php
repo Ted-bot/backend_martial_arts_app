@@ -170,16 +170,21 @@ class AppFixtures extends Fixture
             }
         }
 
-        $category = new Category();
         $currency = new CurrencyType();
         
-        $category->setName('subscription');
-        $currency->setName('euro');
+        $categoryTypes = ['subscription','Heren'];
+        foreach($categoryTypes as $categoryName){
+            $category = new Category();
+            $category->setName($categoryName);
+            $manager->persist($category);
+            
+        }
+        
+        $currency->setName('EUR');
 
-        $manager->persist($category);
         $manager->persist($currency);
 
-        $typesSubscription = ['one_week','one_month','no_duration'];
+        $typesSubscription = ['two weeks','month','no_duration'];
         
         foreach($typesSubscription as $i) {
             $subscriptionType = new SubscriptionType();
@@ -194,16 +199,43 @@ class AppFixtures extends Fixture
 
         $manager->flush();
         
-        $subscriptionNames = ['try_out_once','try_out_five','full_month'];
-        $productPrices = [80,150,250];
+        $productNames = ['Group Trail: 2 Lessons', 'Group MemberShip', 'BD MA T-Shirt'];
+
+        $productPrices = [0,130,0];
         foreach ($this->subscriptionTypeRepository->findAll() as $key => $subscriptionType) {
             $prVatRate = new ProductVat();
             $product = new Product();
-            $product->setName($subscriptionNames[$key]);
+            $product->setName($productNames[$key]);
             $product->setPrice($productPrices[$key]);
             $product->setDescription(Factory::faker()->sentences(2, true));
-            // $product->setCreatedAt(Factory::faker()->dateTimeBetween('-1 month','now'));
-            $product->setCategory($this->categoryRepository->findOneBy(['name'=> 'subscription']));
+            $parseString = explode(" ",$productNames[$key]);
+
+            $compareString = strcmp($parseString[0], 'Group');
+            $compareSecondString = strcmp($parseString[1], 'Membership');
+
+            $setCategoryDecider = $compareString !== 0;
+            $setCategorySecondDecider = $compareSecondString !== 0;
+            // dd([
+            //     'deciderOne' => $setCategoryDecider,
+            //     'deciderTwo' => $setCategorySecondDecider,
+            // ]);
+
+            // $setCategoryType = 0;
+
+            if($setCategoryDecider == false &&  $setCategorySecondDecider == false)
+            {
+                $setCategoryType = 0;
+            } elseif ($setCategoryDecider == false &&  $setCategorySecondDecider == true){
+                $setCategoryType = 0;
+            } else {
+                $setCategoryType = 1;
+            }
+
+            // dd($setCategoryType);
+
+
+            $product->setCategory($this->categoryRepository->findOneBy(['name' => $categoryTypes[$setCategoryType]]));
+
             $product->setCurrencyType($this->currencyTypeRepository->findOneBy(['name'=> 'EUR']));
             $product->setDuration($this->subscriptionTypeRepository->find($subscriptionType->getId()));
             $product->setRelatedUser($this->userRepository->findOneBy(['email'=> 'tkbotch@gmail.com']));
@@ -212,7 +244,6 @@ class AppFixtures extends Fixture
             $tax = BigDecimal::ofUnscaledValue($productPrices[$key])
             ->dividedBy(100, 2, RoundingMode::UP)
             ->multipliedBy($setVatRate->getProcent());
-            // $tax = (($productPrices[$key] / 100) * $setVatRate->getProcent() );
 
             $prVatRate->setVatAmount($tax);
             $prVatRate->setProduct($product);
@@ -285,7 +316,7 @@ class AppFixtures extends Fixture
             $totalAmountOrder = BigDecimal::ofUnscaledValue(0);
             // $productLineArray = array();
             $shopOrder = new ShopOrder();
-            $productNames = ['full_month', 'try_out_five', 'try_out_once'];
+            // $productNames = ['full_month', 'try_out_five', 'try_out_once'];
             
             // if necessary loop multiProducts
             foreach($productNames as $name) {
