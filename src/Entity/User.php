@@ -154,6 +154,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: ShopOrder::class, mappedBy: 'ownedBy')]
     private Collection $shopOrders;
 
+    #[ORM\Column(length: 4, nullable: true)]
+    private ?string $libReactState = null;
+
+    #[ORM\Column(length: 5, nullable: true)]
+    private ?string $libReactCity = null;
+
     public function __construct()
     {
         $dateTime = new DateTimeImmutable();
@@ -179,6 +185,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->setLocation($user->location);
         $this->setConversion($user->conversion);
         $this->setRoles([Role::ROLE_USER_STUDENT]);
+
+        $this->setLibReactState($user->stateId);
+        $this->setLibReactCity($user->cityId);
 
         return $this;
     }
@@ -496,6 +505,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $shopOrder->setOwnedBy(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getLibReactState(): ?string
+    {
+        return $this->libReactState;
+    }
+
+    public function setLibReactState(?string $libReactState): static
+    {
+        $this->libReactState = $libReactState;
+
+        return $this;
+    }
+
+    public function getLibReactCity(): ?string
+    {
+        return $this->libReactCity;
+    }
+
+    public function setLibReactCity(?string $libReactCity): static
+    {
+        $this->libReactCity = $libReactCity;
 
         return $this;
     }

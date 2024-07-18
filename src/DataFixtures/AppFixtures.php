@@ -42,6 +42,7 @@ use App\Repository\ProductRepository;
 use App\Repository\VatRateRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\PostEventRepository;
+use App\Repository\ProductsRepository;
 use Doctrine\Persistence\ObjectManager;
 use App\Factory\SubscriptionTypeFactory;
 use App\Repository\ProductVatRepository;
@@ -55,6 +56,9 @@ use Symfony\Component\Clock\ClockInterface;
 use App\Repository\SubscriptionTypeRepository;
 use Symfony\Component\Validator\Constraints\Currency;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Doctrine\Persistence\ManagerRegistry;
+
+use App\Class\SkuGenerator;
 
 class AppFixtures extends Fixture
 {
@@ -65,9 +69,10 @@ class AppFixtures extends Fixture
         protected UserRepository $userRepository,
         protected UserProfileRepository $userProfileRepository,
         protected PostEventRepository $postEvent,
+        protected ProductRepository $productRepo,
         protected SubscriptionTypeRepository $subscriptionTypeRepository,
         protected CategoryRepository $categoryRepository,
-        protected ProductRepository $productRepository,
+        // protected ProductRepository $productRepository,
         protected CurrencyTypeRepository $currencyTypeRepository,
         protected User $user,
         protected ProductVat $prVat,
@@ -77,6 +82,7 @@ class AppFixtures extends Fixture
         protected AddressRepository $addressRepo,
         protected OrderStatusRepository $orderStatusRepo,
         protected UserAddressRepository $userAddressRepo,
+        protected ManagerRegistry $em
     ) {
         // $this->userPasswordHasherInterface = $userPasswordHasherInterface;
     }
@@ -102,6 +108,8 @@ class AppFixtures extends Fixture
         $user->setDateOfBirth("12-03-1990");
         $user->setConversion("Ik ga iedereen slopen let maar op!");
         $user->setRoles([Role::ROLE_USER_STUDENT]);
+        $user->setLibReactState(2612);
+        $user->setLibReactCity(77340);
 
         $manager->persist($user);
        
@@ -121,6 +129,8 @@ class AppFixtures extends Fixture
             $user->setLocation(Factory::faker()->city());
             $user->setDateOfBirth(Carbon::parse(Factory::faker()->dateTimeBetween('-30 years', '-8 years'))->format('d-m-Y'));
             $user->setConversion(Factory::faker()->sentences(2, true));
+            $user->setLibReactState(2612);
+            $user->setLibReactCity(77340);
 
             $allUsers[$i] = $user;
             $manager->persist($user);
@@ -201,10 +211,13 @@ class AppFixtures extends Fixture
         
         $productNames = ['Group Trail: 2 Lessons', 'Group MemberShip', 'BD MA T-Shirt'];
 
+        $latestPr = 0;
         $productPrices = [0,130,0];
         foreach ($this->subscriptionTypeRepository->findAll() as $key => $subscriptionType) {
             $prVatRate = new ProductVat();
             $product = new Product();
+            $latestPr++;
+
             $product->setName($productNames[$key]);
             $product->setPrice($productPrices[$key]);
             $product->setDescription(Factory::faker()->sentences(2, true));
@@ -215,12 +228,6 @@ class AppFixtures extends Fixture
 
             $setCategoryDecider = $compareString !== 0;
             $setCategorySecondDecider = $compareSecondString !== 0;
-            // dd([
-            //     'deciderOne' => $setCategoryDecider,
-            //     'deciderTwo' => $setCategorySecondDecider,
-            // ]);
-
-            // $setCategoryType = 0;
 
             if($setCategoryDecider == false &&  $setCategorySecondDecider == false)
             {
@@ -231,14 +238,19 @@ class AppFixtures extends Fixture
                 $setCategoryType = 1;
             }
 
-            // dd($setCategoryType);
-
-
             $product->setCategory($this->categoryRepository->findOneBy(['name' => $categoryTypes[$setCategoryType]]));
-
             $product->setCurrencyType($this->currencyTypeRepository->findOneBy(['name'=> 'EUR']));
             $product->setDuration($this->subscriptionTypeRepository->find($subscriptionType->getId()));
             $product->setRelatedUser($this->userRepository->findOneBy(['email'=> 'tkbotch@gmail.com']));
+            
+            $skuNumber = new SkuGenerator($this->em);
+            $subscriptionType = $this->subscriptionTypeRepository->findOneBy(['id' => $product->getDuration()]);
+            $skuStart = $product->getCategory();
+            $skuMid = $product->getDuration();
+
+            $skuEnd = $latestPr;
+
+            $product->setSku($skuNumber->generateSku($skuStart, $skuMid, $skuEnd));
 
             $setVatRate = $this->vatRepo->findOneBy(['procent' => 9.00]);
             $tax = BigDecimal::ofUnscaledValue($productPrices[$key])
@@ -251,10 +263,12 @@ class AppFixtures extends Fixture
 
             $manager->persist($prVatRate);
             $manager->persist($product);
+
         } 
         
         $country = new Country();
         $country->setCode('NL');
+        $country->setLocale('nl_NL');
         $manager->persist($country);
         
         $manager->flush();
@@ -292,7 +306,6 @@ class AppFixtures extends Fixture
             $userAddress->setDefault(true);
 
             $manager->persist($userAddress);
-
         }
 
         foreach($this->userRepository->findAll() as $key => $user){
@@ -314,14 +327,12 @@ class AppFixtures extends Fixture
         foreach($this->userRepository->findAll() as $key => $user){
             
             $totalAmountOrder = BigDecimal::ofUnscaledValue(0);
-            // $productLineArray = array();
             $shopOrder = new ShopOrder();
-            // $productNames = ['full_month', 'try_out_five', 'try_out_once'];
             
             // if necessary loop multiProducts
             foreach($productNames as $name) {
                 $orderLine = new OrderLine();
-                $product = $this->productRepository->findOneBy(['name'=> $name]);
+                $product = $this->productRepo->findOneBy(['name'=> $name]);
 
                 $productTax = $this->prVatRepo->findOneBy(['product'=> $product->getId()]);
                 $statusOrder = $this->orderStatusRepo->findOneBy(['status' => 'saved']);
@@ -348,9 +359,6 @@ class AppFixtures extends Fixture
                 $manager->persist($shopOrder);
                 $manager->persist($orderLine);
             }
-            // foreach ($productLineArray as $orderLine) {
-            //     $totalAmountOrder->plus((string)$orderLine);
-            // }
 
             $manager->flush();
             // end loop for products
