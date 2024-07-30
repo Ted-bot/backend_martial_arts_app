@@ -64,9 +64,8 @@ class RegistrationContoller extends AbstractController
 
         $user->setPassword($hashedPassword);
 
-        $entityManager->persist($user);
-
         try{
+            $entityManager->persist($user);
             $entityManager->flush();
         } catch(UniqueConstraintViolationException $e){
             $sqlState = 0;

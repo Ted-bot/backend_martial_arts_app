@@ -285,7 +285,7 @@ class AppFixtures extends Fixture
             $address = new Address();
             $address->setCity('Amsterdam');
             $address->setCountry($this->countryRepo->findOneBy(['code' => 'NL']));
-            $address->setPostalCode(Factory::faker()->postcode());
+            $address->setPostalCode(substr(Factory::faker()->postcode(), 0, 4));
             $address->setAddressLine(Factory::faker()->address());
             $address->setStreetNumber(Factory::faker()->numberBetween(0, 5000));
             
