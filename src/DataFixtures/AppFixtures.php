@@ -105,7 +105,7 @@ class AppFixtures extends Fixture
         $user->setPhoneNumber("0621212121");
         $user->setGender("Man");
         $user->setLocation("Amsterdam");
-        $user->setDateOfBirth("12-03-1990");
+        $user->setDateOfBirth("1990-03-12");
         $user->setConversion("Ik ga iedereen slopen let maar op!");
         $user->setRoles([Role::ROLE_USER_STUDENT]);
         $user->setLibReactState(2612);
@@ -127,7 +127,7 @@ class AppFixtures extends Fixture
             $user->setPhoneNumber(substr(Factory::faker()->phoneNumber(), 1, 15));
             $user->setGender($gender);
             $user->setLocation(Factory::faker()->city());
-            $user->setDateOfBirth(Carbon::parse(Factory::faker()->dateTimeBetween('-30 years', '-8 years'))->format('d-m-Y'));
+            $user->setDateOfBirth(Carbon::parse(Factory::faker()->dateTimeBetween('-30 years', '-8 years'))->format('Y-m-d'));
             $user->setConversion(Factory::faker()->sentences(2, true));
             $user->setLibReactState(2612);
             $user->setLibReactCity(77340);

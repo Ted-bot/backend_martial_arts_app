@@ -32,6 +32,7 @@ use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Dto\CreateMollieOrderDto;
 
 class OrderController extends AbstractController
 {
@@ -251,12 +252,14 @@ class OrderController extends AbstractController
                 'symbol' => $symbol,
                 'name' => $currencyType->getName()
             ],
+            'locale' => $userCountry->getLocale(),
             'user' => [
                 'id' => $user->getId(),
                 'email' => $user->getEmail(),
                 'phoneNumber' => $user->getPhoneNumber(),
                 'firstAndLastName' => $user->getFirstName() . ' ' . $user->getLastName(),
-                'city' => $user->getLocation()
+                'city' => $user->getLocation(),
+                'consumerDateOfBirth' => $user->getDateOfBirth(),
             ],
             'orderTotalProductPrice' => $orderTotalProductPrice->toScale(2, RoundingMode::UNNECESSARY),
             'orderTaxPrice' => $orderTax->toScale(2, RoundingMode::UNNECESSARY),
@@ -268,60 +271,38 @@ class OrderController extends AbstractController
         ], 201);
     }
 
-    #[Route('/api/v1/payment', name: 'app_payment', methods: ['GET'])]
-    public function payUserOrder(Request $request)
+    #[Route('/api/v1/payment', name: 'app_payment', methods: ['POST'])]
+    public function payUserOrder(#[MapRequestPayload] CreateMollieOrderDto $request): JsonResponse
+    // public function payUserOrder(Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
 
-        // $user = $this->userRepository->findOneBy(['id' => $this->getUser()]);
-        // $userLatestOrder = $this->shopOrderRepository->findOneBy(['ownedBy' => $user]);
+        // dd(['content' => $request->getContent(), 'paymentMethod' => $request->getPayload()->get('paymentMethod'), 'request' => $request]);
+        dd($request);
+        // dd($request->getContent());
 
-        // $mollie = new MollieApiClient();
-        // $mollie->setApiKey($this->getParameter('mollie.test'));
+        $mollie = new MollieApiClient();
+        $mollie->setApiKey($this->getParameter('mollie.test'));
 
-        // $mollie = new Mollie($this->getParameter('mollie.test'));
+        // $confirmedUserOrder = $request->getContent();
 
-        // $user = $this->userRepository->findOneBy(['id' => $this->getUser()]);
-        // $userLatestOrder = $this->shopOrderRepository->findOneBy(['ownedBy' => $user]);
-        // $mollie->consumerDateOfBirth = $user->getDateOfBirth();
-        // $mollie->orderNumber = $userLatestOrder->getId();
-        // $mollie->setlines($orderLine);
-        // $mollie->setAmount([
-        //         'value' => $userLatestOrder->getTotalAmount(),
-        //         'currency' => $currencyType->getName(),
-        //     ]);
-        // $mollie->setBillingAddress([
-        //     'streetAndNumber' => $userAddress->getAddressLine() .' '. $userAddress->getStreetNumber() .' '. $userAddress->getUnitNumber(),
-        //     'postalCode' => $userAddress->getPostalCode(),
-        //     'city' => $userAddress->getCity() ? $userAddress->getCity() : ($user->getLocation() ? $user->getLocation() : '' ),
-        //     'country' => $userCountry->getCode(),
-        //     'givenName' => $user->getFirstName(),
-        //     'familyName' => $user->getLastName(),
-        //     'email' => $user->getEmail(),
-        // ]);
-        // $mollie->setConsumerDateOfBirth($user->getDateOfBirth());
-        // $mollie->setLocale($userCountry->getLocale());
-
-        // $mollie = new Mollie($this->getParameter('mollie.test'));
-        // dd($this->amount);
-
-        // $order = $mollie->orders->create([
-        //     "amount" => $this->amount,
-        //     "billingAddress" => $this->billingAddress,
-        //     "shippingAddress" => $this->billingAddress,
-        //     "metadata" => '',
-        //     "consumerDataOfBirth" => $this->consumerDateOfBirth,
-        //     "locale" => $this->locale,
-        //     "orderNumber" => $this->orderNumber,
-        //     "redirectUrl" => "https://your_domain.com/return?some_other_info=foo",
-        //     "webhookUrl" => "https://your_domain.com/webhook",
-        //     "method" => "ideal",
-        //     "lines" => $this->lines
-        // ]);
+        $order = $mollie->orders->create([
+            // "amount" => $this->amount,
+            // "billingAddress" => $this->billingAddress,
+            // "shippingAddress" => $this->billingAddress,
+            // "metadata" => '',
+            // "consumerDataOfBirth" => $this->consumerDateOfBirth,
+            // "locale" => $this->locale,
+            // "orderNumber" => $this->orderNumber,
+            // "redirectUrl" => "https://your_domain.com/return?some_other_info=foo",
+            // "webhookUrl" => "https://your_domain.com/webhook",
+            // "method" => "ideal",
+            // "lines" => $this->lines
+        ]);
 
         // dd($order);
 
-        return new JsonResponse('test_payment');
+        return new JsonResponse('test_payment', 200);
 
     }
 }
