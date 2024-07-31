@@ -45,6 +45,11 @@ services:
     app.custom_authenticator:
         class: App\Security\CustomAuthenticator
         parent: lexik_jwt_authentication.security.jwt_authenticator
+
+    api_request_param_converter:
+        class: App\ApiBundle\Utilities\ApiRequestParamConverter
+        tags:
+            - { name: request.param_converter }
     
     # CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface:
         # class: CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface

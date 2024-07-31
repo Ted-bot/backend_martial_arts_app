@@ -4,23 +4,27 @@ declare(strict_types=1);
 namespace App\Dto;
 
 use Symfony\Component\Validator\Constraints as Assert;
-// use Symfony\Component\Validator\Constraints\PasswordStrength;
-
+use JMS\Serializer\Annotation as JMS;
+use App\Dto\OrderAmountDto;
 class CreateMollieOrderDto
 {
     public function __construct(
-        #[Assert\Collection([
-                'value' => [
-                    new Assert\NotBlank,
-                    new Assert\Type('numeric'),
-                ],
-                'currency' => new Assert\Length(
-                        max: 3,
-                        maxMessage: 'Your currency should contain {{ limit }} characters'
-                ),
-            ]
-        )]
-        protected readonly array $amount,
+        // #[Assert\Collection([
+        //         'value' => [
+        //             new Assert\NotBlank,
+        //             new Assert\Type('numeric'),
+        //         ],
+        //         'currency' => new Assert\Length(
+        //                 max: 3,
+        //                 maxMessage: 'Your currency should contain {{ limit }} characters'
+        //         ),
+        //     ]
+        // )]
+        // #[JMS\Type(OrderAmountDto::class)]
+        // #[JMS\Type("App\Dto\OrderAmountDto")]
+        // #[JMS\SerializedName('amount')]
+        #[Assert\Valid]
+        public readonly ?OrderAmountDto $amount,
         // protected readonly array $amount = ['value' => '...', 'currency' => '...'],
 
         // // #[Assert\NotBlank]
