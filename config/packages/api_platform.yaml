@@ -18,6 +18,10 @@ api_platform:
     #         rfc_7807_compliant_errors: true
     # keep_legacy_inflector: false
     use_symfony_listeners: true
+    eager_loading:
+        enabled: false
+        # max_joins: 100
+        # force_eager: false
     swagger:
          api_keys:
              access_token:

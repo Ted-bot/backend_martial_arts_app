@@ -4,7 +4,8 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-
+    mollie.live: '%env(MOLLIE_LIVE_KEY)%'
+    mollie.test: '%env(MOLLIE_TEST_KEY)%'
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -44,6 +45,11 @@ services:
     app.custom_authenticator:
         class: App\Security\CustomAuthenticator
         parent: lexik_jwt_authentication.security.jwt_authenticator
+
+    api_request_param_converter:
+        class: App\ApiBundle\Utilities\ApiRequestParamConverter
+        tags:
+            - { name: request.param_converter }
     
     # CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface:
         # class: CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface

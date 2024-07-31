@@ -17,6 +17,9 @@ class Country
 
     #[ORM\Column(length: 2)]
     private ?string $code = null;
+    
+    #[ORM\Column(length: 5)]
+    private ?string $locale = null;
 
     public function getId(): ?int
     {
@@ -31,6 +34,26 @@ class Country
     public function setCode(string $code): static
     {
         $this->code = $code;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of locale
+     */ 
+    public function getLocale()
+    {
+        return $this->locale;
+    }
+
+    /**
+     * Set the value of locale
+     *
+     * @return  self
+     */ 
+    public function setLocale($locale)
+    {
+        $this->locale = $locale;
 
         return $this;
     }

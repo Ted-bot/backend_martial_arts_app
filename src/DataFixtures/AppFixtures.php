@@ -42,6 +42,7 @@ use App\Repository\ProductRepository;
 use App\Repository\VatRateRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\PostEventRepository;
+use App\Repository\ProductsRepository;
 use Doctrine\Persistence\ObjectManager;
 use App\Factory\SubscriptionTypeFactory;
 use App\Repository\ProductVatRepository;
@@ -55,6 +56,9 @@ use Symfony\Component\Clock\ClockInterface;
 use App\Repository\SubscriptionTypeRepository;
 use Symfony\Component\Validator\Constraints\Currency;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Doctrine\Persistence\ManagerRegistry;
+
+use App\Class\SkuGenerator;
 
 class AppFixtures extends Fixture
 {
@@ -65,9 +69,10 @@ class AppFixtures extends Fixture
         protected UserRepository $userRepository,
         protected UserProfileRepository $userProfileRepository,
         protected PostEventRepository $postEvent,
+        protected ProductRepository $productRepo,
         protected SubscriptionTypeRepository $subscriptionTypeRepository,
         protected CategoryRepository $categoryRepository,
-        protected ProductRepository $productRepository,
+        // protected ProductRepository $productRepository,
         protected CurrencyTypeRepository $currencyTypeRepository,
         protected User $user,
         protected ProductVat $prVat,
@@ -77,6 +82,7 @@ class AppFixtures extends Fixture
         protected AddressRepository $addressRepo,
         protected OrderStatusRepository $orderStatusRepo,
         protected UserAddressRepository $userAddressRepo,
+        protected ManagerRegistry $em
     ) {
         // $this->userPasswordHasherInterface = $userPasswordHasherInterface;
     }
@@ -99,9 +105,11 @@ class AppFixtures extends Fixture
         $user->setPhoneNumber("0621212121");
         $user->setGender("Man");
         $user->setLocation("Amsterdam");
-        $user->setDateOfBirth("12-03-1990");
+        $user->setDateOfBirth("1990-03-12");
         $user->setConversion("Ik ga iedereen slopen let maar op!");
         $user->setRoles([Role::ROLE_USER_STUDENT]);
+        $user->setLibReactState(2612);
+        $user->setLibReactCity(77340);
 
         $manager->persist($user);
        
@@ -119,8 +127,10 @@ class AppFixtures extends Fixture
             $user->setPhoneNumber(substr(Factory::faker()->phoneNumber(), 1, 15));
             $user->setGender($gender);
             $user->setLocation(Factory::faker()->city());
-            $user->setDateOfBirth(Carbon::parse(Factory::faker()->dateTimeBetween('-30 years', '-8 years'))->format('d-m-Y'));
+            $user->setDateOfBirth(Carbon::parse(Factory::faker()->dateTimeBetween('-30 years', '-8 years'))->format('Y-m-d'));
             $user->setConversion(Factory::faker()->sentences(2, true));
+            $user->setLibReactState(2612);
+            $user->setLibReactCity(77340);
 
             $allUsers[$i] = $user;
             $manager->persist($user);
@@ -170,19 +180,21 @@ class AppFixtures extends Fixture
             }
         }
 
-        $category = new Category();
-        
-        $category->setName('subscription');
-
-        $manager->persist($category);
-
         $currency = new CurrencyType();
-
-        $currency->setName('euro');
+        
+        $categoryTypes = ['subscription','Heren'];
+        foreach($categoryTypes as $categoryName){
+            $category = new Category();
+            $category->setName($categoryName);
+            $manager->persist($category);
+            
+        }
+        
+        $currency->setName('EUR');
 
         $manager->persist($currency);
 
-        $typesSubscription = ['one_week','one_month','no_duration'];
+        $typesSubscription = ['two weeks','month','no_duration'];
         
         foreach($typesSubscription as $i) {
             $subscriptionType = new SubscriptionType();
@@ -197,25 +209,53 @@ class AppFixtures extends Fixture
 
         $manager->flush();
         
-        $subscriptionNames = ['try_out_once','try_out_five','full_month'];
-        $productPrices = [80,150,250];
+        $productNames = ['Group Trail: 2 Lessons', 'Group MemberShip', 'BD MA T-Shirt'];
+
+        $latestPr = 0;
+        $productPrices = [0,130,0];
         foreach ($this->subscriptionTypeRepository->findAll() as $key => $subscriptionType) {
             $prVatRate = new ProductVat();
             $product = new Product();
-            $product->setName($subscriptionNames[$key]);
+            $latestPr++;
+
+            $product->setName($productNames[$key]);
             $product->setPrice($productPrices[$key]);
             $product->setDescription(Factory::faker()->sentences(2, true));
-            // $product->setCreatedAt(Factory::faker()->dateTimeBetween('-1 month','now'));
-            $product->setCategory($this->categoryRepository->findOneBy(['name'=> 'subscription']));
-            $product->setCurrencyType($this->currencyTypeRepository->findOneBy(['name'=> 'euro']));
+            $parseString = explode(" ",$productNames[$key]);
+
+            $compareString = strcmp($parseString[0], 'Group');
+            $compareSecondString = strcmp($parseString[1], 'Membership');
+
+            $setCategoryDecider = $compareString !== 0;
+            $setCategorySecondDecider = $compareSecondString !== 0;
+
+            if($setCategoryDecider == false &&  $setCategorySecondDecider == false)
+            {
+                $setCategoryType = 0;
+            } elseif ($setCategoryDecider == false &&  $setCategorySecondDecider == true){
+                $setCategoryType = 0;
+            } else {
+                $setCategoryType = 1;
+            }
+
+            $product->setCategory($this->categoryRepository->findOneBy(['name' => $categoryTypes[$setCategoryType]]));
+            $product->setCurrencyType($this->currencyTypeRepository->findOneBy(['name'=> 'EUR']));
             $product->setDuration($this->subscriptionTypeRepository->find($subscriptionType->getId()));
             $product->setRelatedUser($this->userRepository->findOneBy(['email'=> 'tkbotch@gmail.com']));
+            
+            $skuNumber = new SkuGenerator($this->em);
+            $subscriptionType = $this->subscriptionTypeRepository->findOneBy(['id' => $product->getDuration()]);
+            $skuStart = $product->getCategory();
+            $skuMid = $product->getDuration();
+
+            $skuEnd = $latestPr;
+
+            $product->setSku($skuNumber->generateSku($skuStart, $skuMid, $skuEnd));
 
             $setVatRate = $this->vatRepo->findOneBy(['procent' => 9.00]);
             $tax = BigDecimal::ofUnscaledValue($productPrices[$key])
             ->dividedBy(100, 2, RoundingMode::UP)
             ->multipliedBy($setVatRate->getProcent());
-            // $tax = (($productPrices[$key] / 100) * $setVatRate->getProcent() );
 
             $prVatRate->setVatAmount($tax);
             $prVatRate->setProduct($product);
@@ -223,10 +263,12 @@ class AppFixtures extends Fixture
 
             $manager->persist($prVatRate);
             $manager->persist($product);
+
         } 
         
         $country = new Country();
         $country->setCode('NL');
+        $country->setLocale('nl_NL');
         $manager->persist($country);
         
         $manager->flush();
@@ -243,12 +285,11 @@ class AppFixtures extends Fixture
             $address = new Address();
             $address->setCity('Amsterdam');
             $address->setCountry($this->countryRepo->findOneBy(['code' => 'NL']));
-            $address->setPostalCode(Factory::faker()->postcode());
+            $address->setPostalCode(substr(Factory::faker()->postcode(), 0, 4));
             $address->setAddressLine(Factory::faker()->address());
             $address->setStreetNumber(Factory::faker()->numberBetween(0, 5000));
             
-            $manager->persist($address);
-            
+            $manager->persist($address);            
         }
 
         $manager->flush();
@@ -265,7 +306,6 @@ class AppFixtures extends Fixture
             $userAddress->setDefault(true);
 
             $manager->persist($userAddress);
-
         }
 
         foreach($this->userRepository->findAll() as $key => $user){
@@ -279,40 +319,49 @@ class AppFixtures extends Fixture
             $userAddress->setDefault(false);
 
             $manager->persist($userAddress);
-
         }
 
         $manager->flush();
 
         // Create Shop Orders
         foreach($this->userRepository->findAll() as $key => $user){
-            $shopOrder = new ShopOrder();
-            $orderLine = new OrderLine();
-
-            // if necessary loop multiProducts
-            $product = $this->productRepository->findOneBy(['name'=> 'full_month']);
-            $productTax = $this->prVatRepo->findOneBy(['product'=> $product->getId()]);
-            $statusOrder = $this->orderStatusRepo->findOneBy(['status' => 'saved']);
-            $shippingAddress = $this->userAddressRepo->findOneBy(['relatedUser'=> $user->getId(), 'isDefault' => true ]);
-
-            $orderLine->setQty(1);
-            $totalTaxQtyProducts = $productTax->getVatAmount() * $orderLine->getQty();
-            $totalProductPriceWithQty = $product->getPrice() * $orderLine->getQty();
-            $totalAmountOrder = $totalProductPriceWithQty + $totalTaxQtyProducts;
             
-            $orderLine->setShopOrder($shopOrder);
-            $orderLine->setPrice($totalProductPriceWithQty);
-            $orderLine->setProduct($product);
+            $totalAmountOrder = BigDecimal::ofUnscaledValue(0);
+            $shopOrder = new ShopOrder();
+            
+            // if necessary loop multiProducts
+            foreach($productNames as $name) {
+                $orderLine = new OrderLine();
+                $product = $this->productRepo->findOneBy(['name'=> $name]);
+
+                $productTax = $this->prVatRepo->findOneBy(['product'=> $product->getId()]);
+                $statusOrder = $this->orderStatusRepo->findOneBy(['status' => 'saved']);
+                $shippingAddress = $this->userAddressRepo->findOneBy(['relatedUser'=> $user->getId(), 'isDefault' => true ]);
+
+                $quantity = [1,2,3];
+                $orderLine->setQty($quantity[array_rand($quantity)]);
+                $totalTaxQtyProducts = $productTax->getVatAmount() * $orderLine->getQty();
+                $totalProductPriceWithQty = $product->getPrice() * $orderLine->getQty();
+                $totalAmountOrderInclTax = BigDecimal::ofUnscaledValue($totalProductPriceWithQty)->plus($totalTaxQtyProducts);
+                
+                $totalAmountOrder = $totalAmountOrder->plus($totalAmountOrderInclTax);
+
+                $orderLine->setShopOrder($shopOrder); // maakt niewe order
+                $orderLine->setPrice($totalProductPriceWithQty);
+                $orderLine->setProduct($product);
+                
+                $shopOrder->setOwnedBy($user);
+                $shopOrder->setTotalAmount($totalAmountOrder);  // includes tax, Qty of product, ?shippingPrice
+                $shopOrder->setOrderDate(Factory::faker()->dateTimeBetween('-2 month','now'));
+                $shopOrder->setOrderStatus($statusOrder);
+                $shopOrder->setShippingAddress($shippingAddress);
+                
+                $manager->persist($shopOrder);
+                $manager->persist($orderLine);
+            }
+
+            $manager->flush();
             // end loop for products
-
-            $shopOrder->setOwnedBy($user);
-            $shopOrder->setTotalAmount($totalAmountOrder);  // includes tax, Qty of product, ?shippingPrice
-            $shopOrder->setOrderDate(Factory::faker()->dateTimeBetween('-2 month','now'));
-            $shopOrder->setOrderStatus($statusOrder);
-            $shopOrder->setShippingAddress($shippingAddress);
-
-            $manager->persist($shopOrder);
-            $manager->persist($orderLine);
         }
 
         $manager->flush();        

@@ -10,6 +10,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\ProductRepository;
+use App\Class\SkuGenerator;
+use Doctrine\Persistence\ManagerRegistry;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ApiResource]
@@ -20,15 +22,23 @@ class Product
     #[ORM\Column]
     private ?int $id = null;
 
+    protected ManagerRegistry $em;
+
+    #[ORM\Column(length: 10)]
+    protected ?string $sku = null;
+
+    // protected $categoryRepo;
+    // protected $subscriptionTypeRepo;
+    
     #[ORM\Column(length: 100)]
-    private ?string $name = null;
+    protected ?string $name = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 17, scale: 2)]
-    private ?string $price = null;
+    protected ?string $price = null;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Category $category = null;
+    protected ?Category $category = null;
 
     #[ORM\Column(length: 510)]
     private ?string $description = null;
@@ -37,14 +47,14 @@ class Product
     private ?array $images = null;
 
     #[ORM\Column]
-    private ?bool $isPublished = true;
+    protected ?bool $isPublished = true;
 
     #[ORM\Column]
     private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'relatedProducts')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?CurrencyType $currency = null;
+    protected ?CurrencyType $currency = null;
 
     #[ORM\ManyToOne(inversedBy: 'relatedSubscriptions')]
     #[ORM\JoinColumn(nullable: false)]
@@ -58,7 +68,7 @@ class Product
      * @var Collection<int, ProductVat>
      */
     #[ORM\OneToMany(targetEntity: ProductVat::class, mappedBy: 'product')]
-    private Collection $productVats;
+    protected Collection $productVats;
 
     /**
      * @var Collection<int, OrderLine>
@@ -66,12 +76,14 @@ class Product
     #[ORM\OneToMany(targetEntity: OrderLine::class, mappedBy: 'product')]
     private Collection $orderLines;
 
-    public function __construct()
+    public function __construct(
+    )
     {
         $dateTime = new DateTimeImmutable();
         $this->createdAt = $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
         $this->productVats = new ArrayCollection();
         $this->orderLines = new ArrayCollection();
+        // $this->em = new ManagerRegistry();
     }
 
     public function getId(): ?int
@@ -255,6 +267,26 @@ class Product
                 $orderLine->setProduct(null);
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * Get the value of sku
+     */ 
+    public function getSku()
+    {
+        return $this->sku;
+    }
+
+    /**
+     * Set the value of sku
+     *
+     * @return  self
+     */ 
+    public function setSku($sku)
+    {
+        $this->sku = $sku;
 
         return $this;
     }

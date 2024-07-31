@@ -89,5 +89,26 @@ class CreateUserRequest extends AbstractJsonRequest
         maxMessage: 'Your given reason for signing up cannot be longer than {{ limit }} characters',
     )]
     public readonly string $conversion;
+    
+    #[NotBlank()]
+    #[Type('string')]
+    #[Length(
+        min: 1,
+        max: 5,
+        minMessage: 'CityId must have aleast {{ limit }} characters',
+        maxMessage: 'CityId cannot be longer than {{ limit }} characters',
+    )]
+    public readonly string $cityId;
+
+
+    #[NotBlank()]
+    #[Type('string')]
+    #[Length(
+        min: 1,
+        max: 4,
+        minMessage: 'StateId must have aleast {{ limit }} characters',
+        maxMessage: 'StateId cannot be longer than {{ limit }} characters',
+    )]
+    public readonly string $stateId;
 
 }
