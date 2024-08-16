@@ -6,6 +6,7 @@
 parameters:
     mollie.live: '%env(MOLLIE_LIVE_KEY)%'
     mollie.test: '%env(MOLLIE_TEST_KEY)%'
+    mollie.key: '%env(MOLLIE_WEBHOOK_SECRET)%'
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -13,6 +14,7 @@ services:
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
         bind: 
             $eventSubscriptionLogger: '@monolog.logger.M.A.Event'
+            $transferEventLogger: '@monolog.logger.TransferEvent'
 
 
     # makes classes in src/ available to be used as services
