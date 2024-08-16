@@ -65,9 +65,16 @@ class ShopOrder
     #[Groups(['shopOrder:read', 'orderline:read'])]
     protected Collection $orderLines;
 
+    /**
+     * @var Collection<int, StatusTransfer>
+     */
+    #[ORM\OneToMany(targetEntity: StatusTransfer::class, mappedBy: 'orderId')]
+    private Collection $statusTransfers;
+
     public function __construct()
     {
         $this->orderLines = new ArrayCollection();
+        $this->statusTransfers = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -169,6 +176,36 @@ class ShopOrder
             // set the owning side to null (unless already changed)
             if ($orderLine->getShopOrder() === $this) {
                 $orderLine->setShopOrder(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, StatusTransfer>
+     */
+    public function getStatusTransfers(): Collection
+    {
+        return $this->statusTransfers;
+    }
+
+    public function addStatusTransfer(StatusTransfer $statusTransfer): static
+    {
+        if (!$this->statusTransfers->contains($statusTransfer)) {
+            $this->statusTransfers->add($statusTransfer);
+            $statusTransfer->setOrderId($this);
+        }
+
+        return $this;
+    }
+
+    public function removeStatusTransfer(StatusTransfer $statusTransfer): static
+    {
+        if ($this->statusTransfers->removeElement($statusTransfer)) {
+            // set the owning side to null (unless already changed)
+            if ($statusTransfer->getOrderId() === $this) {
+                $statusTransfer->setOrderId(null);
             }
         }
 

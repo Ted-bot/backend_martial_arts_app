@@ -2,12 +2,19 @@
 
 namespace App\RemoteEvent;
 
+use App\Entity\OrderStatus;
+use App\Entity\StatusTransfer;
+use App\Repository\ShopOrderRepository;
+use App\Repository\OrderStatusRepository;
+use App\Repository\StatusTransferRepository;
+use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Psr\Log\LoggerInterface;
 use Mollie\Api\MollieApiClient;
 use Mollie\Api\Exceptions\ApiException;
 use Symfony\Component\RemoteEvent\RemoteEvent;
 use Symfony\Component\RemoteEvent\Consumer\ConsumerInterface;
 use Symfony\Component\RemoteEvent\Attribute\AsRemoteEventConsumer;
+use App\Class\Enum\MollieDirectStatusEnum;
 
 #[AsRemoteEventConsumer('MollieDirectPayment')]
 final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
@@ -15,7 +22,12 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
     private $logger;
 
     public function __construct(
+        private OrderStatusRepository $orderStatusRepository,
         private LoggerInterface $transferEventLogger,
+        private StatusTransfer $statusTransfer,
+        private EntityManager $entityManager,
+        private ShopOrderRepository $soRepo,
+        private StatusTransferRepository $stRepo
     )
     {
         $this->logger = $transferEventLogger;
@@ -43,7 +55,7 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
         //     ]
         // );
 
-        dd(['test' => 'Listener' ,'event' => $event]);        
+        // dd(['test' => 'Listener' ,'event' => $event]);        
         
         // Implement your own logic here
         try {
@@ -62,20 +74,31 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
              */
             $payment = $mollie->payments->get($event->getId());
 
+            $existingOrder = $this->stRepo->findOneBy(['transfer_id' => $event->getId()]);
+            $shopOrderUpdate = $this->soRepo->findOneBy(['id' => $existingOrder->getId()]);
 
-            // $this->entityManager->persist();
-            // $this->entityManager->flush();
+            $statusTransfer = new StatusTransfer();
+            $statusTransfer->setOrderId($shopOrderUpdate);
+            $statusTransfer->setTransferId($event->getId());
+
+            // replace with class instead of table data
             
-
-            // dd([
-            //     'mollie_payment_id' => $payment->id,
-            //     'isPaid' => $payment->isPaid()
-            // ]);
+            $shopOrderUpdate->setStatus();
             /*
             * Update the order in the database.
             */
-            // database_write($orderId, $order->status);    
 
+
+
+            // database_write($orderId, $order->status);    
+            $this->entityManager->persist($statusTransfer);
+            $this->entityManager->persist($statusTransfer);
+            $this->entityManager->flush();            
+            
+            // dd([
+                //     'mollie_payment_id' => $payment->id,
+                //     'isPaid' => $payment->isPaid()
+                // ]);
  
             if ($payment->isPaid() || $payment->isAuthorized()) {
                 /*

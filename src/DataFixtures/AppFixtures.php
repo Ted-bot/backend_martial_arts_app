@@ -3,9 +3,6 @@
 namespace App\DataFixtures;
 
 use Brick\Math\BigDecimal;
-use DateInterval;
-// use Doctrine\DBAL\Types\DecimalType
-use Brick\Math\BigInteger;
 use Brick\Math\RoundingMode;
 use Carbon\Carbon;
 use App\Class\Role;
@@ -93,7 +90,6 @@ class AppFixtures extends Fixture
 
         $user = new User();
         $user->setEmail("tkbotch@gmail.com");
-        //$user->setPassword("test_pass");
         $user->setPassword(
             $this->userPasswordHasherInterface->hashPassword(
                 $user, "test_pass"
@@ -102,7 +98,7 @@ class AppFixtures extends Fixture
 
         $user->setFirstName("Mr.X");
         $user->setLastName("FutureX");
-        $user->setPhoneNumber("0621212121");
+        $user->setPhoneNumber("+31621212121");
         $user->setGender("Man");
         $user->setLocation("Amsterdam");
         $user->setDateOfBirth("1990-03-12");
@@ -212,7 +208,7 @@ class AppFixtures extends Fixture
         $productNames = ['Group Trail: 2 Lessons', 'Group MemberShip', 'BD MA T-Shirt'];
 
         $latestPr = 0;
-        $productPrices = [0,130,0];
+        $productPrices = [1,130,1];
         foreach ($this->subscriptionTypeRepository->findAll() as $key => $subscriptionType) {
             $prVatRate = new ProductVat();
             $product = new Product();
@@ -220,7 +216,7 @@ class AppFixtures extends Fixture
 
             $product->setName($productNames[$key]);
             $product->setPrice($productPrices[$key]);
-            $product->setDescription(Factory::faker()->sentences(2, true));
+            $product->setDescription(Factory::faker()->sentences(1, true));
             $parseString = explode(" ",$productNames[$key]);
 
             $compareString = strcmp($parseString[0], 'Group');
@@ -253,9 +249,12 @@ class AppFixtures extends Fixture
             $product->setSku($skuNumber->generateSku($skuStart, $skuMid, $skuEnd));
 
             $setVatRate = $this->vatRepo->findOneBy(['procent' => 9.00]);
+            $productTotalProcentPlusProcent = 100 + $setVatRate->getProcent();
+            $divideProcentByTotalProductProcent = BigDecimal::of($setVatRate->getProcent())
+            ->dividedBy($productTotalProcentPlusProcent, 4,  RoundingMode::DOWN);
+
             $tax = BigDecimal::ofUnscaledValue($productPrices[$key])
-            ->dividedBy(100, 2, RoundingMode::UP)
-            ->multipliedBy($setVatRate->getProcent());
+            ->multipliedBy($divideProcentByTotalProductProcent);
 
             $prVatRate->setVatAmount($tax);
             $prVatRate->setProduct($product);
@@ -273,13 +272,16 @@ class AppFixtures extends Fixture
         
         $manager->flush();
 
-        $arrayStatusses= ['saved','in_process','paid'];
+        $arrayStatusses = ['open','pending','authorized','paid','canceled','expired','failed','processing','refunded'];
+
         foreach($arrayStatusses as $status) {
             $orderStatus = new OrderStatus();
             $orderStatus->setStatus($status);
 
             $manager->persist($orderStatus);
         }
+
+        $manager->flush();
 
         foreach(range(0,19) as $i) {
             $address = new Address();
@@ -335,16 +337,18 @@ class AppFixtures extends Fixture
                 $product = $this->productRepo->findOneBy(['name'=> $name]);
 
                 $productTax = $this->prVatRepo->findOneBy(['product'=> $product->getId()]);
-                $statusOrder = $this->orderStatusRepo->findOneBy(['status' => 'saved']);
+                $statusOrder = $this->orderStatusRepo->findOneBy(['status' => 'pending']);
                 $shippingAddress = $this->userAddressRepo->findOneBy(['relatedUser'=> $user->getId(), 'isDefault' => true ]);
 
-                $quantity = [1,2,3];
-                $orderLine->setQty($quantity[array_rand($quantity)]);
+                // $quantity = [1,2,3];
+                // $orderLine->setQty($quantity[array_rand($quantity)]);
+                $orderLine->setQty(1);
                 $totalTaxQtyProducts = $productTax->getVatAmount() * $orderLine->getQty();
                 $totalProductPriceWithQty = $product->getPrice() * $orderLine->getQty();
-                $totalAmountOrderInclTax = BigDecimal::ofUnscaledValue($totalProductPriceWithQty)->plus($totalTaxQtyProducts);
+                // $totalAmountOrderInclTax = BigDecimal::ofUnscaledValue($totalProductPriceWithQty)->plus($totalTaxQtyProducts);
+                $totalAmountOrderExclTax = BigDecimal::ofUnscaledValue($totalProductPriceWithQty);
                 
-                $totalAmountOrder = $totalAmountOrder->plus($totalAmountOrderInclTax);
+                $totalAmountOrder = $totalAmountOrder->plus($totalAmountOrderExclTax);
 
                 $orderLine->setShopOrder($shopOrder); // maakt niewe order
                 $orderLine->setPrice($totalProductPriceWithQty);

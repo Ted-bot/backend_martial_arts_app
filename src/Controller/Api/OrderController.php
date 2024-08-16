@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api;
 
+use App\Entity\StatusTransfer;
 use DateTime;
 use App\Class\Role;
 use App\Entity\User;
@@ -49,7 +50,8 @@ class OrderController extends AbstractController
         protected UserAddressRepository $userAddressRepo,
         protected AddressRepository $addressRepo,
         protected CountryRepository $countryRepo,
-        // protected Mollie $mollie
+        private StatusTransfer $statusTransfer,
+        private EntityManager $entityManager,
     )
     {
         // $this->mollie = new Mollie($this->getParameter('mollie.test'));
@@ -58,7 +60,7 @@ class OrderController extends AbstractController
     #[Route('/api/v1/order/address', name: 'app_order_address', methods: ['POST'])]
     public function orderAddress(
         #[MapRequestPayload] CustomerInfoDto $request,
-        EntityManager $entityManager,
+        // EntityManager $entityManager,
         Address $address,
     ): JsonResponse
     // public function orderAddress(Request $request): JsonResponse
@@ -101,12 +103,12 @@ class OrderController extends AbstractController
         $newUserAddress->setDefault(true);
 
         try {
-            $entityManager->persist($addressId);
-            $entityManager->persist($newUserAddress); // set prvious address Id on false
-            $entityManager->persist($user); // update user Data
-            $entityManager->persist($address); // update user Data            
+            $this->entityManager->persist($addressId);
+            $this->entityManager->persist($newUserAddress); // set prvious address Id on false
+            $this->entityManager->persist($user); // update user Data
+            $this->entityManager->persist($address); // update user Data            
             
-            $entityManager->flush(); // update user Data
+            $this->entityManager->flush(); // update user Data
         } catch(UniqueConstraintViolationException $e){
 
             $message = 'Couldnt set new Address and Update User';
@@ -150,17 +152,15 @@ class OrderController extends AbstractController
         $addressId = $this->userAddressRepo->findOneBy(['relatedUser' => $user->getId(), 'isDefault' => 'true']);
         $userAddress = $this->addressRepo->findOneBy(['id' => $addressId->getAddress()]);
         $userCountry = $this->countryRepo->findOneBy(['id' => $userAddress->getCountry()]);
-        // set property
-        // $mollie->locale = $userCountry->getLocale();
-
         $prodUrlNr = 0;
+
         foreach( $userLatestOrder->getOrderLines() as $order ){
             $prodUrlNr++;
             $currentTime = new DateTime();
             $userSelectedProduct = $this->prRepo->findOneBy(['id' => $order->getProduct()->getId()]);
             $selctedProductTotalPrice = BigDecimal::of($userSelectedProduct->getPrice())->multipliedBy($order->getQty());
             $userProductTax = $this->prVatRepo->findOneBy(['product' => $userSelectedProduct->getId()]);
-            $productVatAmount = $userProductTax->getVatAmount();
+            $productVatAmount = BigDecimal::of($userProductTax->getVatAmount())->toScale(2, RoundingMode::UP);
             $taxAmountTimesQty = BigDecimal::of($productVatAmount)->multipliedBy($order->getQty());
             // $productPricePlusTotalTax = BigDecimal::of($order->getPrice())->plus($taxAmountTimesQty);
             
@@ -172,11 +172,15 @@ class OrderController extends AbstractController
             $trailOrProduct = $subscriptionDuration == false ? 2 : 1;
             $setDurationProduct = $isProduct ? $trailOrProduct : $order->getQty();
 
+            // dd(BigDecimal::ofUnscaledValue($taxAmountTimesQty)->toScale(2, RoundingMode::UP));
+            // dd($taxAmountTimesQty);
+            // dd(BigDecimal::of($taxAmountTimesQty)->toScale(2, RoundingMode::UP));
             $orderLine = [
                 'sku' => $order->getProduct()->getSku(), // create sku
-                'name' => $order->getProduct()->getName(),
+                'type' => 'store_credit',
+                'description' => $order->getProduct()->getDescription(),
                 'productUrl' => 'http://localhost:5173/product' . $prodUrlNr,
-                'imageUrl' => 'testimageUrl',
+                'imageUrl' => 'http://localhost:5173/testimageUrl',
                 'quantity' => $order->getQty(),
                 'vatRate' => $userProductTax->getVatRate()->getProcent(),
                 'unitPrice' => [
@@ -187,13 +191,14 @@ class OrderController extends AbstractController
                     'currency' => $currencyType->getName(),
                     'value' => $selctedProductTotalPrice
                 ],
-                'discountAmount' => [
-                    'currency' => $currencyType->getName(),
-                    'value' => '00.00',
-                ],
+                // 'discountAmount' => [
+                //     'currency' => $currencyType->getName(),
+                //     'value' => '00.00',
+                // ],
                 'vatAmount' => [
                     'currency' => $currencyType->getName(),
                     'value' => $taxAmountTimesQty,
+                    // 'value' => BigDecimal::of($taxAmountTimesQty)->toScale(2, RoundingMode::HALF_UP),
                 ],
                 'productDetails' => [
                     'totalProductCalculations' => [
@@ -216,27 +221,9 @@ class OrderController extends AbstractController
         }
 
         unset($orderLine[$getOrderLineProductDetailsKey]);
-
-        // $mollie->setlines($orderLine);
-        // $mollie->setAmount([
-        //         'value' => $userLatestOrder->getTotalAmount(),
-        //         'currency' => $currencyType->getName(),
-        //     ]);
-
-        // $mollie->setBillingAddress([
-        //     'streetAndNumber' => $userAddress->getAddressLine() .' '. $userAddress->getStreetNumber() .' '. $userAddress->getUnitNumber(),
-        //     'postalCode' => $userAddress->getPostalCode(),
-        //     'city' => $userAddress->getCity() ? $userAddress->getCity() : ($user->getLocation() ? $user->getLocation() : '' ),
-        //     'country' => $userCountry->getCode(),
-        //     'givenName' => $user->getFirstName(),
-        //     'familyName' => $user->getLastName(),
-        //     'email' => $user->getEmail(),
-        // ]);
-
-        // $mollie->setConsumerDateOfBirth($user->getDateOfBirth());
-        // $mollie->setLocale($userCountry->getLocale());
         
         return new JsonResponse([
+            'description' => 'order ' . $userLatestOrder->getId() . ' Black Dragon M.A.',
             'address' => [
                 'id' => $userAddress->getId(),
                 'addressLine' => $userAddress->getAddressLine(),
@@ -245,7 +232,7 @@ class OrderController extends AbstractController
                 'postalCode' => $userAddress->getPostalCode(),
                 'reactCityNr' => $user->getLibReactCity(),
                 'reactStateNr' => $user->getLibReactState(),
-                'county' => $userCountry->getCode(),
+                'country' => $userCountry->getCode(),
             ],
             'orderId' => $userLatestOrder->getId(),
             'curreny' => [
@@ -259,10 +246,10 @@ class OrderController extends AbstractController
                 'phoneNumber' => $user->getPhoneNumber(),
                 'firstAndLastName' => $user->getFirstName() . ' ' . $user->getLastName(),
                 'city' => $user->getLocation(),
-                'consumerDateOfBirth' => $user->getDateOfBirth(),
+                // 'consumerDateOfBirth' => $user->getDateOfBirth(),
             ],
-            'orderTotalProductPrice' => $orderTotalProductPrice->toScale(2, RoundingMode::UNNECESSARY),
-            'orderTaxPrice' => $orderTax->toScale(2, RoundingMode::UNNECESSARY),
+            'orderTotalProductPrice' => $orderTotalProductPrice->toScale(2, RoundingMode::UP),
+            'orderTaxPrice' => $orderTax->toScale(2, RoundingMode::UP),
             'amount' => [
                 'value' => $userLatestOrder->getTotalAmount(),
                 'currency' => $currencyType->getName(),
@@ -277,32 +264,33 @@ class OrderController extends AbstractController
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
 
-        // dd(['content' => $request->getContent(), 'paymentMethod' => $request->getPayload()->get('paymentMethod'), 'request' => $request]);
-        dd($request);
-        // dd($request->getContent());
-
         $mollie = new MollieApiClient();
+        $statusTransfer = new StatusTransfer();
         $mollie->setApiKey($this->getParameter('mollie.test'));
+        $shopOrder = $this->shopOrderRepository->findOneBy(['id' => $request->order_id]);
+        
+        $newUserOrder = [
+            "amount" => $request->amount,
+            "billingAddress" => $request->billingAddress,
+            "shippingAddress" => $request->shippingAddress,
+            "metadata" => $request->metadata,
+            "description" => $request->description,
+            "locale" => $request->locale,
+            "redirectUrl" => $request->redirectUrl,
+            "webhookUrl" => $request->webhookUrl . '/webhook/MollieDirectPayment',
+            "method" => $request->method,
+            "lines" => $request->lines
+        ];
+        
+        $createPayment = $mollie->payments->create($newUserOrder);
+        $transferId = $createPayment->id;
 
-        // $confirmedUserOrder = $request->getContent();
+        $statusTransfer->setOrderId($shopOrder);
+        $statusTransfer->setTransferId($transferId);
 
-        $order = $mollie->orders->create([
-            // "amount" => $this->amount,
-            // "billingAddress" => $this->billingAddress,
-            // "shippingAddress" => $this->billingAddress,
-            // "metadata" => '',
-            // "consumerDataOfBirth" => $this->consumerDateOfBirth,
-            // "locale" => $this->locale,
-            // "orderNumber" => $this->orderNumber,
-            // "redirectUrl" => "https://your_domain.com/return?some_other_info=foo",
-            // "webhookUrl" => "https://your_domain.com/webhook",
-            // "method" => "ideal",
-            // "lines" => $this->lines
-        ]);
-
-        // dd($order);
+        $this->entityManager->persist($statusTransfer);
+        $this->entityManager->flush();
 
         return new JsonResponse('test_payment', 200);
-
     }
 }
