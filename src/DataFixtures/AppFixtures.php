@@ -2,8 +2,8 @@
 
 namespace App\DataFixtures;
 
-use Brick\Math\BigDecimal;
-use Brick\Math\RoundingMode;
+use App\ApiResource\MolliePaymentStatusEnum;
+use App\Repository\ShopOrderRepository;
 use Carbon\Carbon;
 use App\Class\Role;
 use App\Entity\User;
@@ -15,10 +15,13 @@ use App\Entity\Category;
 use App\Entity\OrderLine;
 use App\Entity\ShopOrder;
 use App\Entity\ProductVat;
-use App\Entity\OrderStatus;
+use Brick\Math\BigDecimal;
+use App\Class\SkuGenerator;
 use App\Entity\UserAddress;
 use App\Entity\CurrencyType;
 use App\Factory\UserFactory;
+use Brick\Math\RoundingMode;
+use App\Entity\StatusTransfer;
 use Zenstruck\Foundry\Factory;
 use App\Factory\AddressFactory;
 use App\Factory\CountryFactory;
@@ -29,8 +32,8 @@ use App\Factory\CategoryFactory;
 use App\Factory\PostEventFactory;
 use App\Repository\UserRepository;
 use App\Factory\UserAddressFactory;
-use App\Factory\UserProfileFactory;
 
+use App\Factory\UserProfileFactory;
 use App\Factory\CurrencyTypeFactory;
 use App\Entity\ProductVatRateFactory;
 use App\Repository\AddressRepository;
@@ -38,48 +41,47 @@ use App\Repository\CountryRepository;
 use App\Repository\ProductRepository;
 use App\Repository\VatRateRepository;
 use App\Repository\CategoryRepository;
-use App\Repository\PostEventRepository;
 use App\Repository\ProductsRepository;
+use App\Repository\PostEventRepository;
 use Doctrine\Persistence\ObjectManager;
 use App\Factory\SubscriptionTypeFactory;
 use App\Repository\ProductVatRepository;
-use App\Repository\OrderStatusRepository;
-use App\Repository\UserAddressRepository;
 
+use App\Repository\UserAddressRepository;
 use App\Repository\UserProfileRepository;
+use Doctrine\Persistence\ManagerRegistry;
 use App\Repository\CurrencyTypeRepository;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Symfony\Component\Clock\ClockInterface;
+use App\Repository\StatusTransferRepository;
 use App\Repository\SubscriptionTypeRepository;
+
 use Symfony\Component\Validator\Constraints\Currency;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Doctrine\Persistence\ManagerRegistry;
-
-use App\Class\SkuGenerator;
 
 class AppFixtures extends Fixture
 {
     public function __construct(
+        private StatusTransferRepository $stRepo,
         private UserPasswordHasherInterface $userPasswordHasher,
-        protected ClockInterface $time,
-        protected UserPasswordHasherInterface $userPasswordHasherInterface,
-        protected UserRepository $userRepository,
-        protected UserProfileRepository $userProfileRepository,
-        protected PostEventRepository $postEvent,
-        protected ProductRepository $productRepo,
-        protected SubscriptionTypeRepository $subscriptionTypeRepository,
-        protected CategoryRepository $categoryRepository,
-        // protected ProductRepository $productRepository,
-        protected CurrencyTypeRepository $currencyTypeRepository,
-        protected User $user,
-        protected ProductVat $prVat,
-        protected VatRateRepository $vatRepo,
-        protected ProductVatRepository $prVatRepo,
-        protected CountryRepository $countryRepo,
-        protected AddressRepository $addressRepo,
-        protected OrderStatusRepository $orderStatusRepo,
-        protected UserAddressRepository $userAddressRepo,
-        protected ManagerRegistry $em
+        private ClockInterface $time,
+        private UserPasswordHasherInterface $userPasswordHasherInterface,
+        private UserRepository $userRepository,
+        private UserProfileRepository $userProfileRepository,
+        private PostEventRepository $postEvent,
+        private ProductRepository $productRepo,
+        private SubscriptionTypeRepository $subscriptionTypeRepository,
+        private CategoryRepository $categoryRepository,
+        private ShopOrderRepository $soRepo,
+        private CurrencyTypeRepository $currencyTypeRepository,
+        private User $user,
+        private ProductVat $prVat,
+        private VatRateRepository $vatRepo,
+        private ProductVatRepository $prVatRepo,
+        private CountryRepository $countryRepo,
+        private AddressRepository $addressRepo,
+        private UserAddressRepository $userAddressRepo,
+        private ManagerRegistry $em
     ) {
         // $this->userPasswordHasherInterface = $userPasswordHasherInterface;
     }
@@ -272,17 +274,6 @@ class AppFixtures extends Fixture
         
         $manager->flush();
 
-        $arrayStatusses = ['open','pending','authorized','paid','canceled','expired','failed','processing','refunded'];
-
-        foreach($arrayStatusses as $status) {
-            $orderStatus = new OrderStatus();
-            $orderStatus->setStatus($status);
-
-            $manager->persist($orderStatus);
-        }
-
-        $manager->flush();
-
         foreach(range(0,19) as $i) {
             $address = new Address();
             $address->setCity('Amsterdam');
@@ -337,7 +328,6 @@ class AppFixtures extends Fixture
                 $product = $this->productRepo->findOneBy(['name'=> $name]);
 
                 $productTax = $this->prVatRepo->findOneBy(['product'=> $product->getId()]);
-                $statusOrder = $this->orderStatusRepo->findOneBy(['status' => 'pending']);
                 $shippingAddress = $this->userAddressRepo->findOneBy(['relatedUser'=> $user->getId(), 'isDefault' => true ]);
 
                 // $quantity = [1,2,3];
@@ -357,7 +347,6 @@ class AppFixtures extends Fixture
                 $shopOrder->setOwnedBy($user);
                 $shopOrder->setTotalAmount($totalAmountOrder);  // includes tax, Qty of product, ?shippingPrice
                 $shopOrder->setOrderDate(Factory::faker()->dateTimeBetween('-2 month','now'));
-                $shopOrder->setOrderStatus($statusOrder);
                 $shopOrder->setShippingAddress($shippingAddress);
                 
                 $manager->persist($shopOrder);
@@ -369,5 +358,15 @@ class AppFixtures extends Fixture
         }
 
         $manager->flush();        
+
+        // create fake orderPayment
+        $paymentUpdate = new StatusTransfer();
+        $userOrder = $this->soRepo->findOneBy(['ownedBy' =>  $user->getId()]);
+        $paymentUpdate->setTransferId('tr_DBPsz4sq7M');
+        $paymentUpdate->setUserOrder($userOrder);
+
+        $manager->persist($paymentUpdate);   
+        $manager->flush();   
+
     }
 }

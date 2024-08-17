@@ -25,6 +25,7 @@ services:
             - '../src/DependencyInjection/'
             # - '../src/Entity/'
             - '../src/Kernel.php'
+            
     App\http_kernel\cors_subscriber:
         class: App\EventSubscriber\HttpKernel\CorsSubscriber
         tags:

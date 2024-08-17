@@ -60,7 +60,7 @@ class SubscriptionType
     {
         if (!$this->relatedSubscriptions->contains($relatedSubscription)) {
             $this->relatedSubscriptions->add($relatedSubscription);
-            $relatedSubscription->setDurationId($this);
+            $relatedSubscription->setDuration($this);
         }
 
         return $this;
@@ -70,8 +70,8 @@ class SubscriptionType
     {
         if ($this->relatedSubscriptions->removeElement($relatedSubscription)) {
             // set the owning side to null (unless already changed)
-            if ($relatedSubscription->getDurationId() === $this) {
-                $relatedSubscription->setDurationId(null);
+            if ($relatedSubscription->getDuration() === $this) {
+                $relatedSubscription->setDuration(null);
             }
         }
 

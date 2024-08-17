@@ -50,7 +50,7 @@ class OrderController extends AbstractController
         protected UserAddressRepository $userAddressRepo,
         protected AddressRepository $addressRepo,
         protected CountryRepository $countryRepo,
-        private StatusTransfer $statusTransfer,
+        // private StatusTransfer $statusTransfer,
         private EntityManager $entityManager,
     )
     {
@@ -265,7 +265,7 @@ class OrderController extends AbstractController
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
 
         $mollie = new MollieApiClient();
-        $statusTransfer = new StatusTransfer();
+        // $statusTransfer = new StatusTransfer();
         $mollie->setApiKey($this->getParameter('mollie.test'));
         $shopOrder = $this->shopOrderRepository->findOneBy(['id' => $request->order_id]);
         
@@ -285,11 +285,11 @@ class OrderController extends AbstractController
         $createPayment = $mollie->payments->create($newUserOrder);
         $transferId = $createPayment->id;
 
-        $statusTransfer->setOrderId($shopOrder);
-        $statusTransfer->setTransferId($transferId);
+        // $statusTransfer->setUserOrder($shopOrder);
+        // $statusTransfer->setTransferId($transferId);
 
-        $this->entityManager->persist($statusTransfer);
-        $this->entityManager->flush();
+        // $this->entityManager->persist($statusTransfer);
+        // $this->entityManager->flush();
 
         return new JsonResponse('test_payment', 200);
     }

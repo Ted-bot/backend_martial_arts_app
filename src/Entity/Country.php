@@ -15,11 +15,19 @@ class Country
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 2)]
-    private ?string $code = null;
+    // #[ORM\Column(length: 3)]
+    #[ORM\Column]
+    private ?string $code;
     
-    #[ORM\Column(length: 5)]
-    private ?string $locale = null;
+    // #[ORM\Column(length: 6)]
+    #[ORM\Column]
+    private ?string $locale;
+
+    public function __construct($code, $locale)
+    {
+        $this->code = $code;
+        $this->locale = $locale;
+    }
 
     public function getId(): ?int
     {
