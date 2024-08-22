@@ -5,7 +5,7 @@ namespace App\Entity;
 use DateTimeZone;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
-use App\ApiResource\MolliePaymentStatusEnum;
+use App\Enum\MolliePaymentStatusEnum;
 use App\Repository\StatusTransferRepository;
 
 #[ORM\Entity(repositoryClass: StatusTransferRepository::class)]
@@ -21,7 +21,7 @@ class StatusTransfer
     private ?ShopOrder $userOrder;
 
     // #[ORM\Column(type: 'App\Entity\Enum\MolliePaymentStatusEnum')]
-    #[ORM\Column]
+    #[ORM\Column(enumType: MolliePaymentStatusEnum::class)]
     private ?MolliePaymentStatusEnum $status = null;
 
     #[ORM\Column]

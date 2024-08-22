@@ -2,47 +2,50 @@
 
 namespace App\Class;
 
-use App\Repository\CategoryRepository;
-use App\Repository\SubscriptionTypeRepository;
-use Doctrine\Persistence\ManagerRegistry;
+use App\Enum\CategoryTypeEnum;
+use App\Enum\SubscriptionTypeEnum;
+
 class SkuGenerator
 {
 
-    private $categoryRepo;
+    private $catRepo;
     private $subTypeRepo;
     public function __construct(
-        private ManagerRegistry $em
+        // private ManagerRegistry $em
     )
     {
-        $this->categoryRepo = new CategoryRepository($this->em);
-        $this->subTypeRepo = new SubscriptionTypeRepository($this->em);
+        // $this->categoryRepo = new CategoryRepository($this->em);
+        // $this->subTypeRepo = new SubscriptionTypeRepository($this->em);
     }
 
-    public function generateSku($cat, $duration, $seq)
+    public function generateSku(string $cat, string $duration, $seq)
     {
         $skuStart = '';
         $skuMid = '';
         $skuEnd = '';
+        // $cat = CategoryTypeEnum::toInt($cat);
+        // /** @var CategoryTypeEnum $cat Object */
+        // $cat = $cat;
 
-        // $categoryRepo = new CategoryRepository();
-        // $subTypeRepo = new SubscriptionTypeRepository();
-
-        $category = $this->categoryRepo->findOneBy(['id' => $cat]);
-        $duration = $this->subTypeRepo->findOneBy(['id' => $duration]);
-
+        // /** @var SubscriptionTypeEnum $duration Object */
+        // $duration = SubscriptionTypeEnum::toString($duration);
+        // $duration = $duration;
+        /** $changeDuration   */
         $changeDuration = '';
 
-        if($duration->getDuration() == 'two weeks')
+        if($duration == 'TWO_WEEKS')
         {
             $changeDuration = 'week';
         } else {
-            $changeDuration = $duration->getDuration();
+            $changeDuration = $duration;
         }
 
         $sequenceLength = strlen($seq);
 
-        $catSubName = substr($category->getName(), 0, 3);
-        $skuStart = strtoupper($catSubName);
+        // $catSubName = $cat->name;
+        // $catSubName = substr($cat->getId(), 0, 3);
+        // $skuStart = strtoupper($catSubName);
+        $skuStart = $cat;
 
         $firstCharacter = substr($changeDuration, 0, 1); // week
         $skuMid = strtoupper($firstCharacter);

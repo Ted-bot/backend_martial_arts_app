@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\ApiResource;
+namespace App\Enum;
 
 // use App\Class\Trait\EnumToArray;
 use ApiPlatform\Metadata\Get;
@@ -11,8 +11,8 @@ use ApiPlatform\Metadata\Operation;
 // use App\DBAL\Types\SQLEnumTypeTrait;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
-use App\ApiResource\EnumApiResourceTrait;
-use Symfony\Component\Serializer\Annotation\Groups;
+use App\Enum\EnumApiResourceTrait;
+// use Symfony\Component\Serializer\Annotation\Groups;
 
 
 #[
@@ -22,6 +22,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 ]
 enum MolliePaymentStatusEnum: string
 {
+  use EnumApiResourceTrait;
     // use SQLEnumTypeTrait;
     // use EnumToArray;
     
@@ -46,23 +47,22 @@ enum MolliePaymentStatusEnum: string
     #[EnumCase('authorized')]
     case AUTHORIZED = 'authorized';
     
-    #[EnumCase('Expired')]
+    #[EnumCase('expired')]
     case EXPIRED = 'expired';
     
-    #[EnumCase('Failed')]
+    #[EnumCase('failed')]
     case FAILED = 'failed';
 
-    use EnumApiResourceTrait;
 
-    public function getId()
-    {
-        return $this->name;
-    }
+    // public function getId()
+    // {
+    //     return $this->name;
+    // }
     
-    public function getValue()
-    {
-        return $this->value;
-    }
+    // public function getValue()
+    // {
+    //     return $this->value;
+    // }
 
   //     public function toString()
   // {

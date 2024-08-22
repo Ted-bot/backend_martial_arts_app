@@ -20,7 +20,7 @@ class ProductVat
     #[ORM\JoinColumn(nullable: false)]
     private ?VatRate $VatRate = null;
 
-    #[ORM\Column(type: Types::DECIMAL, precision: 17, scale: 2)]
+    #[ORM\Column(type: Types::DECIMAL, precision: 17, scale: 4)]
     protected ?string $VatAmount = null;
 
     #[ORM\ManyToOne(inversedBy: 'productVats')]

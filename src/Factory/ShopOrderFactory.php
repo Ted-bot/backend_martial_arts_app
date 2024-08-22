@@ -2,7 +2,7 @@
 
 namespace App\Factory;
 
-use App\ApiResource\MolliePaymentStatusEnum;
+use App\Enum\MolliePaymentStatusEnum;
 use App\Entity\ShopOrder;
 use App\Repository\ShopOrderRepository;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;

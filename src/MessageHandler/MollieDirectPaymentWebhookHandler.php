@@ -2,7 +2,7 @@
 
 namespace App\MessageHandler;
 
-use App\ApiResource\MollieDirectPaymentWebhook;
+use App\Enum\MollieDirectPaymentWebhook;
 use App\Message\SendWebhookMessage;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Contracts\HttpClient\HttpClientInterface as HttpClient;

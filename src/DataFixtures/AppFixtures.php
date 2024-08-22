@@ -2,8 +2,6 @@
 
 namespace App\DataFixtures;
 
-use App\ApiResource\MolliePaymentStatusEnum;
-use App\Repository\ShopOrderRepository;
 use Carbon\Carbon;
 use App\Class\Role;
 use App\Entity\User;
@@ -11,17 +9,20 @@ use App\Entity\Address;
 use App\Entity\Country;
 use App\Entity\Product;
 use App\Entity\VatRate;
-use App\Entity\Category;
 use App\Entity\OrderLine;
 use App\Entity\ShopOrder;
 use App\Entity\ProductVat;
+// use App\Entity\Category;
 use Brick\Math\BigDecimal;
 use App\Class\SkuGenerator;
 use App\Entity\UserAddress;
 use App\Entity\CurrencyType;
 use App\Factory\UserFactory;
 use Brick\Math\RoundingMode;
+use App\Enum\CountryTypeEnum;
 use App\Entity\StatusTransfer;
+use App\Enum\CategoryTypeEnum;
+use App\Enum\CurrencyTypeEnum;
 use Zenstruck\Foundry\Factory;
 use App\Factory\AddressFactory;
 use App\Factory\CountryFactory;
@@ -30,12 +31,13 @@ use App\Factory\VatRateFactory;
 use App\Entity\SubscriptionType;
 use App\Factory\CategoryFactory;
 use App\Factory\PostEventFactory;
+use App\Enum\SubscriptionTypeEnum;
 use App\Repository\UserRepository;
 use App\Factory\UserAddressFactory;
-
 use App\Factory\UserProfileFactory;
 use App\Factory\CurrencyTypeFactory;
 use App\Entity\ProductVatRateFactory;
+use App\Enum\MolliePaymentStatusEnum;
 use App\Repository\AddressRepository;
 use App\Repository\CountryRepository;
 use App\Repository\ProductRepository;
@@ -43,19 +45,20 @@ use App\Repository\VatRateRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\ProductsRepository;
 use App\Repository\PostEventRepository;
+use App\Repository\ShopOrderRepository;
 use Doctrine\Persistence\ObjectManager;
+use App\Enum\SubscriptionLengthTypeEnum;
 use App\Factory\SubscriptionTypeFactory;
-use App\Repository\ProductVatRepository;
 
+use App\Repository\ProductVatRepository;
 use App\Repository\UserAddressRepository;
 use App\Repository\UserProfileRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use App\Repository\CurrencyTypeRepository;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Symfony\Component\Clock\ClockInterface;
-use App\Repository\StatusTransferRepository;
-use App\Repository\SubscriptionTypeRepository;
 
+use App\Repository\StatusTransferRepository;
+use App\Enum\SubscriptionDirectOrPeriodicTypeEnum;
 use Symfony\Component\Validator\Constraints\Currency;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -70,15 +73,11 @@ class AppFixtures extends Fixture
         private UserProfileRepository $userProfileRepository,
         private PostEventRepository $postEvent,
         private ProductRepository $productRepo,
-        private SubscriptionTypeRepository $subscriptionTypeRepository,
-        private CategoryRepository $categoryRepository,
         private ShopOrderRepository $soRepo,
-        private CurrencyTypeRepository $currencyTypeRepository,
         private User $user,
         private ProductVat $prVat,
         private VatRateRepository $vatRepo,
         private ProductVatRepository $prVatRepo,
-        private CountryRepository $countryRepo,
         private AddressRepository $addressRepo,
         private UserAddressRepository $userAddressRepo,
         private ManagerRegistry $em
@@ -178,40 +177,63 @@ class AppFixtures extends Fixture
             }
         }
 
-        $currency = new CurrencyType();
-        
-        $categoryTypes = ['subscription','Heren'];
-        foreach($categoryTypes as $categoryName){
-            $category = new Category();
-            $category->setName($categoryName);
-            $manager->persist($category);
-            
-        }
-        
-        $currency->setName('EUR');
-
-        $manager->persist($currency);
-
-        $typesSubscription = ['two weeks','month','no_duration'];
-        
-        foreach($typesSubscription as $i) {
-            $subscriptionType = new SubscriptionType();
-            $subscriptionType->setDuration($i);
-            $manager->persist($subscriptionType);
-        }
-
+        $categoryTypes = CategoryTypeEnum::getCases();
+        $typesSubscription = SubscriptionTypeEnum::getCases();
         $vat = new VatRate();
-        $vat->setProcent(9.00);
 
+        $vat->setProcent(9.00);
         $manager->persist($vat);
 
         $manager->flush();
         
+        $productPrices = [1,130,1];
         $productNames = ['Group Trail: 2 Lessons', 'Group MemberShip', 'BD MA T-Shirt'];
 
+        $newProduct = new Product();
+        $prVatRate = new ProductVat();
+
+        $newProduct->setName('Group: Subscribe 4 month');
+        $newProduct->setPrice($productPrices[1]);
+        $newProduct->setDescription(Factory::faker()->sentences(1, true));
+        $newProduct->setCategory(CategoryTypeEnum::SUB);
+        $newProduct->setCurrencyType(CurrencyTypeEnum::EUR);
+        $newProduct->setDuration(SubscriptionTypeEnum::MONTH);
+        $newProduct->setDurationLength(SubscriptionLengthTypeEnum::MONTH_FOUR);
+        $newProduct->setDirectOrPeriodic(SubscriptionDirectOrPeriodicTypeEnum::PERIODIC);
+        // $newProduct->setDurationLength(SubscriptionLengthTypeEnum::MONTH_4);
+        $newProduct->setRelatedUser($this->userRepository->findOneBy(['email'=> 'tkbotch@gmail.com']));
+            
         $latestPr = 0;
-        $productPrices = [1,130,1];
-        foreach ($this->subscriptionTypeRepository->findAll() as $key => $subscriptionType) {
+        $skuNumber = new SkuGenerator();
+            // $subscriptionType = $this->subscriptionTypeRepository->findOneBy(['id' => $product->getDuration()]);
+        $new_skuStart = $newProduct->getCategory()->getId();
+        $new_skuMid = $newProduct->getDuration()->getId();
+        $new_skuEnd = 99;
+        
+        $newProduct->setSku($skuNumber->generateSku($new_skuStart, $new_skuMid, $new_skuEnd));
+        
+        // dd([
+        //     'getSKU' => $newProduct->getSku(),
+        //     'duration' => $newProduct->getDuration()->getId(),
+        // ]);
+        $setVatRate = $this->vatRepo->findOneBy(['procent' => 9.00]);
+        $productTotalProcentPlusProcent = 100 + $setVatRate->getProcent();
+        $divideProcentByTotalProductProcent = BigDecimal::of($setVatRate->getProcent())
+        ->dividedBy($productTotalProcentPlusProcent, 4,  RoundingMode::DOWN);
+
+        $tax = BigDecimal::ofUnscaledValue(520)
+        ->multipliedBy($divideProcentByTotalProductProcent);
+
+        $prVatRate->setVatAmount($tax);
+        $prVatRate->setProduct($newProduct);
+        $prVatRate->setVatRate($setVatRate);
+
+        $manager->persist($prVatRate);
+        $manager->persist($newProduct);
+        $manager->flush();
+        // dd(['test' => 'yes']);
+
+        foreach (SubscriptionTypeEnum::getCases() as $key => $subscriptionType) {
             $prVatRate = new ProductVat();
             $product = new Product();
             $latestPr++;
@@ -229,22 +251,30 @@ class AppFixtures extends Fixture
 
             if($setCategoryDecider == false &&  $setCategorySecondDecider == false)
             {
-                $setCategoryType = 0;
+                $setCategoryType = 'subscription';
             } elseif ($setCategoryDecider == false &&  $setCategorySecondDecider == true){
-                $setCategoryType = 0;
+                $setCategoryType = 'subscription';
             } else {
-                $setCategoryType = 1;
-            }
+                $setCategoryType = 'heren';
+            }           
 
-            $product->setCategory($this->categoryRepository->findOneBy(['name' => $categoryTypes[$setCategoryType]]));
-            $product->setCurrencyType($this->currencyTypeRepository->findOneBy(['name'=> 'EUR']));
-            $product->setDuration($this->subscriptionTypeRepository->find($subscriptionType->getId()));
+            $catType = CategoryTypeEnum::tryFrom($setCategoryType);
+            $product->setCategory($catType);
+            $product->setCurrencyType(CurrencyTypeEnum::EUR);
+            $product->setDuration($subscriptionType);
+            $subscriptionType == SubscriptionTypeEnum::MONTH ? $product->setDurationLength(SubscriptionLengthTypeEnum::MONTH_FOUR)
+            : ($subscriptionType != SubscriptionTypeEnum::WEEK 
+                ? $product->setDurationLength(SubscriptionLengthTypeEnum::UNAVAILABLE)
+                : $product->setDurationLength(SubscriptionLengthTypeEnum::PERIOD_TIMES_TWO)
+            );
+            $product->setDirectOrPeriodic(SubscriptionDirectOrPeriodicTypeEnum::DIRECT);
             $product->setRelatedUser($this->userRepository->findOneBy(['email'=> 'tkbotch@gmail.com']));
             
-            $skuNumber = new SkuGenerator($this->em);
-            $subscriptionType = $this->subscriptionTypeRepository->findOneBy(['id' => $product->getDuration()]);
-            $skuStart = $product->getCategory();
-            $skuMid = $product->getDuration();
+            // $skuNumber = new SkuGenerator($this->em);
+            $skuNumber = new SkuGenerator();
+            // $subscriptionType = $this->subscriptionTypeRepository->findOneBy(['id' => $product->getDuration()]);
+            $skuStart = $product->getCategory()->getId();
+            $skuMid = $product->getDuration()->getId();
 
             $skuEnd = $latestPr;
 
@@ -262,31 +292,30 @@ class AppFixtures extends Fixture
             $prVatRate->setProduct($product);
             $prVatRate->setVatRate($setVatRate);
 
+            
             $manager->persist($prVatRate);
             $manager->persist($product);
-
         } 
         
-        $country = new Country();
-        $country->setCode('NL');
-        $country->setLocale('nl_NL');
-        $manager->persist($country);
-        
+        // $country = new Country('NL', 'nl_NL');
+        // $country = CountryTypeEnum::;
+        // $manager->persist($country);        
         $manager->flush();
-
+        // dd(['product' => $product]);
+        
         foreach(range(0,19) as $i) {
             $address = new Address();
             $address->setCity('Amsterdam');
-            $address->setCountry($this->countryRepo->findOneBy(['code' => 'NL']));
+            $address->setCountry(CountryTypeEnum::NL_CODE);
             $address->setPostalCode(substr(Factory::faker()->postcode(), 0, 4));
             $address->setAddressLine(Factory::faker()->address());
             $address->setStreetNumber(Factory::faker()->numberBetween(0, 5000));
             
             $manager->persist($address);            
         }
-
+        
         $manager->flush();
-
+        
         // Create addresses for Users
         foreach($this->userRepository->findAll() as $key => $user){
 
@@ -333,7 +362,7 @@ class AppFixtures extends Fixture
                 // $quantity = [1,2,3];
                 // $orderLine->setQty($quantity[array_rand($quantity)]);
                 $orderLine->setQty(1);
-                $totalTaxQtyProducts = $productTax->getVatAmount() * $orderLine->getQty();
+                // $totalTaxQtyProducts = $productTax->getVatAmount() * $orderLine->getQty();
                 $totalProductPriceWithQty = $product->getPrice() * $orderLine->getQty();
                 // $totalAmountOrderInclTax = BigDecimal::ofUnscaledValue($totalProductPriceWithQty)->plus($totalTaxQtyProducts);
                 $totalAmountOrderExclTax = BigDecimal::ofUnscaledValue($totalProductPriceWithQty);
@@ -369,4 +398,5 @@ class AppFixtures extends Fixture
         $manager->flush();   
 
     }
+
 }

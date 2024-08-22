@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\CountryTypeEnum;
 use App\Repository\AddressRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -35,7 +36,8 @@ class Address
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
-    protected ?Country $country = null;
+    #[ORM\Column(enumType: CountryTypeEnum::class)]
+    protected ?CountryTypeEnum $country = null;
 
     /**
      * @var Collection<int, UserAddress>
@@ -125,12 +127,12 @@ class Address
         return $this;
     }
 
-    public function getCountry(): ?Country
+    public function getCountry(): ?CountryTypeEnum
     {
         return $this->country;
     }
 
-    public function setCountry(?Country $country): static
+    public function setCountry(?CountryTypeEnum $country): static
     {
         $this->country = $country;
 

@@ -2,7 +2,8 @@
 
 namespace App\Controller\Api;
 
-use App\Entity\StatusTransfer;
+use App\Enum\CurrencyTypeEnum;
+use App\Enum\SubscriptionTypeEnum;
 use DateTime;
 use App\Class\Role;
 use App\Entity\User;
@@ -12,11 +13,14 @@ use Brick\Math\BigDecimal;
 use App\Entity\UserAddress;
 use App\Dto\CustomerInfoDto;
 use Brick\Math\RoundingMode;
+use App\Entity\StatusTransfer;
 use Mollie\Api\MollieApiClient;
+use App\Dto\CreateMollieOrderDto;
 use App\Repository\UserRepository;
 use App\Repository\AddressRepository;
 use App\Repository\CountryRepository;
 use App\Repository\ProductRepository;
+use App\Enum\CountryTypeEnum;
 use Symfony\Component\Intl\Currencies;
 use App\Repository\OrderLineRepository;
 use App\Repository\ShopOrderRepository;
@@ -33,7 +37,6 @@ use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use App\Dto\CreateMollieOrderDto;
 
 class OrderController extends AbstractController
 {
@@ -45,11 +48,11 @@ class OrderController extends AbstractController
         private OrderLineRepository $orderLinesRepo,
         protected ProductRepository $prRepo,
         protected ProductVatRepository $prVatRepo,
-        protected CurrencyTypeRepository $currenyTypeRepo,
-        protected SubscriptionTypeRepository $subscriptionTypeRepo,
+        // protected CurrencyTypeRepository $currenyTypeRepo,
+        // protected SubscriptionTypeRepository $subscriptionTypeRepo,
         protected UserAddressRepository $userAddressRepo,
         protected AddressRepository $addressRepo,
-        protected CountryRepository $countryRepo,
+        // protected CountryRepository $countryRepo,
         // private StatusTransfer $statusTransfer,
         private EntityManager $entityManager,
     )
@@ -74,13 +77,8 @@ class OrderController extends AbstractController
 
         /** @var UserAddress UserAddres Object */
         $addressId = $this->userAddressRepo->findOneBy(['relatedUser' => $user->getId(), 'isDefault' => 'true']);
-        
-        $userAddress = $this->addressRepo->findOneBy(['id' => $addressId->getAddress()]);
-
         $addressId->setDefault(false);
         
-        $userCountry = $this->countryRepo->findOneBy(['id' => $userAddress->getCountry()]);
-
         $user->setFirstName($splitFirstAndLastName[0]);
         $user->setLastName($splitFirstAndLastName[1]);
         $user->setEmail($request->email);
@@ -95,7 +93,7 @@ class OrderController extends AbstractController
         $address->setCity($request->location); // set city
         $address->setRegion($request->region); // set state
         $address->setPostalCode($request->postalCode);
-        $address->setCountry($userCountry);
+        $address->setCountry(CountryTypeEnum::NL_CODE);
 
         $newUserAddress = new UserAddress();
         $newUserAddress->setAddress($address);
@@ -147,11 +145,11 @@ class OrderController extends AbstractController
         $orderLines = array();
         $orderTax = BigDecimal::zero();
         $orderTotalProductPrice= BigDecimal::zero();
-        $currencyType = $this->currenyTypeRepo->findOneBy(['name' => 'EUR']);
-        $symbol = Currencies::getSymbol($currencyType->getName());
+        $currencyType = CurrencyTypeEnum::tryFrom(0)->getId();
+        $symbol = Currencies::getSymbol($currencyType);
         $addressId = $this->userAddressRepo->findOneBy(['relatedUser' => $user->getId(), 'isDefault' => 'true']);
         $userAddress = $this->addressRepo->findOneBy(['id' => $addressId->getAddress()]);
-        $userCountry = $this->countryRepo->findOneBy(['id' => $userAddress->getCountry()]);
+        $userCountry = CountryTypeEnum::toString($userAddress->getCountry());
         $prodUrlNr = 0;
 
         foreach( $userLatestOrder->getOrderLines() as $order ){
@@ -164,11 +162,11 @@ class OrderController extends AbstractController
             $taxAmountTimesQty = BigDecimal::of($productVatAmount)->multipliedBy($order->getQty());
             // $productPricePlusTotalTax = BigDecimal::of($order->getPrice())->plus($taxAmountTimesQty);
             
-            $susbcriptionType = $this->subscriptionTypeRepo->findOneBy(['id' => $userSelectedProduct->getDuration()]);
-            $subscriptionDuration = in_array($susbcriptionType->getDuration(),['month','no_duration']);
+            $susbcriptionType = SubscriptionTypeEnum::tryFrom($userSelectedProduct->getDuration()->getValue());
+            $subscriptionDuration = in_array($susbcriptionType->getValue(),['month','UNAVAILABLE']);
             $addMonthOrWeek = $subscriptionDuration !== true ? 'week' : 'month';
             
-            $isProduct = $susbcriptionType->getDuration() !== 'month';
+            $isProduct = $susbcriptionType !== SubscriptionTypeEnum::MONTH;
             $trailOrProduct = $subscriptionDuration == false ? 2 : 1;
             $setDurationProduct = $isProduct ? $trailOrProduct : $order->getQty();
 
@@ -184,11 +182,12 @@ class OrderController extends AbstractController
                 'quantity' => $order->getQty(),
                 'vatRate' => $userProductTax->getVatRate()->getProcent(),
                 'unitPrice' => [
-                    'currency' => $currencyType->getName(),
+                    'currency' => $currencyType,
                     'value' => $order->getProduct()->getPrice()
                 ],
                 'totalAmount' => [
-                    'currency' => $currencyType->getName(),
+                    'currency' => $order->getProduct()->getCurrencyType()->getId(),
+                    // 'currency' => $currencyType,
                     'value' => $selctedProductTotalPrice
                 ],
                 // 'discountAmount' => [
@@ -196,7 +195,7 @@ class OrderController extends AbstractController
                 //     'value' => '00.00',
                 // ],
                 'vatAmount' => [
-                    'currency' => $currencyType->getName(),
+                    'currency' => $currencyType,
                     'value' => $taxAmountTimesQty,
                     // 'value' => BigDecimal::of($taxAmountTimesQty)->toScale(2, RoundingMode::HALF_UP),
                 ],
@@ -206,7 +205,7 @@ class OrderController extends AbstractController
                         'totalTaxPrice' => $taxAmountTimesQty,
                     ],
                     'subscriptionDetails' => [
-                        'productSubscription' => $susbcriptionType->getDuration(),
+                        'productSubscription' => $susbcriptionType->getValue(),
                         'productSubscriptionStart' => $currentTime->format('Y-m-d'),
                         'productSubscriptionEnd' => $currentTime->modify('+' . $setDurationProduct . ' ' . $addMonthOrWeek)->format('Y-m-d')
                     ]
@@ -232,14 +231,14 @@ class OrderController extends AbstractController
                 'postalCode' => $userAddress->getPostalCode(),
                 'reactCityNr' => $user->getLibReactCity(),
                 'reactStateNr' => $user->getLibReactState(),
-                'country' => $userCountry->getCode(),
+                'country' => $userCountry,
             ],
             'orderId' => $userLatestOrder->getId(),
             'curreny' => [
                 'symbol' => $symbol,
-                'name' => $currencyType->getName()
+                'name' => $currencyType
             ],
-            'locale' => $userCountry->getLocale(),
+            'locale' => CountryTypeEnum::NL_LOCALE,
             'user' => [
                 'id' => $user->getId(),
                 'email' => $user->getEmail(),
@@ -252,7 +251,7 @@ class OrderController extends AbstractController
             'orderTaxPrice' => $orderTax->toScale(2, RoundingMode::UP),
             'amount' => [
                 'value' => $userLatestOrder->getTotalAmount(),
-                'currency' => $currencyType->getName(),
+                'currency' => $currencyType,
             ],
             'lines' => $orderLines
         ], 201);

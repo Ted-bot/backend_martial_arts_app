@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\ApiResource;
+namespace App\Enum;
 
 use ApiPlatform\Metadata\Operation;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -14,7 +14,6 @@ trait EnumApiResourceTrait
         return $this->name;
     }
 
-    #[Groups('read')]
     public function getValue()
     {
         return $this->value;
