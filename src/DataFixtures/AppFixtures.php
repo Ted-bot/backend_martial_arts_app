@@ -356,7 +356,7 @@ class AppFixtures extends Fixture
                 $orderLine = new OrderLine();
                 $product = $this->productRepo->findOneBy(['name'=> $name]);
 
-                $productTax = $this->prVatRepo->findOneBy(['product'=> $product->getId()]);
+                // $productTax = $this->prVatRepo->findOneBy(['product'=> $product->getId()]);
                 $shippingAddress = $this->userAddressRepo->findOneBy(['relatedUser'=> $user->getId(), 'isDefault' => true ]);
 
                 // $quantity = [1,2,3];

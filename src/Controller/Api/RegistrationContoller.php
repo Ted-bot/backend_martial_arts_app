@@ -57,6 +57,8 @@ class RegistrationContoller extends AbstractController
     {
         $user->createNewUserObj($request);
 
+        // dd(['userFirstName' => $user->getFirstName()]);
+
         $hashedPassword = $passwordHasher->hashPassword(
             $user,
             $user->getPassword()

@@ -2,16 +2,19 @@
 
 namespace App\Entity;
 
+use DateTime;
+use DateTimeZone;
+use DateTimeImmutable;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post;
+use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
-use ApiPlatform\Metadata\GetCollection;
-use App\Enum\MolliePaymentStatusEnum;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
+use App\Enum\MolliePaymentStatusEnum;
+use ApiPlatform\Metadata\GetCollection;
 use App\Repository\ShopOrderRepository;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -77,10 +80,14 @@ class ShopOrder
     public function __construct()
     {
         $this->orderLines = new ArrayCollection();
-        // $this->statusTransfers = new ArrayCollection();
         $this->orderStatus = MolliePaymentStatusEnum::OPEN;
-        $this->Tran = new ArrayCollection();
-        $this->ddd = new ArrayCollection();
+        
+        $dateTime = new DateTime();
+        $dateTimeImmutable = new DateTimeImmutable();
+        $dateTimeImmutable->setTimezone(new DateTimeZone('Europe/Amsterdam'));
+        $this->orderDate = $dateTime->createFromImmutable($dateTimeImmutable);
+        // $this->Tran = new ArrayCollection();
+        // $this->ddd = new ArrayCollection();
     }
 
     public function getId(): ?int

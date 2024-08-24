@@ -66,6 +66,8 @@ security:
         - { path: ^/api/v1/dashboard, roles: ROLE_USER_STUDENT }
         - { path: ^/api/v1/payment, roles: ROLE_USER_STUDENT }
         - { path: ^/api/v1/order/address, roles: ROLE_USER_STUDENT }
+        - { path: ^/api/v1/order/payment, roles: ROLE_USER_STUDENT }
+        - { path: ^/api/v1/order/create, roles: ROLE_USER_STUDENT }
 
 when@test:
     security:
