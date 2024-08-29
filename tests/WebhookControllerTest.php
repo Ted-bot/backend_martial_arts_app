@@ -8,7 +8,6 @@ use App\Class\Role;
 use App\Entity\User;
 use DateTimeInterface;
 use App\Entity\Address;
-use App\Entity\Country;
 use App\Entity\ShopOrder;
 use App\Entity\UserAddress;
 use App\Entity\StatusTransfer;
@@ -56,7 +55,7 @@ class WebhookControllerTest extends ApiTestCase
     {
         $this->getSingleUserWithOrder();
 
-        $data = ['json' => ['id' => 'tr_DBPsz4sq7M']];
+        $data = ['json' => ['id' => 'tr_LSGyD4eoXA']];
 
         $this->client->request(
             'POST', 
@@ -90,7 +89,7 @@ class WebhookControllerTest extends ApiTestCase
     {
         $this->setUp();
         $user = new User();
-        $country = new Country('nl', 'nl_NL');
+        // $country = CountryTypeEnum::NL_CODE;
         $shippingAddress = new Address();
         $userAddress = new UserAddress();
         $shopOrder = new ShopOrder();
@@ -116,7 +115,7 @@ class WebhookControllerTest extends ApiTestCase
         $user->setLibReactCity(77340);
         
         $this->persistAndFlush($user);
-        $this->persistAndFlush($country);
+        // $this->persistAndFlush($country);
 
         $shippingAddress->setUnitNumber('-b');
         $shippingAddress->setStreetNumber(5);
@@ -145,9 +144,10 @@ class WebhookControllerTest extends ApiTestCase
 
         $shopOrder = $em->getRepository(ShopOrder::class)->find($shopOrder->getId());
         
-        $statusTransfer->setTransferId('tr_DBPsz4sq7M');
+        $statusTransfer->setTransferId('tr_LSGyD4eoXA');
         $statusTransfer->setUserOrder($shopOrder);
         $statusTransfer->setStatus(MolliePaymentStatusEnum::OPEN);
+        $statusTransfer->setCustomer('cst_HWJKkmZeqA');
 
         $this->persistAndFlush($statusTransfer);
     }

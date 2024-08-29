@@ -88,6 +88,33 @@ services:
     stdin_open: true
     tty: true
 
+  # static-site:
+  #   image: dockersamples/static-site
+  #   build: .
+  #   restart: always
+  #   networks:
+  #         - martial_arts_app
+  #   ports:
+  #     - "80:80"
+    
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    # restart: unless-stopped
+    command:
+      - "start"
+      - "--all"
+      - "--config"
+      - "/etc/ngrok.yml"
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+    # environment:
+    #   NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    networks:
+      - martial_arts_app
+    ports:
+      - 4040:4040
+
 volumes:
   php_socket:
   caddy_data:

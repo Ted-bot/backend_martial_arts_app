@@ -20,7 +20,7 @@ final class Version20240816181158 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE status_transfer ADD transfer_id VARCHAR(25) NOT NULL');
+        $this->addSql('ALTER TABLE "status_transfer" ADD IF NOT EXISTS transfer_id VARCHAR(25) NOT NULL');
     }
 
     public function down(Schema $schema): void

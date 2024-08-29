@@ -20,8 +20,8 @@ final class Version20240821145041 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE product ADD direct_or_periodic INT NOT NULL');
-        $this->addSql('ALTER TABLE product ALTER duration_length SET NOT NULL');
+        $this->addSql('ALTER TABLE product ADD IF NOT EXISTS direct_or_periodic INT NOT NULL');
+        $this->addSql('ALTER TABLE product ADD IF NOT EXISTS duration_length SET NOT NULL');
     }
 
     public function down(Schema $schema): void

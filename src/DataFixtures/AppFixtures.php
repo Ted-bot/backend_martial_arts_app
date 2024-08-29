@@ -221,7 +221,7 @@ class AppFixtures extends Fixture
         $divideProcentByTotalProductProcent = BigDecimal::of($setVatRate->getProcent())
         ->dividedBy($productTotalProcentPlusProcent, 4,  RoundingMode::DOWN);
 
-        $tax = BigDecimal::ofUnscaledValue(520)
+        $tax = BigDecimal::ofUnscaledValue($productPrices[1])
         ->multipliedBy($divideProcentByTotalProductProcent);
 
         $prVatRate->setVatAmount($tax);

@@ -6,7 +6,8 @@ require_once dirname(__DIR__).'/vendor/autoload_runtime.php';
 
 return function (array $context) {
 
-    header('Access-Control-Allow-Origin:http://localhost:5173');
+    header('Access-Control-Allow-Origin: *');
+    // header("Access-Control-Allow-Headers: Content-Type, Accept, Origin, X-Authorization");
     header("Access-Control-Allow-Headers: Content-Type, Accept, Origin, X-Authorization");
     header('Access-Control-Expose-Headers: *');
     header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");

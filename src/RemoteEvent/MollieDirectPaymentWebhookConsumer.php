@@ -2,13 +2,16 @@
 
 namespace App\RemoteEvent;
 
-use Psr\Log\LoggerInterface;
+use App\Entity\User;
+use App\Entity\ShopOrder;
 use App\Entity\StatusTransfer;
+use Psr\Log\LoggerInterface;
 use Mollie\Api\MollieApiClient;
-use Mollie\Api\Exceptions\ApiException;
+use App\Repository\UserRepository;
 use App\Repository\ShopOrderRepository;
-use App\Enum\MolliePaymentStatusEnum;
 use App\Repository\StatusTransferRepository;
+use App\Enum\MolliePaymentStatusEnum;
+use Mollie\Api\Exceptions\ApiException;
 use Symfony\Component\RemoteEvent\RemoteEvent;
 use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Symfony\Component\RemoteEvent\Consumer\ConsumerInterface;
@@ -24,6 +27,7 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
         // private StatusTransfer $statusTransfer,
         private EntityManager $entityManager,
         private ShopOrderRepository $soRepo,
+        private UserRepository $userRepo,
         private StatusTransferRepository $stRepo
     )
     {
@@ -38,41 +42,52 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
             dd(['failed' => 'Webhook not Accepted']);     
             // return;
         }
+        // dd(['failed' => 'Webhook not Accepted']);    
+        $statusTransfer = new StatusTransfer();            
+        $mollieCustomerId = ''; 
 
         try {
             $mollie = new MollieApiClient();
             $mollie->setApiKey('test_hqd6Sq8D72UUKebcT9RnVhkd6k96x2');
-
             $payment = $mollie->payments->get($event->getId());
-            $existingOrder = $this->stRepo->findOneBy(['transferId' => $payment->id]);
-            $shopOrderUpdate = $this->soRepo->findOneBy(['id' => $existingOrder]);            
 
-            $statusTransfer = new StatusTransfer();            
-            $statusTransfer->setUserOrder($shopOrderUpdate);
-            $statusTransfer->setStatus(MolliePaymentStatusEnum::PAID);
-            $statusTransfer->setTransferId($event->getId());
+            /** @var StatusTransfer $previousTransfer Object */
+            $previousTransfer = $this->stRepo->findOneBy(['transferId' => $payment->id]);
 
-            $statusPayment = MolliePaymentStatusEnum::tryFrom($payment->status);
-            $shopOrderUpdate->setOrderStatus($statusPayment);
+            /** @var ShopOrder $shopOrderUpdate Object */
+            $shopOrderUpdate = $this->soRepo->findOneBy(['id' => $previousTransfer->getUserOrder(), 'orderStatus' => MolliePaymentStatusEnum::OPEN]);            
 
-            foreach([$shopOrderUpdate, $statusTransfer] as $updateData){
-                $this->entityManager->persist($updateData);
-                $this->entityManager->flush();  
-            }  
-            
             if ($payment->isPaid() || $payment->isAuthorized()) {
                 /*
                 * The order is paid or authorized
                 * At this point you'd probably want to start the process of delivering the product to the customer.
                 */
                 // $consumerPaid = new MessageComponent(id: $payment->id, status: $payment->status);
+
+                $statusPayment = MolliePaymentStatusEnum::tryFrom($payment->status);
+                // $statusPayment = MolliePaymentStatusEnum::tryFrom($payment->status);
                 
+                $statusTransfer->setUserOrder($shopOrderUpdate);
+                $statusTransfer->setStatus($statusPayment);
+                $statusTransfer->setTransferId($event->getId());
+                $statusTransfer->setCustomer($previousTransfer->getCustomer());
+
+                $shopOrderUpdate->setOrderStatus($statusPayment);
+                
+                foreach([$shopOrderUpdate, $statusTransfer] as $updateData){
+                    $this->entityManager->persist($updateData);
+                    $this->entityManager->flush();  
+                }  
+
+                // dd(['succes']);
+
                 $this->logger->debug(
                     'An event occurred in transfer remote event!',
                     [
                         'remote_event' => [
                             'id' => $payment->id,
-                            'name' => $payment->status,
+                            'status' => $payment->status,
+                            'time' => new \DateTime("now", new \DateTimeZone("Europe/Amsterdam")),
                         ]
                     ]
                 );
@@ -90,7 +105,7 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
                     [
                         'remote_event' => [
                             'id' => $payment->id,
-                            'name' => $payment->status,
+                            'status' => $payment->status,
                         ]
                     ]
                 );
@@ -129,7 +144,7 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
         } catch (ApiException $e) {
             echo "API call failed: " . htmlspecialchars($e->getMessage());
             $this->logger->debug('Webhook Consumer Error: while trying to handle transfer request!', [
-                'id_mollie_payment_error' => $event->getId()
+                'payment_id_error' => $event->getId()
             ]);
         }
     }

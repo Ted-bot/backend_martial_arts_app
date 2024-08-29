@@ -18,7 +18,7 @@ final class MollieDirectPaymentRequestParser extends AbstractRequestParser
     protected function getRequestMatcher(): RequestMatcherInterface
     {
         return new ChainRequestMatcher([
-            new IsJsonRequestMatcher(),
+            // new IsJsonRequestMatcher(),
             new MethodRequestMatcher('POST'),
         ]);
     }

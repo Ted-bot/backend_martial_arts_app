@@ -30,6 +30,9 @@ class StatusTransfer
     #[ORM\Column(length: 15)]
     private ?string $transferId = null;
 
+    #[ORM\Column(length: 25, nullable: true)]
+    private ?string $customer = null;
+
     public function __construct()
     {
         $this->status = MolliePaymentStatusEnum::OPEN;
@@ -87,6 +90,18 @@ class StatusTransfer
     public function setTransferId(string $transferId): static
     {
         $this->transferId = $transferId;
+
+        return $this;
+    }
+
+    public function getCustomer(): ?string
+    {
+        return $this->customer;
+    }
+
+    public function setCustomer(?string $customer): static
+    {
+        $this->customer = $customer;
 
         return $this;
     }

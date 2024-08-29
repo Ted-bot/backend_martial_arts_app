@@ -49,14 +49,14 @@ class RegistrationContoller extends AbstractController
         )]
     public function v2Create(
         CreateUserRequest $request,
+        // #[MapRequestPayload] CreateUserDto $request,
         EntityManager $entityManager,
         JWTTokenManagerInterface $JWTManager,
         User $user,
         UserPasswordHasherInterface $passwordHasher
-        ): Response
+        ): JsonResponse
     {
         $user->createNewUserObj($request);
-
         // dd(['userFirstName' => $user->getFirstName()]);
 
         $hashedPassword = $passwordHasher->hashPassword(
@@ -95,7 +95,7 @@ class RegistrationContoller extends AbstractController
             ]);
         }
 
-        return new Response($JWTManager->create($user), 
+        return new JsonResponse(['token' => $JWTManager->create($user)], 
         200,
         [
             'Content-Type' =>  $request->getRequest()->headers->get('Content-Type')
