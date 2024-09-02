@@ -64,6 +64,25 @@ services:
         class: App\ApiBundle\Utilities\ApiRequestParamConverter
         tags:
             - { name: request.param_converter }
+
+    # this is the service's id
+    site_update_manager.superadmin:
+        class: Symfony\Component\Uid\Factory\UuidFactory
+        # you CAN still use autowiring: we just want to show what it looks like without
+        # autowire: false
+        # manually wire all arguments
+        arguments:
+            - '@App\Service\MessageGenerator'
+            - '@mailer'
+            - 'superadmin@example.com'
+
+    site_update_manager.normal_users:
+        class: App\Service\SiteUpdateManager
+        autowire: false
+        arguments:
+            - '@App\Service\MessageGenerator'
+            - '@mailer'
+            - 'contact@example.com'
     
     # CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface:
         # class: CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface

@@ -62,6 +62,7 @@ security:
         - { path: ^/api/products, roles: PUBLIC_ACCESS }
         - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/login, roles: PUBLIC_ACCESS }
+        # - { path: ^/webhook/MollieDirectPayment, roles: PUBLIC_ACCESS }
         - { path: ^/api/webhook/MollieDirectPayment, roles: PUBLIC_ACCESS }
         - { path: ^/api/(login|token/refresh), roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/dashboard, roles: ROLE_USER_STUDENT }

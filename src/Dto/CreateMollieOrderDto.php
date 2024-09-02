@@ -6,6 +6,7 @@ namespace App\Dto;
 use App\Dto\OrderAmountDto;
 use App\Dto\OrderAddressDto;
 use App\Dto\OrderMetaDataDto;
+use Mollie\Api\Types\SequenceType;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class CreateMollieOrderDto
@@ -13,7 +14,7 @@ class CreateMollieOrderDto
     public function __construct(
         #[Assert\NotBlank]
         #[Assert\Type('string')]
-        public readonly string $description,
+        public string $description,
 
         #[Assert\NotBlank]
         #[Assert\Type('string')]
@@ -21,43 +22,48 @@ class CreateMollieOrderDto
             max: 15,
             maxMessage: 'Your order number cannot be longer than {{ limit }} characters',
         )]
-        public readonly string $order_id,
+        public string $order_id,
 
         #[Assert\NotBlank]
         #[Assert\Valid]
-        public readonly ?OrderAmountDto $amount,
+        public ?OrderAmountDto $amount,
         
         #[Assert\NotBlank]
         #[Assert\Valid]
-        public readonly ?OrderAddressDto $billingAddress,
+        public ?OrderAddressDto $billingAddress,
         
         #[Assert\NotBlank]
         #[Assert\Valid]
-        public readonly ?OrderAddressDto $shippingAddress,
+        public ?OrderAddressDto $shippingAddress,
         
         #[Assert\NotBlank]
         #[Assert\Valid]
-        public readonly ?OrderMetaDataDto $metadata,
+        public ?OrderMetaDataDto $metadata,
         
         #[Assert\NotBlank]
         #[Assert\Type('string')]
-        public readonly string $locale,        
+        public string $locale,        
 
         #[Assert\NotBlank]
         #[Assert\Url]
-        public readonly string $redirectUrl,
+        public string $redirectUrl,
 
         #[Assert\NotBlank]
         #[Assert\Type('string')]
-        public readonly string $webhookUrl,
+        public string $webhookUrl,
+        
+        public SequenceType|string $sequenceType,
 
         #[Assert\NotBlank]
         #[Assert\Type('string')]
-        public readonly string $method,
+        public string $method,
 
         #[Assert\NotBlank]
         #[Assert\Valid]
-        public readonly array $lines,
+        public array $lines,
+        
+        #[Assert\Valid]
+        public OrderSubscriptionDto $subscriptionDetail,
     )
     {}
 }

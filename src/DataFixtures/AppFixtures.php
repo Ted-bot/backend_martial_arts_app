@@ -177,8 +177,8 @@ class AppFixtures extends Fixture
             }
         }
 
-        $categoryTypes = CategoryTypeEnum::getCases();
-        $typesSubscription = SubscriptionTypeEnum::getCases();
+        // $categoryTypes = CategoryTypeEnum::getCases();
+        // $typesSubscription = SubscriptionTypeEnum::getCases();
         $vat = new VatRate();
 
         $vat->setProcent(9.00);
@@ -186,54 +186,48 @@ class AppFixtures extends Fixture
 
         $manager->flush();
         
+        $latestPr = 0;
         $productPrices = [1,130,1];
         $productNames = ['Group Trail: 2 Lessons', 'Group MemberShip', 'BD MA T-Shirt'];
 
-        $newProduct = new Product();
-        $prVatRate = new ProductVat();
+        // $newProduct = new Product();
+        // $prVatRate = new ProductVat();
 
-        $newProduct->setName('Group: Subscribe 4 month');
-        $newProduct->setPrice($productPrices[1]);
-        $newProduct->setDescription(Factory::faker()->sentences(1, true));
-        $newProduct->setCategory(CategoryTypeEnum::SUB);
-        $newProduct->setCurrencyType(CurrencyTypeEnum::EUR);
-        $newProduct->setDuration(SubscriptionTypeEnum::MONTH);
-        $newProduct->setDurationLength(SubscriptionLengthTypeEnum::MONTH_FOUR);
-        $newProduct->setDirectOrPeriodic(SubscriptionDirectOrPeriodicTypeEnum::PERIODIC);
-        // $newProduct->setDurationLength(SubscriptionLengthTypeEnum::MONTH_4);
-        $newProduct->setRelatedUser($this->userRepository->findOneBy(['email'=> 'tkbotch@gmail.com']));
+        // $newProduct->setName('Group: Subscribe 4 month');
+        // $newProduct->setPrice($productPrices[1]);
+        // $newProduct->setDescription(Factory::faker()->sentences(1, true));
+        // $newProduct->setCategory(CategoryTypeEnum::SUB);
+        // $newProduct->setCurrencyType(CurrencyTypeEnum::EUR);
+        // $newProduct->setDuration(SubscriptionTypeEnum::MONTH);
+        // $newProduct->setDurationLength(SubscriptionLengthTypeEnum::MONTH_FOUR);
+        // $newProduct->setDirectOrPeriodic(SubscriptionDirectOrPeriodicTypeEnum::PERIODIC);
+        // $newProduct->setRelatedUser($this->userRepository->findOneBy(['email'=> 'tkbotch@gmail.com']));
             
-        $latestPr = 0;
-        $skuNumber = new SkuGenerator();
-            // $subscriptionType = $this->subscriptionTypeRepository->findOneBy(['id' => $product->getDuration()]);
-        $new_skuStart = $newProduct->getCategory()->getId();
-        $new_skuMid = $newProduct->getDuration()->getId();
-        $new_skuEnd = 99;
+        // $skuNumber = new SkuGenerator();
+        // $new_skuStart = $newProduct->getCategory()->getId();
+        // $new_skuMid = $newProduct->getDuration()->getId();
+        // $new_skuEnd = 99;
         
-        $newProduct->setSku($skuNumber->generateSku($new_skuStart, $new_skuMid, $new_skuEnd));
-        
-        // dd([
-        //     'getSKU' => $newProduct->getSku(),
-        //     'duration' => $newProduct->getDuration()->getId(),
-        // ]);
-        $setVatRate = $this->vatRepo->findOneBy(['procent' => 9.00]);
-        $productTotalProcentPlusProcent = 100 + $setVatRate->getProcent();
-        $divideProcentByTotalProductProcent = BigDecimal::of($setVatRate->getProcent())
-        ->dividedBy($productTotalProcentPlusProcent, 4,  RoundingMode::DOWN);
+        // $newProduct->setSku($skuNumber->generateSku($new_skuStart, $new_skuMid, $new_skuEnd));
 
-        $tax = BigDecimal::ofUnscaledValue($productPrices[1])
-        ->multipliedBy($divideProcentByTotalProductProcent);
+        // $setVatRate = $this->vatRepo->findOneBy(['procent' => 9.00]);
+        // $productTotalProcentPlusProcent = 100 + $setVatRate->getProcent();
+        // $divideProcentByTotalProductProcent = BigDecimal::of($setVatRate->getProcent())
+        // ->dividedBy($productTotalProcentPlusProcent, 4,  RoundingMode::DOWN);
 
-        $prVatRate->setVatAmount($tax);
-        $prVatRate->setProduct($newProduct);
-        $prVatRate->setVatRate($setVatRate);
+        // $tax = BigDecimal::ofUnscaledValue($productPrices[1])
+        // ->multipliedBy($divideProcentByTotalProductProcent);
 
-        $manager->persist($prVatRate);
-        $manager->persist($newProduct);
-        $manager->flush();
-        // dd(['test' => 'yes']);
+        // $prVatRate->setVatAmount($tax);
+        // $prVatRate->setProduct($newProduct);
+        // $prVatRate->setVatRate($setVatRate);
+
+        // $manager->persist($prVatRate);
+        // $manager->persist($newProduct);
+        // $manager->flush();
 
         foreach (SubscriptionTypeEnum::getCases() as $key => $subscriptionType) {
+
             $prVatRate = new ProductVat();
             $product = new Product();
             $latestPr++;
@@ -353,6 +347,10 @@ class AppFixtures extends Fixture
             
             // if necessary loop multiProducts
             foreach($productNames as $name) {
+
+                if($name === 'BD MA T-Shirt') {continue;}
+                if($name === 'Group Trail: 2 Lessons') {continue;}
+
                 $orderLine = new OrderLine();
                 $product = $this->productRepo->findOneBy(['name'=> $name]);
 

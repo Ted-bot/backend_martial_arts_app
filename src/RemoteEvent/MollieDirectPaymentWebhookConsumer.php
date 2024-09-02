@@ -79,6 +79,20 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
                     $this->entityManager->flush();  
                 }  
 
+                // $subscription = $mollie->customers->get($mollieCustomerId);
+                // $subscription->createSubscription(["amount" => [
+                //     "value" => $subscriptionAmount, // You must send the correct number of decimals, thus we enforce the use of strings
+                //     "currency" => "EUR",
+                //     ],
+                //     "times" => $subscriptionLength, // request
+                //     "interval" => "1 month",
+                //     "description" => "Subscription #{$subscriptionId}",
+                //     "webhookUrl" => 'https://e72d-95-96-151-55.ngrok-free.app' . '/api/webhook/MollieDirectPayment',
+                //     "metadata" => [
+                //         "subscription_id" => $subscriptionId,
+                //     ],
+                // ]);
+
                 // dd(['succes']);
 
                 $this->logger->debug(
@@ -99,7 +113,34 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
                 * The order is canceled.
                 */
                 // $consumerCancelled = new MessageComponent(id: $payment->id, status: $payment->status);
+              
+                $statusPayment = MolliePaymentStatusEnum::tryFrom($payment->status);
+                // $statusPayment = MolliePaymentStatusEnum::tryFrom($payment->status);
                 
+                $statusTransfer->setUserOrder($shopOrderUpdate);
+                $statusTransfer->setStatus($statusPayment);
+                $statusTransfer->setTransferId($event->getId());
+                $statusTransfer->setCustomer($previousTransfer->getCustomer());
+
+                $shopOrderUpdate->setOrderStatus($statusPayment);
+                
+                foreach([$shopOrderUpdate, $statusTransfer] as $updateData){
+                    $this->entityManager->persist($updateData);
+                    $this->entityManager->flush();  
+                }  
+
+                // dd(['succes']);
+
+                $this->logger->debug(
+                    'An event occurred in transfer remote event!',
+                    [
+                        'remote_event' => [
+                            'id' => $payment->id,
+                            'status' => $payment->status,
+                            'time' => new \DateTime("now", new \DateTimeZone("Europe/Amsterdam")),
+                        ]
+                ]);
+
                 $this->logger->debug(
                     'An event occurred in transfer remote event!',
                     [

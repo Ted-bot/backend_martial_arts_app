@@ -17,7 +17,7 @@ class MainController extends AbstractController
     public function index(): Response
     // public function index(): Response
     {
-        return new Response('testing');
+        return new Response('BDMA API');
     }
 
     // #[Route('/testuser', name: 'test_user')]
@@ -54,13 +54,5 @@ class MainController extends AbstractController
 
         return new Response('Check out your post: '.$post_event->getConversion());
     }
-    
-    // #[Route('/')]
-    // public function add(): Response
-    // {
-
-
-    //     return Response();
-    // }
 
 }

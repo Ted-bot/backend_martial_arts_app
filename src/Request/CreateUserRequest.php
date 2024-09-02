@@ -13,7 +13,7 @@ use Symfony\Component\Validator\Constraints\PasswordStrength;
 
 class CreateUserRequest extends AbstractJsonRequest
 {
-    #[NotBlank(message: 'I dont like this field empty')]
+    #[NotBlank(message: 'This field cannot be empty')]
     #[Type('string')]
     #[Length(
         min: 2,
@@ -23,7 +23,7 @@ class CreateUserRequest extends AbstractJsonRequest
     )]
     public readonly string $firstName;
 
-    #[NotBlank(message: 'I dont like this field empty')]
+    #[NotBlank(message: 'This field cannot be empty')]
     #[Type('string')]
     #[Length(
         min: 2,
@@ -33,12 +33,12 @@ class CreateUserRequest extends AbstractJsonRequest
     )]
     public readonly string $lastName;
 
-    #[NotBlank()]
+    #[NotBlank(message: 'This field cannot be empty')]
     #[Type('string')]
     #[Email()]
     public readonly string $email;
 
-    #[NotBlank()]
+    #[NotBlank(message: 'This field cannot be empty')]
     #[Type('string')]
     #[Length(
         min: 10,
@@ -48,11 +48,11 @@ class CreateUserRequest extends AbstractJsonRequest
     )]
     public readonly string $phoneNumber;
     
-    #[NotBlank()]
+    #[NotBlank(message: 'This field cannot be empty')]
     #[Date()]
     public readonly string $dateOfBirth;
 
-    #[NotBlank()]
+    #[NotBlank(message: 'This field cannot be empty')]
     #[Type('string')]
     #[Length(
         min: 4,
@@ -62,7 +62,7 @@ class CreateUserRequest extends AbstractJsonRequest
     )]
     public readonly string $gender;
 
-    #[NotBlank()]
+    #[NotBlank(message: 'This field cannot be empty')]
     #[Type('string')]
     #[Length(
         min: 2,
@@ -73,14 +73,14 @@ class CreateUserRequest extends AbstractJsonRequest
     public readonly string $location;
     
     
-    #[NotBlank()]
+    #[NotBlank(message: 'This field cannot be empty')]
     #[Type('string')]
     #[PasswordStrength([
         'minScore' => PasswordStrength::STRENGTH_WEAK,
     ])]
     public readonly string $password;
 
-    #[NotBlank()]
+    #[NotBlank(message: 'This field cannot be empty')]
     #[Type('string')]
     #[Length(
         min: 10,
@@ -90,7 +90,7 @@ class CreateUserRequest extends AbstractJsonRequest
     )]
     public readonly string $conversion;
     
-    #[NotBlank()]
+    #[NotBlank(message: 'This field cannot be empty')]
     #[Type('string')]
     #[Length(
         min: 1,
@@ -101,7 +101,7 @@ class CreateUserRequest extends AbstractJsonRequest
     public readonly string $cityId;
 
 
-    #[NotBlank()]
+    #[NotBlank(message: 'This field cannot be empty')]
     #[Type('string')]
     #[Length(
         min: 1,
