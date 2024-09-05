@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api;
 
+use App\Dto\CreateMollieOrderRequest;
 use App\Entity\ShopOrder;
 use App\Enum\MolliePaymentStatusEnum;
 use App\Repository\StatusTransferRepository;
@@ -296,7 +297,7 @@ class OrderController extends AbstractController
 
     #[Route('/api/v1/payment', name: 'app_payment', methods: ['POST'])]
     public function payUserOrder(#[MapRequestPayload] CreateMollieOrderDto $request): JsonResponse
-    // public function payUserOrder(Request $request): JsonResponse
+    // public function payUserOrder(CreateMollieOrderDto $request): JsonResponse
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
 
@@ -309,6 +310,8 @@ class OrderController extends AbstractController
         $subscriptionLength = $request->subscriptionDetail->subscriptionLength;
         $subscriptionAmount = $request->subscriptionDetail->subscriptionAmount;
 
+        // dd(['subscriptionAmount' => $subscriptionAmount]);
+
         /** @var ShopOrder $shopOrder Object */
         $shopOrder = $this->shopOrderRepository->findOneBy(['ownedBy' => $this->getUser()]);
 
@@ -317,11 +320,6 @@ class OrderController extends AbstractController
 
         $request->sequenceType !== '' ?? $molliehelper->setSubscription(true);
 
-        // $subscriptionPeriod = $request->subscriptionDetail->productSubscription;
-
-        // dd(['test' => $request->subscriptionDetail->productSubscription]);
-        // die();
-        
         if($knownMollieCustomer->getCustomer() != null){
             $mollieCustomerId = $knownMollieCustomer->getCustomer();
             // dd(['test' => $knownMollieCustomer->getCustomer()]);
@@ -335,31 +333,24 @@ class OrderController extends AbstractController
             ];
             $mollieCustomer = $mollie->customers->create($newCustomer);
             $mollieCustomerId = $mollieCustomer->id;
-            // dd(['test'=>'createNewCustomer']);
         }
-        // dd(['test' => $mollieCustomerId]);
+
         $customer = $mollie->customers->get($mollieCustomerId);
 
         //Now make payment  error ApiException
         $createPayment = $customer->createPayment($newUserOrder); // error
         $transferId = $createPayment->id;            
 
-        // 
         $statusTransfer->setUserOrder($shopOrder);
         $statusTransfer->setTransferId($transferId);
-
-        $this->entityManager->persist($statusTransfer);
-        $this->entityManager->flush();
-        
-        // //  If subscription - also make check if user already exist
-
-        dd(['test' => $customer->mandates()]);
-
-
         $statusTransfer->setCustomer($mollieCustomerId);
 
         $this->entityManager->persist($statusTransfer);
         $this->entityManager->flush();
+
+
+        // $this->entityManager->persist($statusTransfer);
+        // $this->entityManager->flush();
 
         /*
         * Generate a unique subscription id for this example. It is important to include this unique attribute
@@ -370,12 +361,16 @@ class OrderController extends AbstractController
         // $subscriptionAmount
         $calculate = (new OrderCalulator());
 
-        $userAddress = $newUserOrder->billingAddress instanceof OrderAddressDto;
+        // $userAddress = $request->billingAddress instanceof OrderAddressDto;
 
-        $customer->createMandate([
-            "method" => $newUserOrder->method,
-            "consumerName" => $userAddress->givenName . ' ' . $userAddress->familyNa
-        ]);
+        // $createCutMandate = $customer->createMandate([
+        //     "method" => \Mollie\Api\Types\MandateMethod::DIRECTDEBIT,
+        //     "consumerAccount" => 'NL34ABNA0243341423',
+        //     // "consumer" => $request->method,
+        //     "consumerName" => $request->billingAddress->givenName . ' ' . $request->billingAddress->familyName
+        // ]);
+
+        // dd([ "subscriptionValue" => $subscriptionAmount, 'subsciptionLength' => $subscriptionLength, 'createMandate' => $createCutMandate]);
 
         // $subscription = $mollie->subscriptions->createFor($mollieCustomer);
         $customer->createSubscription([
@@ -386,11 +381,13 @@ class OrderController extends AbstractController
             "times" => $subscriptionLength, // request
             "interval" => "1 month",
             "description" => "Subscription #{$subscriptionId}",
-            "webhookUrl" => 'https://e72d-95-96-151-55.ngrok-free.app' . '/api/webhook/MollieDirectPayment',
+            "webhookUrl" => $request->webhookUrl . '/api/webhook/MollieSubscriptionPayment',
             "metadata" => [
                 "subscription_id" => $subscriptionId,
             ],
         ]);
+
+        // create subscription for user 
         
         return new JsonResponse(['redirect' => $createPayment->getCheckoutUrl()], 200);
         // return new JsonResponse('Failed Test Payment!', 401);

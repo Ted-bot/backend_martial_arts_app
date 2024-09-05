@@ -4,3 +4,6 @@ framework:
       MollieDirectPayment:
         service: App\Webhook\MollieDirectPaymentRequestParser
         secret: your_secret_here
+      MollieSubscriptionPayment:
+        service: App\Webhook\MollieSubscriptionPaymentRequestParser
+        secret: your_secret_here

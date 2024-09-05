@@ -41,17 +41,17 @@ class CustomerInfoRequest extends AbstractJsonRequest
             max: 5,
             maxMessage: 'Your location cannot be longer than {{ limit }} characters',
         )]
-        public  $unitNumber;
+        public $unitNumber;
 
         #[Assert\NotBlank(message: 'This field cannot be empty')]
-        #[Assert\Type('string')]
+        #[Assert\Type('int')]
         #[Assert\Length(
             min: 1,
             max: 6, //change to 6
             minMessage: 'Your street number cannot be empty',
             maxMessage: 'Your street number cannot be longer than {{ limit }} characters!',
         )]
-        public string $streetNumber;
+        public int $streetNumber;
 
         #[Assert\NotBlank(message: 'This field cannot be empty')]
         #[Assert\Type('string')]

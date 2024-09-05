@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Dto\CreateMollieOrderRequest;
 use DateTime;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
@@ -11,17 +12,27 @@ use Mollie\Api\MollieApiClient;
 use App\Dto\CreateMollieOrderDto;
 use App\Enum\SubscriptionTypeEnum;
 use Mollie\Api\Types\SequenceType;
+use App\Dto\OrderAmountDto;
+use App\Dto\OrderAddressDto;
+use App\Dto\OrderMetaDataDto;
+use App\Dto\OrderSubscriptionDto;
+
+// use OrderAmountDto
+// OrderAddressDto
+// OrderMetaDataDto
+// SequenceType
+// OrderSubscriptionDto
 
 
 class MollieClientHelper
 {
     public $em;
     public $mollie;
-    public array $amount;
+    public OrderAmountDto $amount;
     public string $description;
-    public array $billingAddress;
-    public array $shippingAddress;
-    public string $metadata;
+    public OrderAddressDto $billingAddress;
+    public OrderAddressDto $shippingAddress;
+    public OrderMetaDataDto $metadata;
     public string $locale;
     public string $consumerDateOfBirth;
     public string $orderNumber;
@@ -33,7 +44,7 @@ class MollieClientHelper
     public BigDecimal $orderTotalProductPrice;
     public array $lines;
     public array $orderLine;
-    public SequenceType|string $sequenceType;
+    public string $sequenceType;
 
     public function __construct()
     // public function __construct($secretKey)
@@ -51,16 +62,19 @@ class MollieClientHelper
 
     public function setupOrderToPay(CreateMollieOrderDto $request): self
     {
+
         $this->setAmount($request->amount);
         $this->setBillingAddress($request->billingAddress);
         $this->setShippingAddress($request->shippingAddress);
         $this->setMetadata($request->metadata);
-        $this->setDescription($request->metadata);
+        $this->setDescription($request->description);
         $this->setLocale($request->locale);
         $this->setRedirectUrl($request->redirectUrl);
-        $this->setWebhookUrl($request->redirectUrl);
-        $this->setMethod($request->redirectUrl);
-        $request->sequenceType !== '' ? $this->setSequenceType($request->sequenceType) : '';
+        $this->setLines($request->lines);
+        $this->setWebhookUrl($request->webhookUrl); //'https://e72d-95-96-151-55.ngrok-free.app' . '/api/webhook/MollieDirectPayment'
+        $this->setMethod($request->method);
+        $this->setSequenceType('first');
+        // !$request->sequenceType ? '' : $this->setSequenceType($request->sequenceType);
         // $this->setLines($request->redirectUrl);
 
         return $this;
@@ -77,14 +91,17 @@ class MollieClientHelper
             "locale" => $this->locale,
             "redirectUrl" => $this->redirectUrl,
             // "webhookUrl" => 'https://da15-2a02-a210-4bb-7580-9c3a-36c0-765b-2503.ngrok-free.app' . '/api/webhook/MollieDirectPayment',
-            "webhookUrl" => 'https://e72d-95-96-151-55.ngrok-free.app' . '/api/webhook/MollieDirectPayment',
+            "webhookUrl" => $this->webhookUrl . '/api/webhook/MollieDirectPayment',
             "method" => $this->method,
             "lines" => $this->lines,
+            "sequenceType" => $this->sequenceType,
             // $this->sequenceType !== '' ? ["sequenceType" => $this->sequenceType] : ''
             // "sequenceType" => $this->sequenceType ? $this->sequenceType : '',
             // SequenceType::SEQUENCETYPE_FIRST
         ];
-        return !$this->subscription ? $userOrder : array_push($userOrder, $this->sequenceType);
+        // dd(['userOrder' => $userOrder, 'subscription' => $this->subscription]);
+        return $userOrder;
+        // return !$this->subscription ? $userOrder : array_push($userOrder, $this->sequenceType);
     }
 
     public function createOrderLine($order, $prodUrlNr, $userProductTax, $exchangeToCountry, $userSelectedProduct): self
