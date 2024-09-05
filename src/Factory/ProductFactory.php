@@ -55,7 +55,7 @@ final class ProductFactory extends PersistentProxyObjectFactory
     protected function defaults(): array|callable
     {
         return [
-            'categoryId' => CategoryFactory::first(),
+            'category' => CategoryFactory::first(),
             'createdAt' => DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
             'currencyId' => CurrencyTypeFactory::new(),
             'description' => self::faker()->text(510),

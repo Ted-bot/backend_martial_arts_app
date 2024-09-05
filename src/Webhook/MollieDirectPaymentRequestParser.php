@@ -18,7 +18,7 @@ final class MollieDirectPaymentRequestParser extends AbstractRequestParser
     protected function getRequestMatcher(): RequestMatcherInterface
     {
         return new ChainRequestMatcher([
-            new IsJsonRequestMatcher(),
+            // new IsJsonRequestMatcher(), // webhook comes in as application/x-www-form-urlencoded
             new MethodRequestMatcher('POST'),
         ]);
     }

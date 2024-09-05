@@ -9,4 +9,5 @@ api_refresh_token:
     path: /api/token/refresh
 webhook_mollie_direct_payment:
     resource: '@FrameworkBundle/Resources/config/routing/webhook.xml'
+    # prefix: /webhook/
     prefix: /api/webhook/

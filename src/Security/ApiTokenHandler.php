@@ -25,7 +25,7 @@ class ApiTokenHandler implements AccessTokenHandlerInterface
         // dd([ 'userIdentifier' => $userIdentifier]);
         // $user = $this->authenticator->loadUser(['token' => $token], 'username');
 
-        dd($token->getUserIdentifier());
+        // dd($token->getUserIdentifier());
         // return new UserBadge($userIdentifier);
         return new UserBadge($token);
         // return new UserBadge($user);

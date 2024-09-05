@@ -80,7 +80,7 @@ class ShopOrderRepository extends ServiceEntityRepository
                 ->join('prTax.VatRate','taxRate')
                 ->where('so.ownedBy = :user')
                 ->andWhere('orderLines.shopOrder = so.id')
-                ->andWhere("so.orderStatus != 3") // status = paid
+               //  ->andWhere("so.orderStatus != paid") // status = paid / 3
                 ->setParameter('user', $user)
                 // ->setParameter('calcPrices',  $testQb)
                ->orderBy('so.orderDate','DESC')

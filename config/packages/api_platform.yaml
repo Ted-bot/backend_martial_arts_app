@@ -2,13 +2,19 @@ api_platform:
     title: Amsterdam Martial Arts API Platform
     description: API for martial arts school
     version: 1.0.0
-    formats:
-        jsonld: ['application/ld+json']
-        json: ['application/json']
-    docs_formats:
-        jsonld: ['application/ld+json']
-        jsonopenapi: ['application/vnd.openapi+json']
-        html: ['text/html']
+    # formats:
+    #     jsonld: ['application/ld+json']
+    #     json: ['application/json']
+    # docs_formats:
+    #     jsonld: ['application/ld+json']
+    #     jsonopenapi: ['application/vnd.openapi+json']
+    #     html: ['text/html']
+    # http_cache:
+    #     invalidation:
+            # We assume that your API can reach your caddy instance by the hostname http://caddy.
+            # The endpoint /souin-api/souin is the default path to the invalidation API.
+            # urls: [ 'http://caddy/souin-api/souin' ]
+            # purger: api_platform.http_cache.purger.souin
     # defaults:
     #     stateless: true
     #     cache_headers:

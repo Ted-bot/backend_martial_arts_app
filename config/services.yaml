@@ -25,6 +25,18 @@ services:
             - '../src/DependencyInjection/'
             # - '../src/Entity/'
             - '../src/Kernel.php'
+    
+    #api platform service
+    product.search_filter:
+        parent: 'api_platform.doctrine.orm.search_filter'
+        arguments: [ { duration: ~ } ]
+        tags:  [ 'api_platform.filter' ]
+        # The following are mandatory only if a _defaults section is defined with inverted values.
+        # You may want to isolate filters in a dedicated file to avoid adding the following lines.
+        # autowire: false
+        # autoconfigure: false
+        # public: false
+            
     App\http_kernel\cors_subscriber:
         class: App\EventSubscriber\HttpKernel\CorsSubscriber
         tags:
@@ -52,6 +64,25 @@ services:
         class: App\ApiBundle\Utilities\ApiRequestParamConverter
         tags:
             - { name: request.param_converter }
+
+    # this is the service's id
+    site_update_manager.superadmin:
+        class: Symfony\Component\Uid\Factory\UuidFactory
+        # you CAN still use autowiring: we just want to show what it looks like without
+        # autowire: false
+        # manually wire all arguments
+        arguments:
+            - '@App\Service\MessageGenerator'
+            - '@mailer'
+            - 'superadmin@example.com'
+
+    site_update_manager.normal_users:
+        class: App\Service\SiteUpdateManager
+        autowire: false
+        arguments:
+            - '@App\Service\MessageGenerator'
+            - '@mailer'
+            - 'contact@example.com'
     
     # CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface:
         # class: CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface

@@ -2,19 +2,53 @@
 
 namespace App\Entity;
 
+use App\Enum\SubscriptionDirectOrPeriodicTypeEnum;
+use App\Enum\SubscriptionLengthTypeEnum;
 use DateTimeZone;
 use DateTimeImmutable;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use App\Entity\ProductVat;
+use App\Class\SkuGenerator;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
+use ApiPlatform\Metadata\Patch;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
+use App\Enum\CategoryTypeEnum;
+use App\Enum\CurrencyTypeEnum;
 use App\Repository\ProductRepository;
-use App\Class\SkuGenerator;
+use ApiPlatform\Metadata\GetCollection;
+use App\Enum\SubscriptionTypeEnum;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
+use ApiPlatform\Doctrine\Orm\Filter\NumericFilter;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\Ignore;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
-#[ApiResource]
+// #[ApiResource]
+#[ApiResource(
+    shortName: 'Product',
+    filters: ['product.search_filter'],
+    description: 'Available Products',
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(),
+        new Put(),
+        new Patch(),
+    ],
+    normalizationContext: [
+        'groups' => ['product:read']
+    ],
+    denormalizationContext: [
+        'groups' => ['product:write']
+    ],
+)]
 class Product
 {
     #[ORM\Id]
@@ -22,59 +56,77 @@ class Product
     #[ORM\Column]
     private ?int $id = null;
 
-    protected ManagerRegistry $em;
+    #[ORM\Column(length: 15)]
+    #[Groups(['product:read'])]
+    protected ?string $sku = null;   
 
-    #[ORM\Column(length: 10)]
-    protected ?string $sku = null;
-
-    // protected $categoryRepo;
-    // protected $subscriptionTypeRepo;
-    
     #[ORM\Column(length: 100)]
+    #[Groups(['product:read'])]
     protected ?string $name = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 17, scale: 2)]
+    #[Groups(['product:read'])]
     protected ?string $price = null;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
     #[ORM\JoinColumn(nullable: false)]
-    protected ?Category $category = null;
+    #[ORM\Column(enumType: CategoryTypeEnum::class)]
+    #[Groups(['product:read'])]
+    protected ?CategoryTypeEnum $category;
 
     #[ORM\Column(length: 510)]
+    #[Groups(['product:read'])]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::SIMPLE_ARRAY, nullable: true)]
+    #[Groups(['product:read'])]
     private ?array $images = null;
 
     #[ORM\Column]
+    #[Groups(['product:read'])]
     protected ?bool $isPublished = true;
 
     #[ORM\Column]
+    #[Groups(['product:read'])]
     private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'relatedProducts')]
     #[ORM\JoinColumn(nullable: false)]
-    protected ?CurrencyType $currency = null;
+    #[ORM\Column(enumType: CurrencyTypeEnum::class)]
+    #[Groups(['product:read'])]
+    protected ?CurrencyTypeEnum $currency;
 
     #[ORM\ManyToOne(inversedBy: 'relatedSubscriptions')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?SubscriptionType $duration = null;
+    #[ORM\Column(enumType: SubscriptionTypeEnum::class)]
+    #[Groups(['product:read'])]
+    private ?SubscriptionTypeEnum $duration;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $relatedUser = null;
+    private ?User $relatedUser;
 
     /**
      * @var Collection<int, ProductVat>
      */
     #[ORM\OneToMany(targetEntity: ProductVat::class, mappedBy: 'product')]
+    #[Groups(['product:read'])]
     protected Collection $productVats;
 
     /**
      * @var Collection<int, OrderLine>
      */
     #[ORM\OneToMany(targetEntity: OrderLine::class, mappedBy: 'product')]
+    #[Ignore]
     private Collection $orderLines;
+
+    #[ORM\Column(enumType: SubscriptionLengthTypeEnum::class)]
+    #[Groups(['product:read'])]
+    private ?SubscriptionLengthTypeEnum $durationLength = null;
+
+    #[ORM\Column]
+    #[Groups(['product:read'])]
+    private ?SubscriptionDirectOrPeriodicTypeEnum $directOrPeriodic;
 
     public function __construct(
     )
@@ -83,7 +135,6 @@ class Product
         $this->createdAt = $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
         $this->productVats = new ArrayCollection();
         $this->orderLines = new ArrayCollection();
-        // $this->em = new ManagerRegistry();
     }
 
     public function getId(): ?int
@@ -115,12 +166,12 @@ class Product
         return $this;
     }
 
-    public function getCategory(): ?Category
+    public function getCategory(): ?CategoryTypeEnum
     {
         return $this->category;
     }
 
-    public function setCategory(?Category $category): static
+    public function setCategory(?CategoryTypeEnum $category): static
     {
         $this->category = $category;
 
@@ -175,24 +226,24 @@ class Product
         return $this;
     }
 
-    public function getCurrencyType(): ?CurrencyType
+    public function getCurrencyType(): ?CurrencyTypeEnum
     {
         return $this->currency;
     }
 
-    public function setCurrencyType(?CurrencyType $currency): static
+    public function setCurrencyType(?CurrencyTypeEnum $currency): static
     {
         $this->currency = $currency;
 
         return $this;
     }
 
-    public function getDuration(): ?SubscriptionType
+    public function getDuration(): ?SubscriptionTypeEnum
     {
         return $this->duration;
     }
 
-    public function setDuration(?SubscriptionType $duration): static
+    public function setDuration(?SubscriptionTypeEnum $duration): static
     {
         $this->duration = $duration;
 
@@ -287,6 +338,30 @@ class Product
     public function setSku($sku)
     {
         $this->sku = $sku;
+
+        return $this;
+    }
+
+    public function getDurationLength(): ?SubscriptionLengthTypeEnum
+    {
+        return $this->durationLength;
+    }
+
+    public function setDurationLength(?SubscriptionLengthTypeEnum $durationLength): static
+    {
+        $this->durationLength = $durationLength;
+
+        return $this;
+    }
+
+    public function getDirectOrPeriodic(): ?SubscriptionDirectOrPeriodicTypeEnum
+    {
+        return $this->directOrPeriodic;
+    }
+
+    public function setDirectOrPeriodic(SubscriptionDirectOrPeriodicTypeEnum $directOrPeriodic): static
+    {
+        $this->directOrPeriodic = $directOrPeriodic;
 
         return $this;
     }

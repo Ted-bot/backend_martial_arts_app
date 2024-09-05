@@ -2,15 +2,19 @@
 
 namespace App\Entity;
 
+use DateTime;
+use DateTimeZone;
+use DateTimeImmutable;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post;
+use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
-use ApiPlatform\Metadata\GetCollection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
+use App\Enum\MolliePaymentStatusEnum;
+use ApiPlatform\Metadata\GetCollection;
 use App\Repository\ShopOrderRepository;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -54,9 +58,11 @@ class ShopOrder
     #[ORM\ManyToOne(inversedBy: 'shopOrders')]
     protected ?UserAddress $shippingAddress = null;
 
-    #[ORM\ManyToOne(inversedBy: 'shopOrders')]
-    #[ORM\JoinColumn(nullable: false)]
-    protected ?OrderStatus $orderStatus = null;
+    // #[ORM\ManyToOne(inversedBy: 'shopOrders')]
+    // #[ORM\JoinColumn(nullable: false)]
+    #[ORM\Column(enumType: MolliePaymentStatusEnum::class)]
+    // #[ORM\Column(enumType: MolliePaymentStatusEnum::class)]
+    protected ?MolliePaymentStatusEnum $orderStatus;
 
     /**
      * @var Collection<int, OrderLine>
@@ -65,9 +71,23 @@ class ShopOrder
     #[Groups(['shopOrder:read', 'orderline:read'])]
     protected Collection $orderLines;
 
+    /**
+     * @var Collection<int, StatusTransfer>
+     */
+    #[ORM\OneToMany(targetEntity: StatusTransfer::class, mappedBy: 'userOrder')]
+    private Collection $statusTransfers;
+
     public function __construct()
     {
         $this->orderLines = new ArrayCollection();
+        $this->orderStatus = MolliePaymentStatusEnum::OPEN;
+        
+        $dateTime = new DateTime();
+        $dateTimeImmutable = new DateTimeImmutable();
+        $dateTimeImmutable->setTimezone(new DateTimeZone('Europe/Amsterdam'));
+        $this->orderDate = $dateTime->createFromImmutable($dateTimeImmutable);
+        // $this->Tran = new ArrayCollection();
+        // $this->ddd = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -123,12 +143,12 @@ class ShopOrder
         return $this;
     }
 
-    public function getOrderStatus(): ?OrderStatus
+    public function getOrderStatus(): ?MolliePaymentStatusEnum
     {
         return $this->orderStatus;
     }
 
-    public function setOrderStatus(?OrderStatus $orderStatus): static
+    public function setOrderStatus(?MolliePaymentStatusEnum $orderStatus): static
     {
         $this->orderStatus = $orderStatus;
 
@@ -146,12 +166,12 @@ class ShopOrder
     /**
          * [Groups({"user:read"})]
         * @SerializedName("cheeseListings")
-         */
-        #[Groups(['trainingsession:read', 'profile:read'])]        
-        public function getOrderLinesListings(): Collection
-        {
-            return $this->orderLines;
-        }
+    */
+    #[Groups(['trainingsession:read', 'profile:read'])]        
+    public function getOrderLinesListings(): Collection
+    {
+        return $this->orderLines;
+    }
 
     public function addOrderLine(OrderLine $orderLine): static
     {
@@ -174,4 +194,35 @@ class ShopOrder
 
         return $this;
     }
+
+    /**
+     * @return Collection<int, StatusTransfer>
+     */
+    public function getStatusTransfers(): Collection
+    {
+        return $this->statusTransfers;
+    }
+
+    public function addStatusTransfer(StatusTransfer $statusTransfer): static
+    {
+        if (!$this->statusTransfers->contains($statusTransfer)) {
+            $this->statusTransfers->add($statusTransfer);
+            $statusTransfer->setUserOrder($this);
+        }
+
+        return $this;
+    }
+
+    public function removeStatusTransfer(StatusTransfer $statusTransfer): static
+    {
+        if ($this->statusTransfers->removeElement($statusTransfer)) {
+            // set the owning side to null (unless already changed)
+            if ($statusTransfer->getUserOrder() === $this) {
+                $statusTransfer->setUserOrder(null);
+            }
+        }
+
+        return $this;
+    }
+
 }

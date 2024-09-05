@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Dto;
 
 // use Symfony\Component\Mime\Address;
+use App\Request\AbstractJsonRequest;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class CustomerInfoDto
+class CustomerInfoDto extends AbstractJsonRequest
 {
     public function __construct(
 
@@ -38,8 +39,6 @@ class CustomerInfoDto
         )]
         public readonly string $phoneNumber,
 
-        // Customer Address
-        
         #[Assert\Type('string')]
         #[Assert\Length(
             min: 0,

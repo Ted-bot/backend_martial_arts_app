@@ -59,12 +59,17 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/products, roles: PUBLIC_ACCESS }
         - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/login, roles: PUBLIC_ACCESS }
+        # - { path: ^/webhook/MollieDirectPayment, roles: PUBLIC_ACCESS }
+        - { path: ^/api/webhook/MollieDirectPayment, roles: PUBLIC_ACCESS }
         - { path: ^/api/(login|token/refresh), roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/dashboard, roles: ROLE_USER_STUDENT }
         - { path: ^/api/v1/payment, roles: ROLE_USER_STUDENT }
         - { path: ^/api/v1/order/address, roles: ROLE_USER_STUDENT }
+        - { path: ^/api/v1/order/payment, roles: ROLE_USER_STUDENT }
+        - { path: ^/api/v1/order/create, roles: ROLE_USER_STUDENT }
 
 when@test:
     security:

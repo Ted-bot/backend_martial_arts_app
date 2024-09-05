@@ -19,8 +19,8 @@ final class Version20240715131847 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE "user" ADD lib_react_state IF NOT EXISTS  VARCHAR(4) DEFAULT NULL');
-        $this->addSql('ALTER TABLE "user" ADD lib_react_city IF NOT EXISTS  VARCHAR(5) DEFAULT NULL');
+        $this->addSql('ALTER TABLE "user" ADD IF NOT EXISTS lib_react_state VARCHAR(4) DEFAULT NULL');
+        $this->addSql('ALTER TABLE "user" ADD IF NOT EXISTS lib_react_city VARCHAR(5) DEFAULT NULL');
     }
 
     public function down(Schema $schema): void

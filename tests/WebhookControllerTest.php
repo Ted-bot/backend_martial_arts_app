@@ -2,36 +2,44 @@
 
 namespace App\Tests;
 
-use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
+use App\Enum\CountryTypeEnum;
+use DateTime;
+use App\Class\Role;
+use App\Entity\User;
+use DateTimeInterface;
+use App\Entity\Address;
+use App\Entity\ShopOrder;
+use App\Entity\UserAddress;
+use App\Entity\StatusTransfer;
+use App\Factory\ShopOrderFactory;
 use Zenstruck\Foundry\Test\Factories;
+use App\Factory\StatusTransferFactory;
+use Doctrine\ORM\EntityManagerInterface;
 use Zenstruck\Foundry\Test\ResetDatabase;
+use App\Enum\MolliePaymentStatusEnum;
+use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 // use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
+// class WebhookControllerTest extends ApiTestCase
 class WebhookControllerTest extends ApiTestCase
 {
+    use ResetDatabase, Factories;
 
-    use ResetDatabase;
-    use Factories;
-
-    // use Refres
-    // public function testSomething(): void
-    // {
-    //     $client = static::createClient();
-    //     $crawler = $client->request('GET', '/');
-
-    //     $this->assertResponseIsSuccessful();
-    //     $this->assertSelectorTextContains('h1', 'Hello World');
-    // }
+    private $entityManager;
+    private $client;
+    private $userPasswordHasherInterface;
 
     public function testLogin(): void
     {
-        $client = static::createClient();
+        // $client = static::createClient();
+        $this->setUp();
         
         $data = [ 
             'json' => ['username' => 'tkbotch@gmail.com', 'password' => 'test_pass']
         ];
         
-        $client->request(
+        $this->client->request(
             'POST',
             '/api/login_check', 
             $data,
@@ -39,49 +47,108 @@ class WebhookControllerTest extends ApiTestCase
 
         // dd(['repsonseTest' => $client->getResponse()->getKernelResponse()]);
 
-        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
 
     }
 
     public function testWebhook(): void
     {
+        $this->getSingleUserWithOrder();
 
-        // dd($_ENV['APP_ENV']);
-        // $client = static::createClient([
-        //     'environment' => 'test',
-        //     'debug'       => false,
-        // ]);
-        
-        $client = static::createClient();
-        
-        // $data = ['status' => 'paid', 'order_id' => 'test']; // invalid
-        $data = ['json' => ['id' => 'tr_DBPsz4sq7M']];
-        // $this->browser()
-        // ->post('api/mollie_direct_payments');
-        $client->request(
+        $data = ['json' => ['id' => 'tr_LSGyD4eoXA']];
+
+        $this->client->request(
             'POST', 
             '/api/webhook/MollieDirectPayment',
             $data,
         );
+        
+        $this->assertEquals(202, $this->client->getResponse()->getKernelResponse()->getStatusCode());
+    }
 
-        // $this->assertEquals(200, $client->getResponse()->getStatusCode());
+    #setup functions for tests
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->client = static::createClient();
+        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $this->userPasswordHasherInterface = static::getContainer()->get(UserPasswordHasherInterface::class);
+    }
+    protected function getEntityManager()
+    {
+        return $this->entityManager;
+    }
 
-        // $backend = static::findIriBy('/webhook/mollie_direct_payment', []);
+    protected function persistAndFlush($class): void
+    {
+        $this->entityManager->persist($class);
+        $this->entityManager->flush();
+    }
 
-        // $this->assertIsString($backend);
-        // $client->request(
-        //     'POST',
-        //     '/api/v1/login',
-        //     [],
-        //     [],
-        //     ['HTTP_HOST' => 'localhost:80'],
-        //     // $data,
-        //     json_encode($data),
-        // );
-        // $client->request('GET', '/api/products');
-        dd(['repsonseTest' => $client->getResponse()->getKernelResponse()]);
-        // dd(['responseTest' => $client->getResponse()->toArray()]);
-        // $this->assertEquals(200, $client->getResponse()->getStatusCode());
+    protected function getSingleUserWithOrder(): void
+    {
+        $this->setUp();
+        $user = new User();
+        // $country = CountryTypeEnum::NL_CODE;
+        $shippingAddress = new Address();
+        $userAddress = new UserAddress();
+        $shopOrder = new ShopOrder();
+        $date = new DateTime();
+        $statusTransfer = new StatusTransfer();
+        $em = $this->getEntityManager();
 
+        $user->setFirstName("Mr.X");
+        $user->setLastName("FutureX");
+        $user->setPhoneNumber("+31621212121");
+        $user->setPassword(
+            $this->userPasswordHasherInterface->hashPassword(
+                $user, "test_pass"
+            )
+        );
+        $user->setGender("Man");
+        $user->setLocation("Amsterdam");
+        $user->setEmail("test@gmail.com");
+        $user->setDateOfBirth("1990-03-12");
+        $user->setConversion("Ik ga de beste worden!");
+        $user->setRoles([Role::ROLE_USER_STUDENT]);
+        $user->setLibReactState(2612);
+        $user->setLibReactCity(77340);
+        
+        $this->persistAndFlush($user);
+        // $this->persistAndFlush($country);
+
+        $shippingAddress->setUnitNumber('-b');
+        $shippingAddress->setStreetNumber(5);
+        $shippingAddress->setAddressLine('testStreet');
+        $shippingAddress->setCity('Amsterdam');
+        $shippingAddress->setRegion('North-Holland');
+        $shippingAddress->setPostalCode('1111');
+        $shippingAddress->setCountry(CountryTypeEnum::NL_CODE);
+  
+        $this->persistAndFlush($shippingAddress);
+
+        $userAddress->setRelatedUser($user);
+        $userAddress->setAddress($shippingAddress);
+        $userAddress->setDefault(true);
+
+        $this->persistAndFlush($userAddress);
+        
+        $user = $em->getRepository(User::class)->find($user->getId());
+        $shopOrder->setOrderDate($date);
+        $shopOrder->setOrderStatus(MolliePaymentStatusEnum::OPEN);
+        $shopOrder->setTotalAmount('130.00');        
+        $shopOrder->setOwnedBy($user);        
+        $shopOrder->setShippingAddress($userAddress);
+
+        $this->persistAndFlush($shopOrder);
+
+        $shopOrder = $em->getRepository(ShopOrder::class)->find($shopOrder->getId());
+        
+        $statusTransfer->setTransferId('tr_LSGyD4eoXA');
+        $statusTransfer->setUserOrder($shopOrder);
+        $statusTransfer->setStatus(MolliePaymentStatusEnum::OPEN);
+        $statusTransfer->setCustomer('cst_HWJKkmZeqA');
+
+        $this->persistAndFlush($statusTransfer);
     }
 }

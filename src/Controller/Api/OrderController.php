@@ -2,21 +2,36 @@
 
 namespace App\Controller\Api;
 
+use App\Dto\CreateMollieOrderRequest;
+use App\Entity\ShopOrder;
+use App\Enum\MolliePaymentStatusEnum;
+use App\Repository\StatusTransferRepository;
+use App\Request\CustomerInfoRequest;
+use App\Service\MollieClientHelper;
+use App\Service\OrderCalulator;
+use App\Service\SubscriptionUUID;
 use DateTime;
 use App\Class\Role;
 use App\Entity\User;
 use App\Entity\Address;
 use App\Entity\OrderLine;
-use Brick\Math\BigDecimal;
 use App\Entity\UserAddress;
+use Brick\Math\BigDecimal;
 use App\Dto\CustomerInfoDto;
 use Brick\Math\RoundingMode;
+use App\Enum\CountryTypeEnum;
+use App\Entity\StatusTransfer;
+use App\Enum\CurrencyTypeEnum;
+use app\Enum\SubscriptionLengthTypeEnum;
 use Mollie\Api\MollieApiClient;
+use App\Dto\CreateMollieOrderDto;
+use App\Enum\SubscriptionTypeEnum;
 use App\Repository\UserRepository;
 use App\Repository\AddressRepository;
 use App\Repository\CountryRepository;
 use App\Repository\ProductRepository;
 use Symfony\Component\Intl\Currencies;
+use App\Enum\CountryToCurrencyTypeEnum;
 use App\Repository\OrderLineRepository;
 use App\Repository\ShopOrderRepository;
 use App\Service\MollieClient as Mollie;
@@ -32,33 +47,114 @@ use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use App\Dto\CreateMollieOrderDto;
 
 class OrderController extends AbstractController
 {
     private $mollie;
 
     public function __construct(
+        private SubscriptionUUID $subscriptionUUID,
         protected UserRepository $userRepository,
         public ShopOrderRepository $shopOrderRepository,
         private OrderLineRepository $orderLinesRepo,
         protected ProductRepository $prRepo,
         protected ProductVatRepository $prVatRepo,
-        protected CurrencyTypeRepository $currenyTypeRepo,
-        protected SubscriptionTypeRepository $subscriptionTypeRepo,
+        // protected CurrencyTypeRepository $currenyTypeRepo,
+        // protected SubscriptionTypeRepository $subscriptionTypeRepo,
         protected UserAddressRepository $userAddressRepo,
         protected AddressRepository $addressRepo,
-        protected CountryRepository $countryRepo,
-        // protected Mollie $mollie
+        // protected CountryRepository $countryRepo,
+        private StatusTransferRepository $statusTransferRepo,
+        private EntityManager $entityManager,
     )
     {
         // $this->mollie = new Mollie($this->getParameter('mollie.test'));
     }
 
+    #[Route('/api/v1/order/create', name: 'app_create_order', methods: ['POST'])]
+    public function createOrder(Request $request): JsonResponse
+    // public function payUserOrder(Request $request): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
+
+        $shoppingCart = $this->prRepo->findOneBy(['sku' => $request->getPayload()->get('sku')]);
+        $user = $this->getUser();
+        // $user = $this->userRepository->findOneBy(['id' => $this->getUser()]);
+        $userLatestOrder = $this->shopOrderRepository->findOneBy([
+            'ownedBy' => $user,
+            'orderStatus' => MolliePaymentStatusEnum::OPEN
+        ]);
+
+        // dd(['latestOrderStatus' => $userLatestOrder->getOrderStatus(), 'latestOrderDate' => $userLatestOrder->getOrderDate()]);
+        
+        // dd(['emptyLatestOrder' =>$userLatestOrder]);
+        if($userLatestOrder !== null){
+            // get Subscription Entity and stop if extension is still valid for more then one month to prevent headache later
+            if($userLatestOrder->getOrderStatus() != MolliePaymentStatusEnum::OPEN){
+                foreach($userLatestOrder->getOrderLines() as $orderLine){
+    
+                    if($orderLine->getProduct() === $shoppingCart->getId()){
+                        $addOnToQty = $orderLine->getQty() + 1;
+                        $orderLine->setQty($addOnToQty);
+                        $addOnTotalAmount = BigDecimal::of($userLatestOrder->getTotalAmount())->plus($shoppingCart->getPrice());
+                        $userLatestOrder->setTotalAmount($addOnTotalAmount);
+    
+                        $this->entityManager->persist($userLatestOrder);
+                        $this->entityManager->persist($orderLine);
+                        $this->entityManager->flush();
+                    } else {
+                        $addOneOrderLine = new OrderLine();
+                        $addOneOrderLine->setShopOrder($userLatestOrder);
+                        $addOneOrderLine->setProduct($shoppingCart);
+                        $addOneOrderLine->setPrice($shoppingCart->getPrice());
+                        
+                        $addOnTotalAmount = BigDecimal::of($userLatestOrder->getTotalAmount())->plus($shoppingCart->getPrice());
+                        $userLatestOrder->setTotalAmount($addOnTotalAmount);
+    
+                        $this->entityManager->persist($userLatestOrder);
+                        $this->entityManager->persist($orderLine);
+                        $this->entityManager->flush();
+                    }
+                }
+            } elseif($userLatestOrder->getOrderStatus() === MolliePaymentStatusEnum::PROCESSING){
+                return new JsonResponse(['message' => 'Your order is busy processing!'], 201);
+            }
+
+            return new JsonResponse(['redirect' => '/payment'], 200);
+
+            // dd(['foundProductInsidePreviousOrder'=>$foundProductInsidePreviousOrder]);
+            // $newShopOrder = $userLatestOrder;
+            
+            // Check if shop order has same subscription in basket as previous then no need to contine go ahead to payment page
+        } else {
+            $newShopOrder = new ShopOrder();
+        }
+        
+        
+        $newOrderLine = new OrderLine();
+
+        $newOrderLine->setProduct($shoppingCart);
+        $newOrderLine->setShopOrder($newShopOrder);
+        $newOrderLine->setPrice($shoppingCart->getPrice());
+        $newOrderLine->setQty(1);
+
+        $newShopOrder->setOwnedBy($this->getUser());
+        $newShopOrder->setOrderStatus(MolliePaymentStatusEnum::OPEN);
+        $newShopOrder->addOrderLine($newOrderLine);
+        $newShopOrder->setTotalAmount($shoppingCart->getPrice());
+
+        $this->entityManager->persist($newOrderLine);
+        $this->entityManager->persist($newShopOrder);
+        $this->entityManager->flush();
+
+        return new JsonResponse(['redirect' => '/payment'], 200);
+    }
+
     #[Route('/api/v1/order/address', name: 'app_order_address', methods: ['POST'])]
     public function orderAddress(
-        #[MapRequestPayload] CustomerInfoDto $request,
-        EntityManager $entityManager,
+        CustomerInfoRequest $request,
+        // #[MapRequestPayload] CustomerInfoDto $request,
+        // EntityManager $entityManager,
         Address $address,
     ): JsonResponse
     // public function orderAddress(Request $request): JsonResponse
@@ -73,12 +169,13 @@ class OrderController extends AbstractController
         /** @var UserAddress UserAddres Object */
         $addressId = $this->userAddressRepo->findOneBy(['relatedUser' => $user->getId(), 'isDefault' => 'true']);
         
-        $userAddress = $this->addressRepo->findOneBy(['id' => $addressId->getAddress()]);
-
-        $addressId->setDefault(false);
+        if($addressId){
+            $addressId->setDefault(false);
+        } 
+        // else {
+        //     $addressId = new Address();
+        // }
         
-        $userCountry = $this->countryRepo->findOneBy(['id' => $userAddress->getCountry()]);
-
         $user->setFirstName($splitFirstAndLastName[0]);
         $user->setLastName($splitFirstAndLastName[1]);
         $user->setEmail($request->email);
@@ -93,7 +190,7 @@ class OrderController extends AbstractController
         $address->setCity($request->location); // set city
         $address->setRegion($request->region); // set state
         $address->setPostalCode($request->postalCode);
-        $address->setCountry($userCountry);
+        $address->setCountry(CountryTypeEnum::NL_CODE);
 
         $newUserAddress = new UserAddress();
         $newUserAddress->setAddress($address);
@@ -101,12 +198,14 @@ class OrderController extends AbstractController
         $newUserAddress->setDefault(true);
 
         try {
-            $entityManager->persist($addressId);
-            $entityManager->persist($newUserAddress); // set prvious address Id on false
-            $entityManager->persist($user); // update user Data
-            $entityManager->persist($address); // update user Data            
+            if($addressId){
+                $this->entityManager->persist($addressId);
+            }
+            $this->entityManager->persist($newUserAddress); // set prvious address Id on false
+            $this->entityManager->persist($user); // update user Data
+            $this->entityManager->persist($address); // update user Data            
             
-            $entityManager->flush(); // update user Data
+            $this->entityManager->flush(); // update user Data
         } catch(UniqueConstraintViolationException $e){
 
             $message = 'Couldnt set new Address and Update User';
@@ -130,114 +229,40 @@ class OrderController extends AbstractController
         ]);
     }
 
-    #[Route('/api/v1/order', name: 'app_order', methods: ['GET'])]
+    #[Route('/api/v1/order/payment', name: 'app_order', methods: ['GET'])]
     public function order(Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
 
-        // $mollie = new Mollie($this->getParameter('mollie.test'));
+        $molliehelper = new MollieClientHelper(); 
 
         $user = $this->userRepository->findOneBy(['id' => $this->getUser()]);
-        $userLatestOrder = $this->shopOrderRepository->findOneBy(['ownedBy' => $user]);
-        // $mollie->consumerDateOfBirth = $user->getDateOfBirth();
-        // $mollie->orderNumber = $userLatestOrder->getId();
-
-        $orderLines = array();
-        $orderTax = BigDecimal::zero();
-        $orderTotalProductPrice= BigDecimal::zero();
-        $currencyType = $this->currenyTypeRepo->findOneBy(['name' => 'EUR']);
-        $symbol = Currencies::getSymbol($currencyType->getName());
+        $userLatestOrder = $this->shopOrderRepository->findOneBy(['ownedBy' => $user]);        
         $addressId = $this->userAddressRepo->findOneBy(['relatedUser' => $user->getId(), 'isDefault' => 'true']);
-        $userAddress = $this->addressRepo->findOneBy(['id' => $addressId->getAddress()]);
-        $userCountry = $this->countryRepo->findOneBy(['id' => $userAddress->getCountry()]);
-        // set property
-        // $mollie->locale = $userCountry->getLocale();
-
+        
+        // dd(['address'=>$addressId]);
+        if($addressId !== null){
+            $userAddress = $this->addressRepo->findOneBy(['id' => $addressId->getAddress()]);
+            $userCountry = CountryTypeEnum::toString($userAddress->getCountry());
+            $exchangeToCountry = CountryToCurrencyTypeEnum::getCurrencyType($userAddress->getCountry());
+            $symbol = Currencies::getSymbol($exchangeToCountry);
+        } else {
+            $userAddress = false;
+            $exchangeToCountry = false;
+            $symbol = Currencies::getSymbol('EUR');
+        }
+        
         $prodUrlNr = 0;
         foreach( $userLatestOrder->getOrderLines() as $order ){
             $prodUrlNr++;
-            $currentTime = new DateTime();
             $userSelectedProduct = $this->prRepo->findOneBy(['id' => $order->getProduct()->getId()]);
-            $selctedProductTotalPrice = BigDecimal::of($userSelectedProduct->getPrice())->multipliedBy($order->getQty());
             $userProductTax = $this->prVatRepo->findOneBy(['product' => $userSelectedProduct->getId()]);
-            $productVatAmount = $userProductTax->getVatAmount();
-            $taxAmountTimesQty = BigDecimal::of($productVatAmount)->multipliedBy($order->getQty());
-            // $productPricePlusTotalTax = BigDecimal::of($order->getPrice())->plus($taxAmountTimesQty);
-            
-            $susbcriptionType = $this->subscriptionTypeRepo->findOneBy(['id' => $userSelectedProduct->getDuration()]);
-            $subscriptionDuration = in_array($susbcriptionType->getDuration(),['month','no_duration']);
-            $addMonthOrWeek = $subscriptionDuration !== true ? 'week' : 'month';
-            
-            $isProduct = $susbcriptionType->getDuration() !== 'month';
-            $trailOrProduct = $subscriptionDuration == false ? 2 : 1;
-            $setDurationProduct = $isProduct ? $trailOrProduct : $order->getQty();
-
-            $orderLine = [
-                'sku' => $order->getProduct()->getSku(), // create sku
-                'name' => $order->getProduct()->getName(),
-                'productUrl' => 'http://localhost:5173/product' . $prodUrlNr,
-                'imageUrl' => 'testimageUrl',
-                'quantity' => $order->getQty(),
-                'vatRate' => $userProductTax->getVatRate()->getProcent(),
-                'unitPrice' => [
-                    'currency' => $currencyType->getName(),
-                    'value' => $order->getProduct()->getPrice()
-                ],
-                'totalAmount' => [
-                    'currency' => $currencyType->getName(),
-                    'value' => $selctedProductTotalPrice
-                ],
-                'discountAmount' => [
-                    'currency' => $currencyType->getName(),
-                    'value' => '00.00',
-                ],
-                'vatAmount' => [
-                    'currency' => $currencyType->getName(),
-                    'value' => $taxAmountTimesQty,
-                ],
-                'productDetails' => [
-                    'totalProductCalculations' => [
-                        'totalProductPrice' => $order->getPrice(),
-                        'totalTaxPrice' => $taxAmountTimesQty,
-                    ],
-                    'subscriptionDetails' => [
-                        'productSubscription' => $susbcriptionType->getDuration(),
-                        'productSubscriptionStart' => $currentTime->format('Y-m-d'),
-                        'productSubscriptionEnd' => $currentTime->modify('+' . $setDurationProduct . ' ' . $addMonthOrWeek)->format('Y-m-d')
-                    ]
-                ]
-            ];
-            
-            $getOrderLineProductDetailsKey = array_key_last($orderLine);            
-            $orderTax = $orderTax->plus($orderLine['productDetails']['totalProductCalculations']['totalTaxPrice']);
-            $orderTotalProductPrice = $orderTotalProductPrice->plus($orderLine['productDetails']['totalProductCalculations']['totalProductPrice']);
-            
-            $orderLines[] = $orderLine;
+            $molliehelper->createOrderLine($order, $prodUrlNr, $userProductTax, $exchangeToCountry,$userSelectedProduct);
         }
-
-        unset($orderLine[$getOrderLineProductDetailsKey]);
-
-        // $mollie->setlines($orderLine);
-        // $mollie->setAmount([
-        //         'value' => $userLatestOrder->getTotalAmount(),
-        //         'currency' => $currencyType->getName(),
-        //     ]);
-
-        // $mollie->setBillingAddress([
-        //     'streetAndNumber' => $userAddress->getAddressLine() .' '. $userAddress->getStreetNumber() .' '. $userAddress->getUnitNumber(),
-        //     'postalCode' => $userAddress->getPostalCode(),
-        //     'city' => $userAddress->getCity() ? $userAddress->getCity() : ($user->getLocation() ? $user->getLocation() : '' ),
-        //     'country' => $userCountry->getCode(),
-        //     'givenName' => $user->getFirstName(),
-        //     'familyName' => $user->getLastName(),
-        //     'email' => $user->getEmail(),
-        // ]);
-
-        // $mollie->setConsumerDateOfBirth($user->getDateOfBirth());
-        // $mollie->setLocale($userCountry->getLocale());
         
         return new JsonResponse([
-            'address' => [
+            'description' => 'order ' . $userLatestOrder->getId() . ' Black Dragon M.A.',
+            'address' => ($userAddress !== false) ? [
                 'id' => $userAddress->getId(),
                 'addressLine' => $userAddress->getAddressLine(),
                 'unitNumber' => $userAddress->getUnitNumber(),
@@ -245,64 +270,127 @@ class OrderController extends AbstractController
                 'postalCode' => $userAddress->getPostalCode(),
                 'reactCityNr' => $user->getLibReactCity(),
                 'reactStateNr' => $user->getLibReactState(),
-                'county' => $userCountry->getCode(),
-            ],
+                'country' => $userCountry,
+            ] : [],
             'orderId' => $userLatestOrder->getId(),
             'curreny' => [
                 'symbol' => $symbol,
-                'name' => $currencyType->getName()
+                'name' => $exchangeToCountry ?: CurrencyTypeEnum::EUR 
             ],
-            'locale' => $userCountry->getLocale(),
+            'locale' => CountryTypeEnum::NL_LOCALE,
             'user' => [
                 'id' => $user->getId(),
                 'email' => $user->getEmail(),
                 'phoneNumber' => $user->getPhoneNumber(),
                 'firstAndLastName' => $user->getFirstName() . ' ' . $user->getLastName(),
                 'city' => $user->getLocation(),
-                'consumerDateOfBirth' => $user->getDateOfBirth(),
             ],
-            'orderTotalProductPrice' => $orderTotalProductPrice->toScale(2, RoundingMode::UNNECESSARY),
-            'orderTaxPrice' => $orderTax->toScale(2, RoundingMode::UNNECESSARY),
+            'orderTotalProductPrice' => $molliehelper->orderTotalProductPrice->toScale(2, RoundingMode::UP),
+            'orderTaxPrice' => $molliehelper->orderTax->toScale(2, RoundingMode::UP),
             'amount' => [
                 'value' => $userLatestOrder->getTotalAmount(),
-                'currency' => $currencyType->getName(),
+                'currency' => $exchangeToCountry ?: CurrencyTypeEnum::EUR,
             ],
-            'lines' => $orderLines
+            'lines' => $molliehelper->lines
         ], 201);
     }
 
     #[Route('/api/v1/payment', name: 'app_payment', methods: ['POST'])]
     public function payUserOrder(#[MapRequestPayload] CreateMollieOrderDto $request): JsonResponse
-    // public function payUserOrder(Request $request): JsonResponse
+    // public function payUserOrder(CreateMollieOrderDto $request): JsonResponse
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
 
-        // dd(['content' => $request->getContent(), 'paymentMethod' => $request->getPayload()->get('paymentMethod'), 'request' => $request]);
-        dd($request);
-        // dd($request->getContent());
-
+        $molliehelper = new MollieClientHelper(); 
         $mollie = new MollieApiClient();
-        $mollie->setApiKey($this->getParameter('mollie.test'));
+        $mollie->setApiKey($this->getParameter('mollie.test'));            
+        $statusTransfer = new StatusTransfer();
+        
+        $newUserOrder = $molliehelper->setupOrderToPay($request)->getOrderToPay();
+        $subscriptionLength = $request->subscriptionDetail->subscriptionLength;
+        $subscriptionAmount = $request->subscriptionDetail->subscriptionAmount;
 
-        // $confirmedUserOrder = $request->getContent();
+        // dd(['subscriptionAmount' => $subscriptionAmount]);
 
-        $order = $mollie->orders->create([
-            // "amount" => $this->amount,
-            // "billingAddress" => $this->billingAddress,
-            // "shippingAddress" => $this->billingAddress,
-            // "metadata" => '',
-            // "consumerDataOfBirth" => $this->consumerDateOfBirth,
-            // "locale" => $this->locale,
-            // "orderNumber" => $this->orderNumber,
-            // "redirectUrl" => "https://your_domain.com/return?some_other_info=foo",
-            // "webhookUrl" => "https://your_domain.com/webhook",
-            // "method" => "ideal",
-            // "lines" => $this->lines
+        /** @var ShopOrder $shopOrder Object */
+        $shopOrder = $this->shopOrderRepository->findOneBy(['ownedBy' => $this->getUser()]);
+
+        /** @var StatusTransfer $knownMollieCustomer Object */
+        $knownMollieCustomer = $this->statusTransferRepo->findOneBy(['userOrder' => $shopOrder->getId()]);
+
+        $request->sequenceType !== '' ?? $molliehelper->setSubscription(true);
+
+        if($knownMollieCustomer->getCustomer() != null){
+            $mollieCustomerId = $knownMollieCustomer->getCustomer();
+            // dd(['test' => $knownMollieCustomer->getCustomer()]);
+        } else {
+            $newCustomer = [
+                "name" => $request->billingAddress->givenName,
+                "email" => $request->billingAddress->email,
+                "locale" => $request->locale,
+                "metadata" => $request->metadata,
+                // "testmode" => true,
+            ];
+            $mollieCustomer = $mollie->customers->create($newCustomer);
+            $mollieCustomerId = $mollieCustomer->id;
+        }
+
+        $customer = $mollie->customers->get($mollieCustomerId);
+
+        //Now make payment  error ApiException
+        $createPayment = $customer->createPayment($newUserOrder); // error
+        $transferId = $createPayment->id;            
+
+        $statusTransfer->setUserOrder($shopOrder);
+        $statusTransfer->setTransferId($transferId);
+        $statusTransfer->setCustomer($mollieCustomerId);
+
+        $this->entityManager->persist($statusTransfer);
+        $this->entityManager->flush();
+
+
+        // $this->entityManager->persist($statusTransfer);
+        // $this->entityManager->flush();
+
+        /*
+        * Generate a unique subscription id for this example. It is important to include this unique attribute
+        * in the webhookUrl (below) so new payments can be associated with this subscription.
+        */
+        $subscriptionId = (new SubscriptionUUID)->create();
+        // $subscriptionLength
+        // $subscriptionAmount
+        $calculate = (new OrderCalulator());
+
+        // $userAddress = $request->billingAddress instanceof OrderAddressDto;
+
+        // $createCutMandate = $customer->createMandate([
+        //     "method" => \Mollie\Api\Types\MandateMethod::DIRECTDEBIT,
+        //     "consumerAccount" => 'NL34ABNA0243341423',
+        //     // "consumer" => $request->method,
+        //     "consumerName" => $request->billingAddress->givenName . ' ' . $request->billingAddress->familyName
+        // ]);
+
+        // dd([ "subscriptionValue" => $subscriptionAmount, 'subsciptionLength' => $subscriptionLength, 'createMandate' => $createCutMandate]);
+
+        // $subscription = $mollie->subscriptions->createFor($mollieCustomer);
+        $customer->createSubscription([
+            "amount" => [
+            "value" => $subscriptionAmount, // You must send the correct number of decimals, thus we enforce the use of strings
+            "currency" => "EUR",
+            ],
+            "times" => $subscriptionLength, // request
+            "interval" => "1 month",
+            "description" => "Subscription #{$subscriptionId}",
+            "webhookUrl" => $request->webhookUrl . '/api/webhook/MollieSubscriptionPayment',
+            "metadata" => [
+                "subscription_id" => $subscriptionId,
+            ],
         ]);
 
-        // dd($order);
-
-        return new JsonResponse('test_payment', 200);
+        // create subscription for user 
+        
+        return new JsonResponse(['redirect' => $createPayment->getCheckoutUrl()], 200);
+        // return new JsonResponse('Failed Test Payment!', 401);
 
     }
 }

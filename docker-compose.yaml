@@ -1,6 +1,7 @@
 services:
   php:
     image: ghcr.io/eventpoints/php:main
+    # image: dunglas/frankenphp
     extra_hosts: ["host.docker.internal:host-gateway"]
     container_name: php
     platform: linux/amd64
@@ -20,6 +21,9 @@ services:
 
   caddy:
     image: ghcr.io/eventpoints/caddy:main
+    # build: 
+    #   context: .
+    #   dockerfile: ./caddy/Dockerfile
     container_name: caddy
     platform: linux/amd64
     depends_on:
@@ -30,6 +34,7 @@ services:
       MERCURE_PUBLISHER_JWT_KEY: secret
       MERCURE_SUBSCRIBER_JWT_KEY: secret
     volumes:
+      # - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - php_socket:/var/run/php
       - caddy_data:/data
       - caddy_config:/config
@@ -82,6 +87,33 @@ services:
       - node_modules:/app/node_modules
     stdin_open: true
     tty: true
+
+  # static-site:
+  #   image: dockersamples/static-site
+  #   build: .
+  #   restart: always
+  #   networks:
+  #         - martial_arts_app
+  #   ports:
+  #     - "80:80"
+    
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    # restart: unless-stopped
+    command:
+      - "start"
+      - "--all"
+      - "--config"
+      - "/etc/ngrok.yml"
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+    # environment:
+    #   NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    networks:
+      - martial_arts_app
+    ports:
+      - 4040:4040
 
 volumes:
   php_socket:

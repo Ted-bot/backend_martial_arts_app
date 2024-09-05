@@ -51,10 +51,10 @@ final class AddressFactory extends PersistentProxyObjectFactory
     protected function defaults(): array|callable
     {
         return [
-            'addressLine' => self::faker()->text(100),
-            'city' => self::faker()->text(100),
+            'addressLine' => self::faker()->text(50),
+            'city' => self::faker()->text(50),
             'country' => CountryFactory::new(),
-            'postalCode' => self::faker()->text(10),
+            'postalCode' => self::faker()->text(5),
             'streetNumber' => self::faker()->randomNumber(),
         ];
     }

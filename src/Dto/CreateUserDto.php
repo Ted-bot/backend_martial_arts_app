@@ -89,12 +89,26 @@ class CreateUserDto
         ])]
         public readonly string $password,
 
-        // #[Assert\NotBlank]
-        // #[Assert\Type('string')]
-        // public readonly string $category,
+        #[Assert\NotBlank()]
+        #[Assert\Type('int')]
+        #[Assert\Length(
+            min: 1,
+            max: 5,
+            minMessage: 'CityId must have aleast {{ limit }} characters',
+            maxMessage: 'CityId cannot be longer than {{ limit }} characters',
+        )]
+        public readonly int $city_id,
 
-        // #[Assert\Type('array')]
-        // public ?array $tags = null,
-    ) {
-    }
+
+        #[Assert\NotBlank()]
+        #[Assert\Type('int')]
+        #[Assert\Length(
+            min: 1,
+            max: 4,
+            minMessage: 'StateId must have aleast {{ limit }} characters',
+            maxMessage: 'StateId cannot be longer than {{ limit }} characters',
+        )]
+        public readonly int $state_id,
+        ) {
+        }
 }

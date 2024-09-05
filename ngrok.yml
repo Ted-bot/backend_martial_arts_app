@@ -1,0 +1,8 @@
+version: 2
+authtoken: 2lLAOFf5bYMInPur6TV2uWavxAk_6mEBjmge1RtX5zusfT5by
+region: eu
+tunnels:
+  webhook:
+    proto: http
+    addr: caddy
+    host_header: rewrite
