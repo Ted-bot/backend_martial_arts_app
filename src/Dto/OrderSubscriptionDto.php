@@ -26,5 +26,6 @@ class OrderSubscriptionDto {
         
         #[Assert\NotBlank]
         public int $subscriptionLength,
+      
     ){}
 }

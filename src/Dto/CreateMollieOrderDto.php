@@ -42,7 +42,7 @@ class CreateMollieOrderDto
         
         #[Assert\NotBlank]
         #[Assert\Type('string')]
-        public string $locale,        
+        public string $locale,  
 
         #[Assert\NotBlank]
         #[Assert\Url]

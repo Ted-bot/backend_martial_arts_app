@@ -2,6 +2,7 @@ monolog:
     channels:
         - M.A.Event
         - TransferEvent
+        - SubscriptionEvent
         - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
 
 when@dev:
@@ -22,6 +23,11 @@ when@dev:
                 path: "%kernel.logs_dir%/m_a_transfer_events.log"
                 level: debug
                 channels: ["TransferEvent"]
+            subscription_event:
+                type: stream
+                path: "%kernel.logs_dir%/m_a_subscription_events.log"
+                level: debug
+                channels: ["SubscriptionEvent"]
             # uncomment to get logging in your browser
             # you may have to allow bigger header sizes in your Web server configuration
             #firephp:

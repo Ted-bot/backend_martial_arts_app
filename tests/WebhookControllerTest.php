@@ -2,7 +2,6 @@
 
 namespace App\Tests;
 
-use App\Enum\CountryTypeEnum;
 use DateTime;
 use App\Class\Role;
 use App\Entity\User;
@@ -10,15 +9,21 @@ use DateTimeInterface;
 use App\Entity\Address;
 use App\Entity\ShopOrder;
 use App\Entity\UserAddress;
+use App\Entity\Subscription;
+use App\Enum\CountryTypeEnum;
 use App\Entity\StatusTransfer;
+use Symfony\Component\Uid\Uuid;
 use App\Factory\ShopOrderFactory;
+use App\Service\SubscriptionUUID;
+use App\Enum\MolliePaymentStatusEnum;
 use Zenstruck\Foundry\Test\Factories;
 use App\Factory\StatusTransferFactory;
+use App\Enum\SubscriptionLengthTypeEnum;
 use Doctrine\ORM\EntityManagerInterface;
 use Zenstruck\Foundry\Test\ResetDatabase;
-use App\Enum\MolliePaymentStatusEnum;
 use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+// use Uuid
 // use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 // class WebhookControllerTest extends ApiTestCase
@@ -60,6 +65,35 @@ class WebhookControllerTest extends ApiTestCase
         $this->client->request(
             'POST', 
             '/api/webhook/MollieDirectPayment',
+            $data,
+        );
+        
+        $this->assertEquals(202, $this->client->getResponse()->getKernelResponse()->getStatusCode());
+    }
+
+    public function testSubscriptionWebhook(): void
+    {
+        $this->getSingleUserWithOrder();
+
+        // $subscriptionId = (new SubscriptionUUID)->create();
+        $subscriptionId = Uuid::fromRfc4122('1ef6c98c-f478-6cfc-a022-b3cca17359bc');
+        $subscription = new Subscription();
+        $subscription->setStatus(MolliePaymentStatusEnum::OPEN);
+        // $subscription->setUuid($subscriptionId);
+        $subscription->setUuid($subscriptionId);
+        $subscription->setTransferId(null); // webhook also setUpdateAt
+        $subscription->setAmount("32.50");
+        $subscription->setDuration(SubscriptionLengthTypeEnum::MONTH_FOUR); //SubscriptionLengthTypeEnum
+        // $currentTime->modify('+' . $setDurationProduct . ' ' . $addMonthOrWeek)->format('Y-m-d')
+        $subscription->setDateEnd('+' . 3 . ' ' . 'month'); //SubscriptionLengthTypeEnum
+
+        $this->persistAndFlush($subscription);
+
+        $data = ['json' => ['id' => 'tr_LSGyD4eoXA', 'subscriptionId' => $subscriptionId]];
+
+        $this->client->request(
+            'POST', 
+            '/api/webhook/MollieSubscriptionPayment',
             $data,
         );
         

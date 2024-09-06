@@ -90,14 +90,10 @@ class MollieClientHelper
             "description" => $this->description,
             "locale" => $this->locale,
             "redirectUrl" => $this->redirectUrl,
-            // "webhookUrl" => 'https://da15-2a02-a210-4bb-7580-9c3a-36c0-765b-2503.ngrok-free.app' . '/api/webhook/MollieDirectPayment',
             "webhookUrl" => $this->webhookUrl . '/api/webhook/MollieDirectPayment',
             "method" => $this->method,
             "lines" => $this->lines,
             "sequenceType" => $this->sequenceType,
-            // $this->sequenceType !== '' ? ["sequenceType" => $this->sequenceType] : ''
-            // "sequenceType" => $this->sequenceType ? $this->sequenceType : '',
-            // SequenceType::SEQUENCETYPE_FIRST
         ];
         // dd(['userOrder' => $userOrder, 'subscription' => $this->subscription]);
         return $userOrder;
