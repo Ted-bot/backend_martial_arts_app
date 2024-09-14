@@ -102,18 +102,28 @@ class MollieClientHelper
 
     public function createOrderLine($order, $prodUrlNr, $userProductTax, $exchangeToCountry, $userSelectedProduct): self
     {
+
         $currentTime = new DateTime();
         $selctedProductTotalPrice = BigDecimal::of($userSelectedProduct->getPrice())->multipliedBy($order->getQty());
         $productVatAmount = BigDecimal::of($userProductTax->getVatAmount())->toScale(2, RoundingMode::UP);
         $taxAmountTimesQty = BigDecimal::of($productVatAmount)->multipliedBy($order->getQty());
         $susbcriptionType = SubscriptionTypeEnum::tryFrom($userSelectedProduct->getDuration()->getValue());
-        $isProduct = $susbcriptionType == SubscriptionTypeEnum::UNAVAILABLE;
+        $isProductOrSubscription = $susbcriptionType === SubscriptionTypeEnum::UNAVAILABLE;
 
-        $subscriptionDuration = in_array($susbcriptionType->getValue(),['month','UNAVAILABLE']);
+        $subscriptionDuration = in_array($susbcriptionType->getValue(),['month','unavailable']);
         $addMonthOrWeek = $subscriptionDuration !== true ? 'week' : 'month';
         // trailOrProduct: if false set 1 (month duration refund) else set specified duration refund of product
         $trailOrProduct = $subscriptionDuration == false ? 1 : $userSelectedProduct->getDurationLength()->getValue(); /// month or week == true 
-        $setDurationProduct = $isProduct ? $trailOrProduct : $userSelectedProduct->getDurationLength()->getValue();
+        $setDurationProduct = $isProductOrSubscription ? $trailOrProduct : $userSelectedProduct->getDurationLength()->getValue();
+        $unitPrice = $order->getProduct()->getPrice();
+        
+        if(isset($isProductOrSubscription)){
+            $subDuration = $userSelectedProduct->getDurationLength()->getValue();
+            $selctedProductTotalPrice = BigDecimal::of($userSelectedProduct->getPrice())->dividedBy($subDuration)->multipliedBy($order->getQty());
+            $productVatAmount = BigDecimal::of($userProductTax->getVatAmount())->dividedBy($subDuration,2, RoundingMode::UP);
+            $taxAmountTimesQty = BigDecimal::of($productVatAmount)->multipliedBy($order->getQty());
+            $unitPrice = BigDecimal::of($order->getProduct()->getPrice())->dividedBy($subDuration);
+        }
 
         $orderLine = [
             'sku' => $order->getProduct()->getSku(), // create sku
@@ -124,15 +134,15 @@ class MollieClientHelper
             'quantity' => $order->getQty(),
             'vatRate' => $userProductTax->getVatRate()->getProcent(),
             'unitPrice' => [
-                'currency' => $exchangeToCountry ?: CurrencyTypeEnum::EUR,
-                'value' => $order->getProduct()->getPrice()
+                'currency' => $exchangeToCountry ?? CurrencyTypeEnum::EUR,
+                'value' => $unitPrice
             ],
             'totalAmount' => [
                 'currency' => $order->getProduct()->getCurrencyType()->getId(),
                 'value' => $selctedProductTotalPrice
             ],
             'vatAmount' => [
-                'currency' => $exchangeToCountry ?: CurrencyTypeEnum::EUR,
+                'currency' => $exchangeToCountry ?? CurrencyTypeEnum::EUR,
                 'value' => $taxAmountTimesQty,
             ],
             'productDetails' => [
@@ -140,18 +150,28 @@ class MollieClientHelper
                     'totalProductPrice' => $order->getPrice(),
                     'totalTaxPrice' => $taxAmountTimesQty,
                 ],
-                'subscriptionDetails' => [
-                    'productSubscription' => $susbcriptionType->getValue(),
-                    'subscriptionAmount' => $userSelectedProduct->getDurationLength()->getValue() > 1 ? BigDecimal::of($order->getPrice())->dividedBy($userSelectedProduct->getDurationLength()->getValue(), 2, RoundingMode::UP)->__toString() : '',
-                    'subscriptionLength' => $userSelectedProduct->getDurationLength(),
-                    'productSubscriptionStart' => $currentTime->format('Y-m-d'),
-                    'productSubscriptionEnd' => $currentTime->modify('+' . $setDurationProduct . ' ' . $addMonthOrWeek)->format('Y-m-d')
-                ]
             ]
         ];
 
-        $this->orderTax->plus($orderLine['productDetails']['totalProductCalculations']['totalTaxPrice']);
-        $this->orderTotalProductPrice->plus($orderLine['productDetails']['totalProductCalculations']['totalProductPrice']);
+        if(isset($isProductOrSubscription)){
+            $orderLine['productDetails']['subscriptionDetails'] = [
+                'subscriptionTimeUnit' => $susbcriptionType->getValue(),
+                'subscriptionAmount' => $userSelectedProduct->getDurationLength()->getValue() > 1 ? BigDecimal::of($order->getPrice())->dividedBy($userSelectedProduct->getDurationLength()->getValue(), 2, RoundingMode::UP)->__toString() : '',
+                'subscriptionLength' => $userSelectedProduct->getDurationLength(),
+                'productSubscriptionStart' => $currentTime->format('Y-m-d'),
+                'productSubscriptionEnd' => $currentTime->modify('+' . $setDurationProduct . ' ' . $addMonthOrWeek)->format('Y-m-d')
+            ];
+        }
+        $subscriptionAmount = $orderLine['productDetails']['subscriptionDetails']['subscriptionAmount'];
+        $productAmount = $orderLine['productDetails']['totalProductCalculations']['totalProductPrice'];
+        
+        // $newOrdersTotalProductPrice = BigDecimal::of($this->getOrderTotalProductPrice())->plus($addSubscriptionOrProductPrice);
+        // $this->orderTax->plus($orderLine['productDetails']['totalProductCalculations']['totalTaxPrice']);
+        $this->setOrderTax($taxAmountTimesQty);
+        $addSubscriptionOrProductPrice = $subscriptionAmount ?? $productAmount;
+
+        $newOrdersTotalProductPrice = BigDecimal::of($this->getOrderTotalProductPrice())->plus($addSubscriptionOrProductPrice);
+        $this->setOrderTotalProductPrice($newOrdersTotalProductPrice);
 
         $this->lines[] = $orderLine;
         return $this;
@@ -418,7 +438,8 @@ class MollieClientHelper
      */ 
     public function setOrderTax($orderTax)
     {
-        $this->orderTax = $orderTax;
+        $newValue = BigDecimal::of($this->orderTax)->plus($orderTax);
+        $this->orderTax = $newValue;
 
         return $this;
     }
@@ -439,7 +460,8 @@ class MollieClientHelper
      */ 
     public function setOrderTotalProductPrice($orderTotalProductPrice)
     {
-        $this->orderTotalProductPrice = $orderTotalProductPrice;
+        $newValue = BigDecimal::of($this->orderTotalProductPrice)->plus($orderTotalProductPrice);
+        $this->orderTotalProductPrice = $newValue;
 
         return $this;
     }

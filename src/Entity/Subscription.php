@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-
 use DateTime;
 use DateTimeZone;
 use DateTimeImmutable;
@@ -98,8 +97,6 @@ class Subscription
         $dateTime = new DateTime('now',new DateTimeZone('Europe/Amsterdam'));
         $this->createdAt = $dateTime;
         $this->dateStart = DateTime::createFromFormat('d-m-Y',$dateTime->format('d-m-Y'),new DateTimeZone('Europe/Amsterdam'));
-        // $this->dateStart = DateTimeImmutable::createFromFormat('d-m-Y', $dateTime->format('y-m-d'),new DateTimeZone('Europe/Amsterdam'));
-
     }
 
     public function getId(): ?int
