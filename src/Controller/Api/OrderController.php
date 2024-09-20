@@ -5,6 +5,7 @@ namespace App\Controller\Api;
 use App\Dto\CreateMollieOrderRequest;
 use App\Entity\ShopOrder;
 use App\Enum\MolliePaymentStatusEnum;
+use App\Message\Command\CreateSubscriptionMessage;
 use App\Repository\StatusTransferRepository;
 use App\Request\CustomerInfoRequest;
 use App\Service\MollieClientHelper;
@@ -15,6 +16,7 @@ use App\Class\Role;
 use App\Entity\User;
 use App\Entity\Address;
 use App\Entity\OrderLine;
+use App\Entity\Subscription;
 use App\Entity\UserAddress;
 use Brick\Math\BigDecimal;
 use App\Dto\CustomerInfoDto;
@@ -41,6 +43,7 @@ use App\Repository\CurrencyTypeRepository;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\SubscriptionTypeRepository;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Doctrine\ORM\EntityManagerInterface as EntityManager;
@@ -288,7 +291,8 @@ class OrderController extends AbstractController
             'orderTotalProductPrice' => $molliehelper->orderTotalProductPrice->toScale(2, RoundingMode::UP),
             'orderTaxPrice' => $molliehelper->orderTax->toScale(2, RoundingMode::UP),
             'amount' => [
-                'value' => $userLatestOrder->getTotalAmount(),
+                // 'value' => $userLatestOrder->getTotalAmount(),
+                'value' => $molliehelper->getOrderTotalProductPrice(),
                 'currency' => $exchangeToCountry ?: CurrencyTypeEnum::EUR,
             ],
             'lines' => $molliehelper->lines
@@ -296,8 +300,7 @@ class OrderController extends AbstractController
     }
 
     #[Route('/api/v1/payment', name: 'app_payment', methods: ['POST'])]
-    public function payUserOrder(#[MapRequestPayload] CreateMollieOrderDto $request): JsonResponse
-    // public function payUserOrder(CreateMollieOrderDto $request): JsonResponse
+    public function payUserOrder(#[MapRequestPayload] CreateMollieOrderDto $request, MessageBusInterface $messageBus): JsonResponse
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
 
@@ -306,11 +309,8 @@ class OrderController extends AbstractController
         $mollie->setApiKey($this->getParameter('mollie.test'));            
         $statusTransfer = new StatusTransfer();
         
+        $request->iban !== '' ?? $molliehelper->setSubscription(true);
         $newUserOrder = $molliehelper->setupOrderToPay($request)->getOrderToPay();
-        $subscriptionLength = $request->subscriptionDetail->subscriptionLength;
-        $subscriptionAmount = $request->subscriptionDetail->subscriptionAmount;
-
-        // dd(['subscriptionAmount' => $subscriptionAmount]);
 
         /** @var ShopOrder $shopOrder Object */
         $shopOrder = $this->shopOrderRepository->findOneBy(['ownedBy' => $this->getUser()]);
@@ -318,11 +318,10 @@ class OrderController extends AbstractController
         /** @var StatusTransfer $knownMollieCustomer Object */
         $knownMollieCustomer = $this->statusTransferRepo->findOneBy(['userOrder' => $shopOrder->getId()]);
 
-        $request->sequenceType !== '' ?? $molliehelper->setSubscription(true);
-
+        // check if user has selected a subscription
         if($knownMollieCustomer->getCustomer() != null){
             $mollieCustomerId = $knownMollieCustomer->getCustomer();
-            // dd(['test' => $knownMollieCustomer->getCustomer()]);
+            $customer = $mollie->customers->get($knownMollieCustomer->getCustomer());
         } else {
             $newCustomer = [
                 "name" => $request->billingAddress->givenName,
@@ -331,11 +330,17 @@ class OrderController extends AbstractController
                 "metadata" => $request->metadata,
                 // "testmode" => true,
             ];
-            $mollieCustomer = $mollie->customers->create($newCustomer);
-            $mollieCustomerId = $mollieCustomer->id;
-        }
+            $customer = $mollie->customers->create($newCustomer);
+            $mollieCustomerId = $customer->id;
 
-        $customer = $mollie->customers->get($mollieCustomerId);
+            if($molliehelper->subscription) {
+                $customer->createMandate([
+                    "method" => \Mollie\Api\Types\MandateMethod::DIRECTDEBIT,
+                    "consumerAccount" => $request->iban, // NL34ABNA0243341423
+                    "consumerName" => $request->billingAddress->givenName . ' ' . $request->billingAddress->familyName
+                ]);
+            }
+        }
 
         //Now make payment  error ApiException
         $createPayment = $customer->createPayment($newUserOrder); // error
@@ -346,51 +351,50 @@ class OrderController extends AbstractController
         $statusTransfer->setCustomer($mollieCustomerId);
 
         $this->entityManager->persist($statusTransfer);
-        $this->entityManager->flush();
-
-
-        // $this->entityManager->persist($statusTransfer);
-        // $this->entityManager->flush();
-
+        $this->entityManager->flush();        
+        
         /*
         * Generate a unique subscription id for this example. It is important to include this unique attribute
         * in the webhookUrl (below) so new payments can be associated with this subscription.
         */
-        $subscriptionId = (new SubscriptionUUID)->create();
-        // $subscriptionLength
-        // $subscriptionAmount
-        $calculate = (new OrderCalulator());
+        if($molliehelper->subscription){
+            
+            $subscriptionLength = $request->subscriptionDetail->subscriptionLength;
+            $subscriptionMonthOrWeek = $request->subscriptionDetail->subscriptionTimeUnit;
+            $subscriptionAmount = $request->subscriptionDetail->subscriptionAmount;
+            
+            $subscriptionId = (new SubscriptionUUID)->create();
+            $subscriptionMessage = new CreateSubscriptionMessage($subscriptionId);
+            $messageBus->dispatch($subscriptionMessage);
+            
+            $subscription = new Subscription();
+            $subscriptionLengthConvertToEnum = SubscriptionLengthTypeEnum::from($subscriptionLength);
+            
+            $subscription->setUuid($subscriptionId);
+            $subscription->setStatus(MolliePaymentStatusEnum::OPEN);
+            $subscription->setTransferId(null); // webhook also setUpdateAt
+            $subscription->setAmount($subscriptionAmount);
+            $subscription->setDuration($subscriptionLengthConvertToEnum); //SubscriptionLengthTypeEnum
+            $subscription->setDateEnd('+' . $subscriptionLength . ' ' . $subscriptionMonthOrWeek); //SubscriptionLengthTypeEnum    
+                
+            $customer->createSubscription([
+                "amount" => [
+                    "value" => $subscriptionAmount, // You must send the correct number of decimals, thus we enforce the use of strings
+                    "currency" => $request->amount->currency,// "EUR",
+                ],
+                "times" => $subscriptionLength, // request
+                "interval" => $subscriptionLength . " " . $subscriptionMonthOrWeek, // "1 day"
+                "description" => "Subscription #{$subscriptionId}",
+                "webhookUrl" => $request->webhookUrl . '/api/webhook/MollieSubscriptionPayment',
+                "metadata" => [
+                    "subscription_id" => $subscriptionId,
+                ],
+            ]);
+                
+            $this->entityManager->persist($subscription);
+            $this->entityManager->flush();            
+        }
 
-        // $userAddress = $request->billingAddress instanceof OrderAddressDto;
-
-        // $createCutMandate = $customer->createMandate([
-        //     "method" => \Mollie\Api\Types\MandateMethod::DIRECTDEBIT,
-        //     "consumerAccount" => 'NL34ABNA0243341423',
-        //     // "consumer" => $request->method,
-        //     "consumerName" => $request->billingAddress->givenName . ' ' . $request->billingAddress->familyName
-        // ]);
-
-        // dd([ "subscriptionValue" => $subscriptionAmount, 'subsciptionLength' => $subscriptionLength, 'createMandate' => $createCutMandate]);
-
-        // $subscription = $mollie->subscriptions->createFor($mollieCustomer);
-        $customer->createSubscription([
-            "amount" => [
-            "value" => $subscriptionAmount, // You must send the correct number of decimals, thus we enforce the use of strings
-            "currency" => "EUR",
-            ],
-            "times" => $subscriptionLength, // request
-            "interval" => "1 month",
-            "description" => "Subscription #{$subscriptionId}",
-            "webhookUrl" => $request->webhookUrl . '/api/webhook/MollieSubscriptionPayment',
-            "metadata" => [
-                "subscription_id" => $subscriptionId,
-            ],
-        ]);
-
-        // create subscription for user 
-        
         return new JsonResponse(['redirect' => $createPayment->getCheckoutUrl()], 200);
-        // return new JsonResponse('Failed Test Payment!', 401);
-
     }
 }

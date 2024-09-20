@@ -94,7 +94,7 @@ final class ForgotPasswordEventSubscriber implements EventSubscriberInterface
         $user = $passwordToken->getUser();
         $userNewPassword = $event->getPassword();
 
-        var_dump(['userPassword' => $userNewPassword]);
+        // var_dump(['userPassword' => $userNewPassword]);
 
         $hashedPassword = $this->passwordHasher->hashPassword(
             $user,
@@ -102,7 +102,7 @@ final class ForgotPasswordEventSubscriber implements EventSubscriberInterface
         );
 
         $this->userRepository->upgradePassword($user, $hashedPassword);
-        $this->entityManager->persist($user);
+        // $this->entityManager->persist($user); // persist only when creating new entity
         $this->entityManager->flush();
     }
 

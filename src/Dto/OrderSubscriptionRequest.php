@@ -13,7 +13,7 @@ class OrderSubscriptionRequest extends AbstractJsonRequest
 
     // public function __construct(
         #[Assert\NotBlank]
-        public string $productSubscription;
+        public string $subscriptionTimeUnit;
         
         #[Assert\NotBlank]
         #[Assert\Date]

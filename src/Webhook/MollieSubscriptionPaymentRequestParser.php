@@ -30,12 +30,14 @@ final class MollieSubscriptionPaymentRequestParser extends AbstractRequestParser
     {
         // TODO: Adapt or replace the content of this method to fit your need.
 
+        // dd(['test' => $request->getContent()]);
         // Validate the request against $secret.
         // $authToken = $request->headers->get('X-Authentication-Token');
 
         // if ($authToken !== $secret) {
         //     throw new RejectWebhookException(Response::HTTP_UNAUTHORIZED, 'Invalid authentication token.');
         // }
+        // dd(['request' => $request]);
         
 
         // Validate the request payload.

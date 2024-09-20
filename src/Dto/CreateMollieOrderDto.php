@@ -23,6 +23,15 @@ class CreateMollieOrderDto
             maxMessage: 'Your order number cannot be longer than {{ limit }} characters',
         )]
         public string $order_id,
+        
+        #[Assert\Type('string')]
+        #[Assert\Length(
+            min: 16,
+            max: 24,
+            minMessage: 'Your IBAN number cannot be shorter than {{ limit }} characters',
+            maxMessage: 'Your IBAN number cannot be longer than {{ limit }} characters',
+        )]
+        public string $iban,
 
         #[Assert\NotBlank]
         #[Assert\Valid]
@@ -42,7 +51,7 @@ class CreateMollieOrderDto
         
         #[Assert\NotBlank]
         #[Assert\Type('string')]
-        public string $locale,        
+        public string $locale,  
 
         #[Assert\NotBlank]
         #[Assert\Url]

@@ -15,6 +15,7 @@ services:
         bind: 
             $eventSubscriptionLogger: '@monolog.logger.M.A.Event'
             $transferEventLogger: '@monolog.logger.TransferEvent'
+            $subscriptionEventLogger: '@monolog.logger.SubscriptionEvent'
 
 
     # makes classes in src/ available to be used as services
@@ -66,23 +67,23 @@ services:
             - { name: request.param_converter }
 
     # this is the service's id
-    site_update_manager.superadmin:
-        class: Symfony\Component\Uid\Factory\UuidFactory
-        # you CAN still use autowiring: we just want to show what it looks like without
-        # autowire: false
-        # manually wire all arguments
-        arguments:
-            - '@App\Service\MessageGenerator'
-            - '@mailer'
-            - 'superadmin@example.com'
+    # site_update_manager.superadmin:
+    #     class: Symfony\Component\Uid\Factory\UuidFactory
+    #     # you CAN still use autowiring: we just want to show what it looks like without
+    #     # autowire: false
+    #     # manually wire all arguments
+    #     arguments:
+    #         - '@App\Service\MessageGenerator'
+    #         - '@mailer'
+    #         - 'superadmin@example.com'
 
-    site_update_manager.normal_users:
-        class: App\Service\SiteUpdateManager
-        autowire: false
-        arguments:
-            - '@App\Service\MessageGenerator'
-            - '@mailer'
-            - 'contact@example.com'
+    # site_update_manager.normal_users:
+    #     class: App\Service\SiteUpdateManager
+    #     autowire: false
+    #     arguments:
+    #         - '@App\Service\MessageGenerator'
+    #         - '@mailer'
+    #         - 'contact@example.com'
     
     # CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface:
         # class: CoopTilleuls\ForgotPasswordBundle\Provider\ProviderChainInterface
