@@ -93,11 +93,12 @@ class MollieClientHelper
             "webhookUrl" => $this->webhookUrl . '/api/webhook/MollieDirectPayment',
             "method" => $this->method,
             "lines" => $this->lines,
-            "sequenceType" => $this->sequenceType,
         ];
-        // dd(['userOrder' => $userOrder, 'subscription' => $this->subscription]);
+
+        if($this->subscription) $userOrder['sequenceType'] = SequenceType::SEQUENCETYPE_FIRST;
+        // if($this->subscription) $userOrder['sequenceType'] = SequenceType::SEQUENCETYPE_RECURRING; 
+
         return $userOrder;
-        // return !$this->subscription ? $userOrder : array_push($userOrder, $this->sequenceType);
     }
 
     public function createOrderLine($order, $prodUrlNr, $userProductTax, $exchangeToCountry, $userSelectedProduct): self

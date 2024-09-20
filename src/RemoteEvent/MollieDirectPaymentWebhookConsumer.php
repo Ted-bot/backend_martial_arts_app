@@ -90,6 +90,7 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
                     ]
                 );
 
+
                 // $this->bus->dispatch(new SendWebhookMessage($consumerPaid));
 
             } elseif ($payment->isCanceled() || $payment->isFailed()) {

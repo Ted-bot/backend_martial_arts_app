@@ -79,7 +79,7 @@ final class MollieSubscriptionPaymentWebhookConsumer implements ConsumerInterfac
                         ]
                     ]
                 );
-                
+                                
             } elseif ($subscription->isOpen()) {
                 /*
                 * The subscription is open.
