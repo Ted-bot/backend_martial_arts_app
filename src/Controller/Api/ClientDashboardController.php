@@ -5,6 +5,7 @@ namespace App\Controller\Api;
 use App\Class\Role;
 use App\Class\Roles;
 use App\Entity\User;
+use App\Repository\SubscriptionRepository;
 use App\Repository\UserRepository;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,25 +22,16 @@ use Lexik\Bundle\JWTAuthenticationBundle\TokenExtractor\AuthorizationHeaderToken
 #[AsController]
 class ClientDashboardController extends AbstractController
 {
-    public $userRepository;
+    public $subRepo;
     public $jwtEncoder;
     
     public function __construct(
-            UserRepository $userRepository,
+            SubscriptionRepository $subRepo,
             JWTEncoderInterface $jwtEncoder
         )
         {
-            $this->userRepository = $userRepository;
-            $this->jwtEncoder = $jwtEncoder;
+            $this->subRepo = $subRepo;
         }
-        
-        // public function __invoke(): Response
-        // {
-        //     // $this->denyAccessUnlessGranted(Roles::ROLE_USER_STUDENT);
-            
-        //     // return new Response($this->getUser());
-        //     return new Response($this->getUser());
-        // }
         
         #[Route(
             '/api/v1/dashboard/user',
@@ -49,27 +41,11 @@ class ClientDashboardController extends AbstractController
         public function dashboardData(#[CurrentUser] ?User $user, Request $request, JWTTokenManagerInterface $jwtTokenManager): JsonResponse
     {
         $user = $this->getUser();
-
-        return $this->json(array('id' => $user->getId(),'first_name'=> $user->getFirstName(), 'email' => $user->getEmail(), 'last_name' => $user->getLastName()), 200);
+        // $subscription = $this->subRepo->findByIdThenReturnArray($this->getUser()->getId());
+        $subscription = $this->subRepo->findOneBy(['subscriptionOwnedBy' => $user->getId()],['createdAt' => 'DESC']);
+        $userData = array('id' => $user->getId(),'first_name'=> $user->getFirstName(), 'email' => $user->getEmail(), 'last_name' => $user->getLastName());
+        $subscription !== null && $userData['subscription'] = $subscription;
+        return $this->json($userData, 200);
     }
 
-    /**
-     * Get the value of userRepository
-     */ 
-    public function getUserRepository()
-    {
-        return $this->userRepository;
-    }
-
-    /**
-     * Set the value of userRepository
-     *
-     * @return  self
-     */ 
-    public function setUserRepository($userRepository)
-    {
-        $this->userRepository = $userRepository;
-
-        return $this;
-    }
 }   

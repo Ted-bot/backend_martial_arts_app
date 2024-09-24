@@ -29,9 +29,30 @@ services:
     
     #api platform service
     product.search_filter:
-        parent: 'api_platform.doctrine.orm.search_filter'
-        arguments: [ { duration: ~ } ]
-        tags:  [ 'api_platform.filter' ]
+        parent:         'api_platform.doctrine.orm.search_filter'
+        arguments:      [ { duration: ~ } ]
+        tags:           [{name: 'api_platform.filter' }]
+    
+    user.search_filter:
+        parent:         'api_platform.doctrine.orm.search_filter'
+        arguments:      [{ id: ~ , subscriptions.status: ~}]
+        tags:           [{ name: 'api_platform.filter'}]
+        autowire:       false # required, explained below
+        autoconfigure:  false # required, explained below
+        public:         false
+
+    user.property_filter:
+        parent:         'api_platform.serializer.property_filter'
+        tags:           [{name: 'api_platform.filter'}]
+        autowire:       false # required, explained below
+        autoconfigure:  false # required, explained below
+        public:         false
+    
+    subscription.property_filter:
+        parent:     'api_platform.doctrine.orm.search_filter'
+        # parent: 'api_platform.serializer.property_filter'
+        arguments:  [ { subscriptionOwnedBy: ~ } ]
+        tags:       [{name: 'api_platform.filter'} ]
         # The following are mandatory only if a _defaults section is defined with inverted values.
         # You may want to isolate filters in a dedicated file to avoid adding the following lines.
         # autowire: false

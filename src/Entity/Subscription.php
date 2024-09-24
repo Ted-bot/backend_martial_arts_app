@@ -21,11 +21,12 @@ use ApiPlatform\Metadata\GetCollection;
 use App\Enum\SubscriptionLengthTypeEnum;
 use App\Repository\SubscriptionRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
+// use ApiPlatform\Serializer\Filter\PropertyFilter;
 
 #[ORM\Entity(repositoryClass: SubscriptionRepository::class)]
 #[ApiResource(
     shortName: 'Subscription',
-    // filters: ['product.search_filter'],
+    filters: ['subscription.property_filter'],
     description: 'Subscriptions of Users',
     operations: [
         new Get(),
@@ -58,7 +59,7 @@ class Subscription
     private ?Uuid $uuid = null;
 
     #[ORM\Column(enumType: MolliePaymentStatusEnum::class, length: 255)]
-    #[Groups(['subscription:read'])]
+    #[Groups(['subscription:read', 'user:read'])]
     private ?MolliePaymentStatusEnum $status;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
@@ -72,25 +73,27 @@ class Subscription
     #[ORM\ManyToOne(inversedBy: 'relatedSubscriptions')]
     #[ORM\JoinColumn(nullable: false)]
     #[ORM\Column(enumType: SubscriptionTypeEnum::class)]
-    #[Groups(['subscription:read'])]
+    #[Groups(['subscription:read', 'user:read'])]
     private ?SubscriptionLengthTypeEnum $duration;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['subscription:read'])]
+    #[Groups(['subscription:read', 'user:read'])]
     private ?DateTimeInterface $dateStart;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['subscription:read'])]
+    #[Groups(['subscription:read', 'user:read'])]
     private ?DateTimeInterface $dateEnd;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Groups(['subscription:read'])]
+    #[Groups(['subscription:read', 'user:read'])]
     private ?DateTimeInterface $createdAt;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    #[Groups(['subscription:read'])]
+    #[Groups(['subscription:read', 'user:read'])]
     private ?DateTimeInterface $updatedAt = null;
 
+    #[ORM\ManyToOne(inversedBy: 'subscriptions')]
+    private ?User $subscriptionOwnedBy = null;
 
     public function __construct()
     {
@@ -215,4 +218,17 @@ class Subscription
 
         return $this;
     }
+
+    public function getSubscriptionOwnedBy(): ?User
+    {
+        return $this->subscriptionOwnedBy;
+    }
+
+    public function setSubscriptionOwnedBy(?User $subscriptionOwnedBy): static
+    {
+        $this->subscriptionOwnedBy = $subscriptionOwnedBy;
+
+        return $this;
+    }
+
 }

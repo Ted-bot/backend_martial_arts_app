@@ -56,7 +56,7 @@ final class ShopOrderFactory extends PersistentProxyObjectFactory
             'orderDate' => self::faker()->dateTime(),
             'orderStatus' => self::faker()->randomElement(MolliePaymentStatusEnum::cases()),
             // 'orderStatus' => self::faker()->randomElement(MolliePaymentStatusEnum::cases()),
-            'ownedBy' => UserFactory::new(),
+            'orderOwnedBy' => UserFactory::new(),
             'totalAmount' => self::faker()->randomFloat(),
         ];
     }

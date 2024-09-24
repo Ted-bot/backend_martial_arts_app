@@ -33,6 +33,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USER', fields: ['email', 'phone_number'])]
 #[ApiResource(
     description: 'User Entity',
+    filters: ['user.search_filter', 'user.property_filter'], //user.property_filter
     operations: [
         new Get(),
         new GetCollection(),
@@ -152,7 +153,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, ShopOrder>
      */
-    #[ORM\OneToMany(targetEntity: ShopOrder::class, mappedBy: 'ownedBy')]
+    #[ORM\OneToMany(targetEntity: ShopOrder::class, mappedBy: 'orderOwnedBy')]
     private Collection $shopOrders;
 
     #[ORM\Column(length: 4, nullable: true)]
@@ -160,6 +161,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 5, nullable: true)]
     private ?string $libReactCity = null;
+
+    /**
+     * @var Collection<int, Subscription>
+     */
+    #[Groups(['user:read'])]
+    #[ORM\OneToMany(targetEntity: Subscription::class, mappedBy: 'subscriptionOwnedBy')]
+    private Collection $subscriptions;
 
     public function __construct()
     {
@@ -170,6 +178,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->products = new ArrayCollection();
         $this->userAddresses = new ArrayCollection();
         $this->shopOrders = new ArrayCollection();
+        $this->subscriptions = new ArrayCollection();
     }
 
     public function createNewUserObj(CreateUserRequest $user)
@@ -492,7 +501,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->shopOrders->contains($shopOrder)) {
             $this->shopOrders->add($shopOrder);
-            $shopOrder->setOwnedBy($this);
+            $shopOrder->setOrderOwnedBy($this);
         }
 
         return $this;
@@ -502,8 +511,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if ($this->shopOrders->removeElement($shopOrder)) {
             // set the owning side to null (unless already changed)
-            if ($shopOrder->getOwnedBy() === $this) {
-                $shopOrder->setOwnedBy(null);
+            if ($shopOrder->getOrderOwnedBy() === $this) {
+                $shopOrder->setOrderOwnedBy(null);
             }
         }
 
@@ -533,5 +542,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+
+    /**
+     * @return Collection<int, Subscription>
+     */
+    public function getSubscriptions(): Collection
+    {
+        return $this->subscriptions;
+    }
+
+    public function addSubscription(Subscription $subscription): static
+    {
+        if (!$this->subscriptions->contains($subscription)) {
+            $this->subscriptions->add($subscription);
+            $subscription->setSubscriptionOwnedBy($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSubscription(Subscription $subscription): static
+    {
+        if ($this->subscriptions->removeElement($subscription)) {
+            // set the owning side to null (unless already changed)
+            if ($subscription->getSubscriptionOwnedBy() === $this) {
+                $subscription->setSubscriptionOwnedBy(null);
+            }
+        }
+
+        return $this;
+    }
+
 
 }

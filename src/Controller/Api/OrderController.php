@@ -84,7 +84,7 @@ class OrderController extends AbstractController
         $user = $this->getUser();
         // $user = $this->userRepository->findOneBy(['id' => $this->getUser()]);
         $userLatestOrder = $this->shopOrderRepository->findOneBy([
-            'ownedBy' => $user,
+            'orderOwnedBy' => $user,
             'orderStatus' => MolliePaymentStatusEnum::OPEN
         ]);
 
@@ -141,7 +141,7 @@ class OrderController extends AbstractController
         $newOrderLine->setPrice($shoppingCart->getPrice());
         $newOrderLine->setQty(1);
 
-        $newShopOrder->setOwnedBy($this->getUser());
+        $newShopOrder->setOrderOwnedBy($this->getUser());
         $newShopOrder->setOrderStatus(MolliePaymentStatusEnum::OPEN);
         $newShopOrder->addOrderLine($newOrderLine);
         $newShopOrder->setTotalAmount($shoppingCart->getPrice());
@@ -240,7 +240,7 @@ class OrderController extends AbstractController
         $molliehelper = new MollieClientHelper(); 
 
         $user = $this->userRepository->findOneBy(['id' => $this->getUser()]);
-        $userLatestOrder = $this->shopOrderRepository->findOneBy(['ownedBy' => $user]);        
+        $userLatestOrder = $this->shopOrderRepository->findOneBy(['orderOwnedBy' => $user]);        
         $addressId = $this->userAddressRepo->findOneBy(['relatedUser' => $user->getId(), 'isDefault' => 'true']);
         
         // dd(['address'=>$addressId]);
@@ -313,7 +313,7 @@ class OrderController extends AbstractController
         $newUserOrder = $molliehelper->setupOrderToPay($request)->getOrderToPay();
 
         /** @var ShopOrder $shopOrder Object */
-        $shopOrder = $this->shopOrderRepository->findOneBy(['ownedBy' => $this->getUser()]);
+        $shopOrder = $this->shopOrderRepository->findOneBy(['orderOwnedBy' => $this->getUser()]);
 
         /** @var StatusTransfer $knownMollieCustomer Object */
         $knownMollieCustomer = $this->statusTransferRepo->findOneBy(['userOrder' => $shopOrder->getId()]);
@@ -364,13 +364,14 @@ class OrderController extends AbstractController
             $subscriptionAmount = $request->subscriptionDetail->subscriptionAmount;
             
             $subscriptionId = (new SubscriptionUUID)->create();
-            $subscriptionMessage = new CreateSubscriptionMessage($subscriptionId);
-            $messageBus->dispatch($subscriptionMessage);
+            // $subscriptionMessage = new CreateSubscriptionMessage($subscriptionId);
+            // $messageBus->dispatch($subscriptionMessage);
             
             $subscription = new Subscription();
             $subscriptionLengthConvertToEnum = SubscriptionLengthTypeEnum::from($subscriptionLength);
             
             $subscription->setUuid($subscriptionId);
+            $subscription->setSubscriptionOwnedBy($this->getUser());
             $subscription->setStatus(MolliePaymentStatusEnum::OPEN);
             $subscription->setTransferId(null); // webhook also setUpdateAt
             $subscription->setAmount($subscriptionAmount);

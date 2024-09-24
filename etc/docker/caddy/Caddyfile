@@ -5,9 +5,10 @@
 
 {$SERVER_NAME}
 
-log
+# log
 
 route {
+    # revers_proxy locahost:80
     root * /app/public
     mercure {
         # Transport to use (default to Bolt)

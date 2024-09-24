@@ -371,7 +371,7 @@ class AppFixtures extends Fixture
                 $orderLine->setPrice($totalProductPriceWithQty);
                 $orderLine->setProduct($product);
                 
-                $shopOrder->setOwnedBy($user);
+                $shopOrder->setOrderOwnedBy($user);
                 $shopOrder->setTotalAmount($totalAmountOrder);  // includes tax, Qty of product, ?shippingPrice
                 $shopOrder->setOrderDate(Factory::faker()->dateTimeBetween('-2 month','now'));
                 $shopOrder->setShippingAddress($shippingAddress);
@@ -388,7 +388,7 @@ class AppFixtures extends Fixture
 
         // create fake orderPayment
         $paymentUpdate = new StatusTransfer();
-        $userOrder = $this->soRepo->findOneBy(['ownedBy' =>  $user->getId()]);
+        $userOrder = $this->soRepo->findOneBy(['orderOwnedBy' =>  $user->getId()]);
         $paymentUpdate->setTransferId('tr_DBPsz4sq7M');
         $paymentUpdate->setUserOrder($userOrder);
 

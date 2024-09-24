@@ -1,0 +1,5 @@
+App\Entity\User:
+    # ...
+    collectionOperations:
+        get:
+            filters: ['user.search_filter', 'user.property_filter']

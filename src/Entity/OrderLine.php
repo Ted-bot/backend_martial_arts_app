@@ -42,12 +42,12 @@ class OrderLine
     #[ORM\ManyToOne(inversedBy: 'orderLines')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['shopOrder:read', 'orderline:read'])]
-    protected ?ShopOrder $shopOrder = null;
+    protected ?ShopOrder $shopOrder;
 
     #[ORM\ManyToOne(inversedBy: 'orderLines')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['shopOrder:read', 'orderline:read'])]
-    protected ?Product $product = null;
+    protected ?Product $product;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 17, scale: 2)]
     #[Groups(['shopOrder:read', 'orderline:read'])]

@@ -19,6 +19,7 @@ use App\Repository\ShopOrderRepository;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Doctrine\Common\Collections\Criteria;
 
 #[ORM\Entity(repositoryClass: ShopOrderRepository::class)]
 #[ApiResource(
@@ -47,7 +48,7 @@ class ShopOrder
 
     #[ORM\ManyToOne(inversedBy: 'shopOrders')]
     #[ORM\JoinColumn(nullable: false)]
-    protected ?User $ownedBy = null;
+    protected ?User $orderOwnedBy = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 17, scale: 2)]
     protected ?string $totalAmount = null;
@@ -59,10 +60,10 @@ class ShopOrder
     protected ?UserAddress $shippingAddress = null;
 
     // #[ORM\ManyToOne(inversedBy: 'shopOrders')]
-    // #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     #[ORM\Column(enumType: MolliePaymentStatusEnum::class)]
     // #[ORM\Column(enumType: MolliePaymentStatusEnum::class)]
-    protected ?MolliePaymentStatusEnum $orderStatus;
+    protected MolliePaymentStatusEnum|null $orderStatus;
 
     /**
      * @var Collection<int, OrderLine>
@@ -70,6 +71,7 @@ class ShopOrder
     #[ORM\OneToMany(targetEntity: OrderLine::class, mappedBy: 'shopOrder')]
     #[Groups(['shopOrder:read', 'orderline:read'])]
     protected Collection $orderLines;
+    // protected $orderLines;
 
     /**
      * @var Collection<int, StatusTransfer>
@@ -95,14 +97,14 @@ class ShopOrder
         return $this->id;
     }
 
-    public function getOwnedBy(): ?User
+    public function getOrderOwnedBy(): ?User
     {
-        return $this->ownedBy;
+        return $this->orderOwnedBy;
     }
 
-    public function setOwnedBy(?User $ownedBy): static
+    public function setOrderOwnedBy(?User $orderOwnedBy): static
     {
-        $this->ownedBy = $ownedBy;
+        $this->orderOwnedBy = $orderOwnedBy;
 
         return $this;
     }
@@ -148,18 +150,20 @@ class ShopOrder
         return $this->orderStatus;
     }
 
-    public function setOrderStatus(?MolliePaymentStatusEnum $orderStatus): static
+    public function setOrderStatus(MolliePaymentStatusEnum|null $orderStatus): static
     {
         $this->orderStatus = $orderStatus;
 
         return $this;
     }
 
+    #[Groups(['shopOrder:read', 'orderline:read'])]
     /**
      * @return Collection<int, OrderLine>
      */
     public function getOrderLines(): Collection
     {
+        // return new ArrayCollection($this->orderLines->toArray());
         return $this->orderLines;
     }
 
@@ -172,6 +176,13 @@ class ShopOrder
     {
         return $this->orderLines;
     }
+
+    // public function getApprovedAnswers(): Collection
+    // {
+    //     $criteria = Criteria::create()
+    //         ->andWhere(Criteria::expr()->eq('product', Answer::STATUS_APPROVED));
+    //     return $this->answers->matching($criteria);
+    // }
 
     public function addOrderLine(OrderLine $orderLine): static
     {

@@ -16,6 +16,21 @@ class SubscriptionRepository extends ServiceEntityRepository
         parent::__construct($registry, Subscription::class);
     }
 
+    public function findByIdThenReturnArray($id){
+        return $this->createQueryBuilder('p')
+        //  "SELECT date_start,date_end FROM subscription sub WHERE sub.subscriptionOwnedBy = :id ORDER BY createdAt DESC"
+        // ->select('p.id')
+        ->select('p.dateStart')
+        ->addSelect('p.dateEnd')
+        ->addSelect('p.duration')
+        ->where('p.subscriptionOwnedBy = :id')
+        ->where('p.status = paid')
+        // ->leftJoin('p.subscribe','subscribe') // subscribe is relation table UserProfile
+        ->setParameter('id', $id)
+        ->orderBy('p.createdAt','DESC')
+        ->getQuery()
+        ->getResult();
+    }
     //    /**
     //     * @return Subscription[] Returns an array of Subscription objects
     //     */

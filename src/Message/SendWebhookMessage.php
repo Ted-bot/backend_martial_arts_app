@@ -11,6 +11,6 @@ class SendWebhookMessage
 
     public function getOrderId(): string
     {
-        return $this->mollieDirectPaymentWebhook->id;
+        return $this->mollieDirectPaymentWebhook->getId();
     }
 }

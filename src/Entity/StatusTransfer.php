@@ -22,6 +22,7 @@ class StatusTransfer
 
     // #[ORM\Column(type: 'App\Entity\Enum\MolliePaymentStatusEnum')]
     #[ORM\Column(enumType: MolliePaymentStatusEnum::class)]
+    // #[ORM\JoinColumn(nullable: true)]
     private ?MolliePaymentStatusEnum $status = null;
 
     #[ORM\Column]

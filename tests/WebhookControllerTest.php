@@ -7,21 +7,33 @@ use App\Class\Role;
 use App\Entity\User;
 use DateTimeInterface;
 use App\Entity\Address;
+use App\Entity\VatRate;
+use App\Entity\OrderLine;
 use App\Entity\ShopOrder;
+use App\Entity\ProductVat;
+use App\Class\SkuGenerator;
 use App\Entity\UserAddress;
 use App\Entity\Subscription;
 use App\Enum\CountryTypeEnum;
 use App\Entity\StatusTransfer;
+use App\Enum\CategoryTypeEnum;
+use App\Enum\CurrencyTypeEnum;
+use Zenstruck\Foundry\Factory;
 use Symfony\Component\Uid\Uuid;
 use App\Factory\ShopOrderFactory;
 use App\Service\SubscriptionUUID;
+use App\Enum\SubscriptionTypeEnum;
+use App\Repository\UserRepository;
 use App\Enum\MolliePaymentStatusEnum;
 use Zenstruck\Foundry\Test\Factories;
 use App\Factory\StatusTransferFactory;
+use App\Entity\Product;
 use App\Enum\SubscriptionLengthTypeEnum;
 use Doctrine\ORM\EntityManagerInterface;
 use Zenstruck\Foundry\Test\ResetDatabase;
+use App\Repository\SubscriptionRepository;
 use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
+use App\Enum\SubscriptionDirectOrPeriodicTypeEnum;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 // use Uuid
 // use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -49,6 +61,7 @@ class WebhookControllerTest extends ApiTestCase
             '/api/login_check', 
             $data,
         );
+        $this->entityManager->refresh();
 
         // dd(['repsonseTest' => $client->getResponse()->getKernelResponse()]);
 
@@ -60,7 +73,9 @@ class WebhookControllerTest extends ApiTestCase
     {
         $this->getSingleUserWithOrder();
 
-        $data = ['json' => ['id' => 'tr_LSGyD4eoXA']];
+        $data = ['json' => ['id' => 'tr_8VmbyUYxYH']];
+
+        // dd($data);
 
         $this->client->request(
             'POST', 
@@ -74,12 +89,17 @@ class WebhookControllerTest extends ApiTestCase
     public function testSubscriptionWebhook(): void
     {
         $this->getSingleUserWithOrder();
+        
+        $em = $this->getEntityManager();
+        $user = $em->getRepository(User::class)->find(1);
+
+        // dd($user);
 
         // $subscriptionId = (new SubscriptionUUID)->create();
         $subscriptionId = Uuid::fromRfc4122('1ef6c98c-f478-6cfc-a022-b3cca17359bc');
         $subscription = new Subscription();
         $subscription->setStatus(MolliePaymentStatusEnum::OPEN);
-        // $subscription->setUuid($subscriptionId);
+        $subscription->setSubscriptionOwnedBy($user);
         $subscription->setUuid($subscriptionId);
         $subscription->setTransferId(null); // webhook also setUpdateAt
         $subscription->setAmount("32.50");
@@ -88,12 +108,18 @@ class WebhookControllerTest extends ApiTestCase
         $subscription->setDateEnd('+' . 3 . ' ' . 'month'); //SubscriptionLengthTypeEnum
 
         $this->persistAndFlush($subscription);
+        // $em =  $this->getEntityManager();
+        // $findSubscription = $em->getRepository(Subscription::class)->findOneBy(['subscriptionOwnedBy' => $user]);
 
-        $data = ['json' => ['id' => 'tr_LSGyD4eoXA', 'subscriptionId' => $subscriptionId]];
+        // $this->assertIsObject($findSubscription);
+
+        // $data = ['json' => ['id' => 'tr_LSGyD4eoXA', 'subscriptionId' => $subscriptionId]];
+        $data = ['json' => ['id' => 'tr_8VmbyUYxYH']];
 
         $this->client->request(
             'POST', 
-            '/api/webhook/MollieSubscriptionPayment',
+            '/api/webhook/MollieDirectPayment',
+            // '/api/webhook/MollieSubscriptionPayment',
             $data,
         );
         
@@ -113,6 +139,7 @@ class WebhookControllerTest extends ApiTestCase
         return $this->entityManager;
     }
 
+
     protected function persistAndFlush($class): void
     {
         $this->entityManager->persist($class);
@@ -128,6 +155,7 @@ class WebhookControllerTest extends ApiTestCase
         $userAddress = new UserAddress();
         $shopOrder = new ShopOrder();
         $date = new DateTime();
+        $product = new Product();
         $statusTransfer = new StatusTransfer();
         $em = $this->getEntityManager();
 
@@ -171,17 +199,54 @@ class WebhookControllerTest extends ApiTestCase
         $shopOrder->setOrderDate($date);
         $shopOrder->setOrderStatus(MolliePaymentStatusEnum::OPEN);
         $shopOrder->setTotalAmount('130.00');        
-        $shopOrder->setOwnedBy($user);        
+        $shopOrder->setOrderOwnedBy($user);        
         $shopOrder->setShippingAddress($userAddress);
-
-        $this->persistAndFlush($shopOrder);
-
-        $shopOrder = $em->getRepository(ShopOrder::class)->find($shopOrder->getId());
+        $vat = new VatRate();
+        $vat->setProcent(9.00);
         
-        $statusTransfer->setTransferId('tr_LSGyD4eoXA');
+        $prVatRate = new ProductVat();
+        $prVatRate->setVatAmount("10.76");
+        $prVatRate->setProduct($product);
+        $prVatRate->setVatRate($vat);
+        
+        $product->setName('Group Membership');
+        $product->setPrice("130.00");
+        $product->setDescription(Factory::faker()->sentences(1, true));
+        $product->setCategory(CategoryTypeEnum::SUB);
+        $product->setCurrencyType(CurrencyTypeEnum::EUR);
+        $product->setDuration(SubscriptionTypeEnum::MONTH);
+        $product->setDirectOrPeriodic(SubscriptionDirectOrPeriodicTypeEnum::DIRECT);
+        $product->setRelatedUser($user);
+        
+        $skuNumber = new SkuGenerator();
+        $product->setSku($skuNumber->generateSku("test", "bang", 11));
+        $product->setDurationLength(durationLength: SubscriptionLengthTypeEnum::MONTH_FOUR);
+        $product->setPublished(isPublished: true);
+        
+        $line = new OrderLine();
+        $line->setPrice($product->getPrice());
+        $line->setProduct($product);
+        $line->setQty(1);
+        $line->setShopOrder($shopOrder);
+        
+        $this->persistAndFlush($vat);
+        $this->persistAndFlush($product);
+        $this->persistAndFlush($prVatRate);
+        $this->persistAndFlush($shopOrder);
+        // $shopOrder->addProduct($product);
+        $this->persistAndFlush($line);
+        $product->setProductVat($prVatRate);            
+        $this->persistAndFlush($product);
+        $shopOrder->addOrderLine($line);
+        $this->persistAndFlush($shopOrder);
+        
+        $shopOrder = $em->getRepository(ShopOrder::class)->find($shopOrder->getId());
+        $this->persistAndFlush($shopOrder);
+        
+        $statusTransfer->setTransferId('tr_8VmbyUYxYH');
         $statusTransfer->setUserOrder($shopOrder);
         $statusTransfer->setStatus(MolliePaymentStatusEnum::OPEN);
-        $statusTransfer->setCustomer('cst_HWJKkmZeqA');
+        $statusTransfer->setCustomer('cst_HNAZwFuErE');
 
         $this->persistAndFlush($statusTransfer);
     }

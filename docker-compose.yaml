@@ -1,29 +1,49 @@
 services:
   php:
-    image: ghcr.io/eventpoints/php:main
+    build: 
+      context: ./
+      # dockerfile: ./Dockerfile
+      dockerfile: ./etc/docker/php/Dockerfile
+    # image: ghcr.io/eventpoints/php:main
     # image: dunglas/frankenphp
+    # image: php:8.3.7-fpm-alpine
     extra_hosts: ["host.docker.internal:host-gateway"]
     container_name: php
     platform: linux/amd64
+    # ports:
+    #   # HTTP
+    #   - target: 80
+    #     published: 80
+    #     protocol: tcp
+    #   # HTTPS
+    #   - target: 443
+    #     published: 443
+    #     protocol: tcp
+    #   # HTTP/3
+    #   - target: 443
+    #     published: 443
     volumes:
       - .:/app:cached
       - php_socket:/var/run/php
-      - ./docker/php/php.ini:/usr/local/etc/php/php.ini
+      # - php_socket:/var/run/php
+      # - ./etc/docker/php/php.ini:/usr/local/etc/php/php.ini
     networks:
       - martial_arts_app
-    healthcheck:
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 30s
+    # healthcheck:
+    #   interval: 10s
+    #   timeout: 3s
+    #   retries: 3
+    #   start_period: 30s
     depends_on:
       - database
+    tty: true
 
   caddy:
-    image: ghcr.io/eventpoints/caddy:main
-    # build: 
-    #   context: .
-    #   dockerfile: ./caddy/Dockerfile
+    # image: ghcr.io/eventpoints/caddy:main
+    # image: caddy:2
+    build: 
+      context: .
+      dockerfile: ./etc/docker/caddy/Dockerfile
     container_name: caddy
     platform: linux/amd64
     depends_on:
@@ -34,11 +54,11 @@ services:
       MERCURE_PUBLISHER_JWT_KEY: secret
       MERCURE_SUBSCRIBER_JWT_KEY: secret
     volumes:
-      # - ./caddy/Caddyfile:/etc/caddy/Caddyfile
-      - php_socket:/var/run/php
+      # - ./etc/docker/caddy/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
       - ./public:/app/public
+      - php_socket:/var/run/php
     networks:
       - martial_arts_app
     ports:
@@ -53,7 +73,7 @@ services:
       # HTTP/3
       - target: 443
         published: 443
-    #     protocol: udp
+        protocol: udp
     # command: --conf /etc/caddy/Caddyfile --log stdout --port 80
 
   database:
