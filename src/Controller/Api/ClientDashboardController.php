@@ -42,7 +42,7 @@ class ClientDashboardController extends AbstractController
     {
         $user = $this->getUser();
         // $subscription = $this->subRepo->findByIdThenReturnArray($this->getUser()->getId());
-        $subscription = $this->subRepo->findOneBy(['subscriptionOwnedBy' => $user->getId()],['createdAt' => 'DESC']);
+        $subscription = $this->subRepo->findOneBy(['subOwnedBy' => $user->getId()],['createdAt' => 'DESC']);
         $userData = array('id' => $user->getId(),'first_name'=> $user->getFirstName(), 'email' => $user->getEmail(), 'last_name' => $user->getLastName());
         $subscription !== null && $userData['subscription'] = $subscription;
         return $this->json($userData, 200);

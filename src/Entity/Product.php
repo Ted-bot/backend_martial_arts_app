@@ -33,7 +33,7 @@ use Symfony\Component\Serializer\Attribute\Ignore;
 // #[ApiResource]
 #[ApiResource(
     shortName: 'Product',
-    filters: ['product.search_filter'],
+    filters: ['app.product.search_filter'],
     description: 'Available Products',
     operations: [
         new Get(),

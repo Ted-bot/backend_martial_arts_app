@@ -2,38 +2,40 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use DateTimeZone;
 use Carbon\Carbon;
 use App\Class\Role;
 use DateTimeImmutable;
 use App\Entity\Product;
-// use App\Dto\CreateUserDto;
-use App\Request\CreateUserRequest;
 use App\Entity\UserProfile;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
+use App\Request\CreateUserRequest;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use Doctrine\Common\Collections\Collection;
-use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Collections\ArrayCollection;
+use ApiPlatform\Elasticsearch\Filter\OrderFilter;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\SerializedName;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USER', fields: ['email', 'phone_number'])]
+#[ApiFilter(OrderFilter::class, properties: ['id', 'date_start', 'date_end'], arguments: ['orderParameterName' => 'order'])]
 #[ApiResource(
     description: 'User Entity',
-    filters: ['user.search_filter', 'user.property_filter'], //user.property_filter
+    // filters: ['app.user.search_filter'], //app.user.property_filter
     operations: [
         new Get(),
         new GetCollection(),
@@ -50,6 +52,13 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
     ],
     
 )]
+#[ApiResource(
+    shortName: 'User',
+    operations: [new Get(    
+        uriTemplate: '/user_by_email/{email}/email',
+        uriVariables: 'email'
+    )],
+)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -61,7 +70,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var string Email of user
      */
-    #[ORM\Column(length: 180)]
+    #[ORM\Column(length: 180, unique: true)]
+    // #[ApiProperty(indentifier: true)]
     #[Groups(['user:read', 'user:write','profile:read'])]
     private ?string $email = null;
 
@@ -78,15 +88,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
-    #[Groups(['user:read'])]
     #[ORM\OneToOne(mappedBy: 'userUniq', targetEntity: UserProfile::class,cascade: ['persist', 'remove'])]
+    #[Groups(['user:read'])]
     private ?UserProfile $userProfile = null;
 
     /**
      * @var string Email of user
      */
     #[ORM\Column(length: 25)]
-    #[Groups(['user:read', 'user:write','profile:read'])]
+    #[Groups(['user:read', 'user:write','profile:read', 'subscription:read'])]
     private ?string $firstName = null;
 
     /**
@@ -141,7 +151,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Product>
      */
-    #[ORM\OneToMany(targetEntity: Product::class, mappedBy: 'userUniq')]
+    #[ORM\OneToMany(targetEntity: Product::class, mappedBy: 'relatedUser')]
     private Collection $products;
 
     /**
@@ -165,9 +175,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Subscription>
      */
-    #[Groups(['user:read'])]
-    #[ORM\OneToMany(targetEntity: Subscription::class, mappedBy: 'subscriptionOwnedBy')]
-    private Collection $subscriptions;
+    #[Groups(['user:read', 'subscription:read'])]
+    #[Link(toProperty: 'subscription')]
+    #[ORM\OneToMany(targetEntity: Subscription::class, mappedBy: 'subOwnedBy')]
+    public Collection $subscriptions;
 
     public function __construct()
     {

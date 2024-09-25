@@ -2,9 +2,9 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\Link;
 use DateTime;
 use DateTimeZone;
-use DateTimeImmutable;
 use DateTimeInterface;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
@@ -21,12 +21,11 @@ use ApiPlatform\Metadata\GetCollection;
 use App\Enum\SubscriptionLengthTypeEnum;
 use App\Repository\SubscriptionRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
-// use ApiPlatform\Serializer\Filter\PropertyFilter;
 
 #[ORM\Entity(repositoryClass: SubscriptionRepository::class)]
-#[ApiResource(
+#[ApiResource(    
     shortName: 'Subscription',
-    filters: ['subscription.property_filter'],
+    filters: ['app.subscription.property_filter'],
     description: 'Subscriptions of Users',
     operations: [
         new Get(),
@@ -40,6 +39,24 @@ use Symfony\Component\Serializer\Attribute\Groups;
     ],
     denormalizationContext: [
         'groups' => ['subscription:write']
+    ],    
+)]
+#[ApiResource(
+    uriTemplate: '/users/{email}/subscriptions/{status}.{_format}',
+    shortName: 'Subscription',
+    operations: [new Get()],
+    uriVariables: [
+        'email' => new Link(
+            identifiers: ['email'],
+            fromProperty: 'subscriptions',
+            fromClass: User::class
+        ),
+        'status' => new Link(
+            identifiers: ['status']
+        ),        
+    ],
+    normalizationContext: [
+        'groups' => ['subscription:read']
     ],
 )]
 class Subscription
@@ -67,7 +84,7 @@ class Subscription
     private ?string $amount;
 
     #[ORM\Column(length: 30, nullable: true)]
-    #[Groups(['subscription:read'])]
+    #[Groups(['subscription:read', 'user:read'])]
     private ?string $transferId = null;
 
     #[ORM\ManyToOne(inversedBy: 'relatedSubscriptions')]
@@ -93,7 +110,7 @@ class Subscription
     private ?DateTimeInterface $updatedAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'subscriptions')]
-    private ?User $subscriptionOwnedBy = null;
+    public ?User $subOwnedBy = null;
 
     public function __construct()
     {
@@ -221,12 +238,12 @@ class Subscription
 
     public function getSubscriptionOwnedBy(): ?User
     {
-        return $this->subscriptionOwnedBy;
+        return $this->subOwnedBy;
     }
 
-    public function setSubscriptionOwnedBy(?User $subscriptionOwnedBy): static
+    public function setSubscriptionOwnedBy(?User $subOwnedBy): static
     {
-        $this->subscriptionOwnedBy = $subscriptionOwnedBy;
+        $this->subOwnedBy = $subOwnedBy;
 
         return $this;
     }

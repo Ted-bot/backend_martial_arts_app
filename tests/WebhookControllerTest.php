@@ -109,7 +109,7 @@ class WebhookControllerTest extends ApiTestCase
 
         $this->persistAndFlush($subscription);
         // $em =  $this->getEntityManager();
-        // $findSubscription = $em->getRepository(Subscription::class)->findOneBy(['subscriptionOwnedBy' => $user]);
+        // $findSubscription = $em->getRepository(Subscription::class)->findOneBy(['subOwnedBy' => $user]);
 
         // $this->assertIsObject($findSubscription);
 

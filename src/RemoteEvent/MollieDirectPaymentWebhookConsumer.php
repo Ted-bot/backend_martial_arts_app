@@ -186,8 +186,8 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
             }
             
             /** @var Subscription $subscription */
-            $subscription = $this->entityManager->getRepository(Subscription::class)->findOneBy(['subscriptionOwnedBy' => $shopOrder->getOrderOwnedBy()], ['id' => 'DESC']);
-            // $subscription = $this->subRepo->findOneBy(['subscriptionOwnedBy' => $shopOrder->getOrderOwnedBy()]);
+            $subscription = $this->entityManager->getRepository(Subscription::class)->findOneBy(['subOwnedBy' => $shopOrder->getOrderOwnedBy()], ['id' => 'DESC']);
+            // $subscription = $this->subRepo->findOneBy(['subOwnedBy' => $shopOrder->getOrderOwnedBy()]);
             $subscription->setUpdatedAt();
             $subscription->setStatus(MolliePaymentStatusEnum::PAID);
             $subscription->setTransferId($transferId);
