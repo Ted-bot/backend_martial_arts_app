@@ -190,42 +190,6 @@ class AppFixtures extends Fixture
         $productPrices = [1,130,1];
         $productNames = ['Group Trail: 2 Lessons', 'Group MemberShip', 'BD MA T-Shirt'];
 
-        // $newProduct = new Product();
-        // $prVatRate = new ProductVat();
-
-        // $newProduct->setName('Group: Subscribe 4 month');
-        // $newProduct->setPrice($productPrices[1]);
-        // $newProduct->setDescription(Factory::faker()->sentences(1, true));
-        // $newProduct->setCategory(CategoryTypeEnum::SUB);
-        // $newProduct->setCurrencyType(CurrencyTypeEnum::EUR);
-        // $newProduct->setDuration(SubscriptionTypeEnum::MONTH);
-        // $newProduct->setDurationLength(SubscriptionLengthTypeEnum::MONTH_FOUR);
-        // $newProduct->setDirectOrPeriodic(SubscriptionDirectOrPeriodicTypeEnum::PERIODIC);
-        // $newProduct->setRelatedUser($this->userRepository->findOneBy(['email'=> 'tkbotch@gmail.com']));
-            
-        // $skuNumber = new SkuGenerator();
-        // $new_skuStart = $newProduct->getCategory()->getId();
-        // $new_skuMid = $newProduct->getDuration()->getId();
-        // $new_skuEnd = 99;
-        
-        // $newProduct->setSku($skuNumber->generateSku($new_skuStart, $new_skuMid, $new_skuEnd));
-
-        // $setVatRate = $this->vatRepo->findOneBy(['procent' => 9.00]);
-        // $productTotalProcentPlusProcent = 100 + $setVatRate->getProcent();
-        // $divideProcentByTotalProductProcent = BigDecimal::of($setVatRate->getProcent())
-        // ->dividedBy($productTotalProcentPlusProcent, 4,  RoundingMode::DOWN);
-
-        // $tax = BigDecimal::ofUnscaledValue($productPrices[1])
-        // ->multipliedBy($divideProcentByTotalProductProcent);
-
-        // $prVatRate->setVatAmount($tax);
-        // $prVatRate->setProduct($newProduct);
-        // $prVatRate->setVatRate($setVatRate);
-
-        // $manager->persist($prVatRate);
-        // $manager->persist($newProduct);
-        // $manager->flush();
-
         foreach (SubscriptionTypeEnum::getCases() as $key => $subscriptionType) {
 
             $prVatRate = new ProductVat();
@@ -285,17 +249,11 @@ class AppFixtures extends Fixture
             $prVatRate->setVatAmount($tax);
             $prVatRate->setProduct($product);
             $prVatRate->setVatRate($setVatRate);
-
             
             $manager->persist($prVatRate);
             $manager->persist($product);
-        } 
-        
-        // $country = new Country('NL', 'nl_NL');
-        // $country = CountryTypeEnum::;
-        // $manager->persist($country);        
-        $manager->flush();
-        // dd(['product' => $product]);
+            $manager->flush();
+        }    
         
         foreach(range(0,19) as $i) {
             $address = new Address();
@@ -353,16 +311,10 @@ class AppFixtures extends Fixture
 
                 $orderLine = new OrderLine();
                 $product = $this->productRepo->findOneBy(['name'=> $name]);
-
-                // $productTax = $this->prVatRepo->findOneBy(['product'=> $product->getId()]);
+                
                 $shippingAddress = $this->userAddressRepo->findOneBy(['addressUser'=> $user->getId(), 'isDefault' => true ]);
-
-                // $quantity = [1,2,3];
-                // $orderLine->setQty($quantity[array_rand($quantity)]);
                 $orderLine->setQty(1);
-                // $totalTaxQtyProducts = $productTax->getVatAmount() * $orderLine->getQty();
                 $totalProductPriceWithQty = $product->getPrice() * $orderLine->getQty();
-                // $totalAmountOrderInclTax = BigDecimal::ofUnscaledValue($totalProductPriceWithQty)->plus($totalTaxQtyProducts);
                 $totalAmountOrderExclTax = BigDecimal::ofUnscaledValue($totalProductPriceWithQty);
                 
                 $totalAmountOrder = $totalAmountOrder->plus($totalAmountOrderExclTax);
@@ -379,14 +331,12 @@ class AppFixtures extends Fixture
                 $manager->persist($shopOrder);
                 $manager->persist($orderLine);
             }
-
             $manager->flush();
             // end loop for products
         }
 
         $manager->flush();        
 
-        // create fake orderPayment
         $paymentUpdate = new StatusTransfer();
         $userOrder = $this->soRepo->findOneBy(['orderOwnedBy' =>  $user->getId()]);
         $paymentUpdate->setTransferId('tr_DBPsz4sq7M');
@@ -394,7 +344,6 @@ class AppFixtures extends Fixture
 
         $manager->persist($paymentUpdate);   
         $manager->flush();   
-
     }
 
 }

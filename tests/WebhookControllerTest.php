@@ -49,7 +49,6 @@ class WebhookControllerTest extends ApiTestCase
 
     public function testLogin(): void
     {
-        // $client = static::createClient();
         $this->setUp();
         
         $data = [ 
@@ -63,8 +62,6 @@ class WebhookControllerTest extends ApiTestCase
         );
         $this->entityManager->refresh();
 
-        // dd(['repsonseTest' => $client->getResponse()->getKernelResponse()]);
-
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
 
     }
@@ -74,8 +71,6 @@ class WebhookControllerTest extends ApiTestCase
         $this->getSingleUserWithOrder();
 
         $data = ['json' => ['id' => 'tr_8VmbyUYxYH']];
-
-        // dd($data);
 
         $this->client->request(
             'POST', 
@@ -93,9 +88,6 @@ class WebhookControllerTest extends ApiTestCase
         $em = $this->getEntityManager();
         $user = $em->getRepository(User::class)->find(1);
 
-        // dd($user);
-
-        // $subscriptionId = (new SubscriptionUUID)->create();
         $subscriptionId = Uuid::fromRfc4122('1ef6c98c-f478-6cfc-a022-b3cca17359bc');
         $subscription = new Subscription();
         $subscription->setStatus(MolliePaymentStatusEnum::OPEN);
@@ -104,16 +96,10 @@ class WebhookControllerTest extends ApiTestCase
         $subscription->setTransferId(null); // webhook also setUpdateAt
         $subscription->setAmount("32.50");
         $subscription->setDuration(SubscriptionLengthTypeEnum::MONTH_FOUR); //SubscriptionLengthTypeEnum
-        // $currentTime->modify('+' . $setDurationProduct . ' ' . $addMonthOrWeek)->format('Y-m-d')
         $subscription->setDateEnd('+' . 3 . ' ' . 'month'); //SubscriptionLengthTypeEnum
 
         $this->persistAndFlush($subscription);
-        // $em =  $this->getEntityManager();
-        // $findSubscription = $em->getRepository(Subscription::class)->findOneBy(['subOwnedBy' => $user]);
 
-        // $this->assertIsObject($findSubscription);
-
-        // $data = ['json' => ['id' => 'tr_LSGyD4eoXA', 'subscriptionId' => $subscriptionId]];
         $data = ['json' => ['id' => 'tr_8VmbyUYxYH']];
 
         $this->client->request(

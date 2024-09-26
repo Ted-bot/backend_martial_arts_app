@@ -185,7 +185,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[Groups(['user:read', 'subscription:read'])]
     #[Link(toProperty: 'subscription')]
-    #[ORM\OneToMany(targetEntity: Subscription::class, mappedBy: 'subOwnedBy')]
+    #[ORM\OneToMany(targetEntity: Subscription::class, mappedBy: 'subscriptionOwnedBy')]
     public Collection $subscriptions;
 
     public function __construct()
@@ -491,7 +491,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->userAddresses->contains($userAddress)) {
             $this->userAddresses->add($userAddress);
-            $userAddress->setRelatedUser($this);
+            $userAddress->setAddressUser($this);
         }
 
         return $this;

@@ -82,20 +82,13 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
                         ]
                     ]
                 );
-                // if($statusPayment !== null){
-                // dd('test');
+
                 $shopOrderUpdate->setOrderStatus(MolliePaymentStatusEnum::PAID);
-                // }                    
-                
                 $this->entityManager->persist($statusTransfer);
                 $this->entityManager->flush();  
-                
-                // $this->entityManager->persist($shopOrderUpdate);
-                $this->entityManager->flush();  
-                
+                                
                 $this->checkForSubscription($shopOrderUpdate->getId(), $event->getId());
                 
-
                 // $this->bus->dispatch(new SendWebhookMessage($consumerPaid));
 
             } elseif ($payment->isCanceled() || $payment->isFailed()) {
@@ -158,8 +151,6 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
 
             }
 
-
-
         } catch (ApiException $e) {
             echo "API call failed: " . htmlspecialchars($e->getMessage());
             $this->logger->debug('Webhook Consumer Error: while trying to handle transfer request!', [
@@ -186,11 +177,10 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
             }
             
             /** @var Subscription $subscription */
-            $subscription = $this->entityManager->getRepository(Subscription::class)->findOneBy(['subOwnedBy' => $shopOrder->getOrderOwnedBy()], ['id' => 'DESC']);
-            // $subscription = $this->subRepo->findOneBy(['subOwnedBy' => $shopOrder->getOrderOwnedBy()]);
+            $subscription = $this->entityManager->getRepository(Subscription::class)->findOneBy(['subscriptionOwnedBy' => $shopOrder->getOrderOwnedBy()], ['id' => 'DESC']);
             $subscription->setUpdatedAt();
             $subscription->setStatus(MolliePaymentStatusEnum::PAID);
-            $subscription->setTransferId($transferId);
+            $subscription->setTransferId($transferId);            
             $this->entityManager->persist($subscription);
             $this->entityManager->flush();
         }

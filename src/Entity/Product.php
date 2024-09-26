@@ -128,6 +128,12 @@ class Product
     #[Groups(['product:read'])]
     private ?SubscriptionDirectOrPeriodicTypeEnum $directOrPeriodic;
 
+    /**
+     * @var Collection<int, Subscription>
+     */
+    #[ORM\OneToMany(targetEntity: Subscription::class, mappedBy: 'subscribedProduct')]
+    private Collection $subscriptions;
+
     public function __construct(
     )
     {
@@ -135,6 +141,8 @@ class Product
         $this->createdAt = $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
         $this->productVats = new ArrayCollection();
         $this->orderLines = new ArrayCollection();
+        $this->susbcriptions = new ArrayCollection();
+        $this->subscriptions = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -362,6 +370,39 @@ class Product
     public function setDirectOrPeriodic(SubscriptionDirectOrPeriodicTypeEnum $directOrPeriodic): static
     {
         $this->directOrPeriodic = $directOrPeriodic;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Subscription>
+     */
+    public function getSubscriptions(): Collection
+    {
+        return $this->subscriptions;
+    }
+
+    // note: add user to product so all users with subscription can be found through product
+    public function addSubscription(Subscription $subscription): static
+    {
+        if (!$this->subscriptions->contains($subscription)) {
+            $this->subscriptions->add($subscription);
+            $subscription->setSubscribedProduct($this);
+        }
+
+        return $this;
+    }
+
+
+    // note: add user to product so all users with subscription can be found through product
+    public function removeSubscription(Subscription $subscription): static
+    {
+        if ($this->subscriptions->removeElement($subscription)) {
+            // set the owning side to null (unless already changed)
+            if ($subscription->getSubscribedProduct() === $this) {
+                $subscription->setSubscribedProduct(null);
+            }
+        }
 
         return $this;
     }

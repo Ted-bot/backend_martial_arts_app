@@ -20,14 +20,6 @@ class ApiTokenHandler implements AccessTokenHandlerInterface
     public function getUserBadgeFrom(string $token): UserBadge
     {
         $token = $this->userRepository->findOneBy(['email' => $token]);
-        // $this->user->setEmail($token);
-        // $userIdentifier = $this->user->getUserIdentifier();
-        // dd([ 'userIdentifier' => $userIdentifier]);
-        // $user = $this->authenticator->loadUser(['token' => $token], 'username');
-
-        // dd($token->getUserIdentifier());
-        // return new UserBadge($userIdentifier);
         return new UserBadge($token);
-        // return new UserBadge($user);
     }
 }

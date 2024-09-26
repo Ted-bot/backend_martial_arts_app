@@ -14,7 +14,7 @@ final class Version20240821145041 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'add fields direct_or_periodic and duration_length to product table';
     }
 
     public function up(Schema $schema): void

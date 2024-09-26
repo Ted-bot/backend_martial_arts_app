@@ -2,12 +2,14 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\Link;
 use DateTime;
 use DateTimeZone;
+use Carbon\Carbon;
+use DateTimeImmutable;
 use DateTimeInterface;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Patch;
@@ -109,8 +111,13 @@ class Subscription
     #[Groups(['subscription:read', 'user:read'])]
     private ?DateTimeInterface $updatedAt = null;
 
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $subscriptionOwnedBy = null;
+
     #[ORM\ManyToOne(inversedBy: 'subscriptions')]
-    public ?User $subOwnedBy = null;
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Product $subscribedProduct;
 
     public function __construct()
     {
@@ -172,11 +179,19 @@ class Subscription
         return $this;
     }
 
+    #[ApiProperty(security: 'is_granted("Role_Admin")')]
     public function getDateStart(): ?\DateTimeInterface
     {
         return $this->dateStart;
     }
+    
+    #[Groups(['user:read', 'subscription:read'])]
+    public function getStartDate(): ?string
+    {
+        return Carbon::parse($this->dateStart)->format('d-m-Y');//->diffForHumans()
+    }
 
+    #[ApiProperty(security: 'is_granted("Role_Admin")')]
     public function setDateStart(DateTimeInterface $dateStart): static
     {
         $this->dateStart = $dateStart;
@@ -189,13 +204,17 @@ class Subscription
         return $this->dateEnd;
     }
 
+    #[Groups(['user:read', 'subscription:read'])]
+    public function getEndDate(): ?string
+    {
+        return Carbon::parse($this->dateEnd)->format('d-m-Y');
+    }
+
     public function setDateEnd(string $dateEnd): static
     {
         $dateTime = new DateTime('now',new DateTimeZone('Europe/Amsterdam'));
         $test = DateTime::createFromFormat('d-m-Y',$dateTime->format('d-m-Y'),new DateTimeZone('Europe/Amsterdam'));
         $this->dateEnd = $test->modify($dateEnd);
-        // $this->dateEnd = $dateEnd;
-
         return $this;
     }
 
@@ -238,12 +257,24 @@ class Subscription
 
     public function getSubscriptionOwnedBy(): ?User
     {
-        return $this->subOwnedBy;
+        return $this->subscriptionOwnedBy;
     }
 
-    public function setSubscriptionOwnedBy(?User $subOwnedBy): static
+    public function setSubscriptionOwnedBy(?User $subscriptionOwnedBy): static
     {
-        $this->subOwnedBy = $subOwnedBy;
+        $this->subscriptionOwnedBy = $subscriptionOwnedBy;
+
+        return $this;
+    }
+
+    public function getSubscribedProduct(): ?Product
+    {
+        return $this->subscribedProduct;
+    }
+
+    public function setSubscribedProduct(?Product $subscribedProduct): static
+    {
+        $this->subscribedProduct = $subscribedProduct;
 
         return $this;
     }

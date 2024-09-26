@@ -2,35 +2,26 @@
 
 namespace App\Controller\Api;
 
-use App\Dto\CreateMollieOrderRequest;
-use App\Entity\ShopOrder;
-use App\Enum\MolliePaymentStatusEnum;
-use App\Message\Command\CreateSubscriptionMessage;
-use App\Repository\StatusTransferRepository;
-use App\Request\CustomerInfoRequest;
-use App\Service\MollieClientHelper;
-use App\Service\OrderCalulator;
-use App\Service\SubscriptionUUID;
-use DateTime;
 use App\Class\Role;
 use App\Entity\User;
 use App\Entity\Address;
 use App\Entity\OrderLine;
-use App\Entity\Subscription;
-use App\Entity\UserAddress;
+use App\Entity\ShopOrder;
 use Brick\Math\BigDecimal;
-use App\Dto\CustomerInfoDto;
+use App\Entity\UserAddress;
+use App\Entity\Subscription;
 use Brick\Math\RoundingMode;
 use App\Enum\CountryTypeEnum;
 use App\Entity\StatusTransfer;
 use App\Enum\CurrencyTypeEnum;
-use app\Enum\SubscriptionLengthTypeEnum;
 use Mollie\Api\MollieApiClient;
 use App\Dto\CreateMollieOrderDto;
-use App\Enum\SubscriptionTypeEnum;
+use App\Service\SubscriptionUUID;
 use App\Repository\UserRepository;
+use App\Service\MollieClientHelper;
+use App\Request\CustomerInfoRequest;
+use App\Enum\MolliePaymentStatusEnum;
 use App\Repository\AddressRepository;
-use App\Repository\CountryRepository;
 use App\Repository\ProductRepository;
 use Symfony\Component\Intl\Currencies;
 use App\Enum\CountryToCurrencyTypeEnum;
@@ -39,17 +30,17 @@ use App\Repository\ShopOrderRepository;
 use App\Service\MollieClient as Mollie;
 use App\Repository\ProductVatRepository;
 use App\Repository\UserAddressRepository;
-use App\Repository\CurrencyTypeRepository;
+use App\Repository\StatusTransferRepository;
 use Symfony\Component\HttpFoundation\Request;
-use App\Repository\SubscriptionTypeRepository;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Dto\MollieClientDto\SubscriptionOrderLine;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
 
 class OrderController extends AbstractController
 {
@@ -62,35 +53,26 @@ class OrderController extends AbstractController
         private OrderLineRepository $orderLinesRepo,
         protected ProductRepository $prRepo,
         protected ProductVatRepository $prVatRepo,
-        // protected CurrencyTypeRepository $currenyTypeRepo,
-        // protected SubscriptionTypeRepository $subscriptionTypeRepo,
         protected UserAddressRepository $userAddressRepo,
         protected AddressRepository $addressRepo,
-        // protected CountryRepository $countryRepo,
         private StatusTransferRepository $statusTransferRepo,
         private EntityManager $entityManager,
     )
-    {
-        // $this->mollie = new Mollie($this->getParameter('mollie.test'));
-    }
+    {}
 
     #[Route('/api/v1/order/create', name: 'app_create_order', methods: ['POST'])]
     public function createOrder(Request $request): JsonResponse
-    // public function payUserOrder(Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
 
         $shoppingCart = $this->prRepo->findOneBy(['sku' => $request->getPayload()->get('sku')]);
         $user = $this->getUser();
-        // $user = $this->userRepository->findOneBy(['id' => $this->getUser()]);
+
         $userLatestOrder = $this->shopOrderRepository->findOneBy([
             'orderOwnedBy' => $user,
             'orderStatus' => MolliePaymentStatusEnum::OPEN
         ]);
 
-        // dd(['latestOrderStatus' => $userLatestOrder->getOrderStatus(), 'latestOrderDate' => $userLatestOrder->getOrderDate()]);
-        
-        // dd(['emptyLatestOrder' =>$userLatestOrder]);
         if($userLatestOrder !== null){
             // get Subscription Entity and stop if extension is still valid for more then one month to prevent headache later
             if($userLatestOrder->getOrderStatus() != MolliePaymentStatusEnum::OPEN){
@@ -131,8 +113,7 @@ class OrderController extends AbstractController
             // Check if shop order has same subscription in basket as previous then no need to contine go ahead to payment page
         } else {
             $newShopOrder = new ShopOrder();
-        }
-        
+        }        
         
         $newOrderLine = new OrderLine();
 
@@ -160,7 +141,6 @@ class OrderController extends AbstractController
         // EntityManager $entityManager,
         Address $address,
     ): JsonResponse
-    // public function orderAddress(Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
         
@@ -175,10 +155,7 @@ class OrderController extends AbstractController
         if($addressId){
             $addressId->setDefault(false);
         } 
-        // else {
-        //     $addressId = new Address();
-        // }
-        
+
         $user->setFirstName($splitFirstAndLastName[0]);
         $user->setLastName($splitFirstAndLastName[1]);
         $user->setEmail($request->email);
@@ -233,17 +210,14 @@ class OrderController extends AbstractController
     }
 
     #[Route('/api/v1/order/payment', name: 'app_order', methods: ['GET'])]
-    public function order(Request $request): JsonResponse
+    public function order(Request $request, MollieClientHelper $mollieClientHelper): JsonResponse
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
-
-        $molliehelper = new MollieClientHelper(); 
 
         $user = $this->userRepository->findOneBy(['id' => $this->getUser()]);
         $userLatestOrder = $this->shopOrderRepository->findOneBy(['orderOwnedBy' => $user]);        
         $addressId = $this->userAddressRepo->findOneBy(['addressUser' => $user->getId(), 'isDefault' => 'true']);
         
-        // dd(['address'=>$addressId]);
         if($addressId !== null){
             $userAddress = $this->addressRepo->findOneBy(['id' => $addressId->getAddress()]);
             $userCountry = CountryTypeEnum::toString($userAddress->getCountry());
@@ -260,7 +234,7 @@ class OrderController extends AbstractController
             $prodUrlNr++;
             $userSelectedProduct = $this->prRepo->findOneBy(['id' => $order->getProduct()->getId()]);
             $userProductTax = $this->prVatRepo->findOneBy(['product' => $userSelectedProduct->getId()]);
-            $molliehelper->createOrderLine($order, $prodUrlNr, $userProductTax, $exchangeToCountry,$userSelectedProduct);
+            $mollieClientHelper->createOrderLine($order, $prodUrlNr, $userProductTax, $exchangeToCountry,$userSelectedProduct);
         }
         
         return new JsonResponse([
@@ -288,29 +262,29 @@ class OrderController extends AbstractController
                 'firstAndLastName' => $user->getFirstName() . ' ' . $user->getLastName(),
                 'city' => $user->getLocation(),
             ],
-            'orderTotalProductPrice' => $molliehelper->orderTotalProductPrice->toScale(2, RoundingMode::UP),
-            'orderTaxPrice' => $molliehelper->orderTax->toScale(2, RoundingMode::UP),
+            'orderTotalProductPrice' => $mollieClientHelper->orderTotalProductPrice->toScale(2, RoundingMode::UP),
+            'orderTaxPrice' => $mollieClientHelper->orderTax->toScale(2, RoundingMode::UP),
             'amount' => [
                 // 'value' => $userLatestOrder->getTotalAmount(),
-                'value' => $molliehelper->getOrderTotalProductPrice(),
+                'value' => $mollieClientHelper->getOrderTotalProductPrice(),
                 'currency' => $exchangeToCountry ?: CurrencyTypeEnum::EUR,
             ],
-            'lines' => $molliehelper->lines
+            'lines' => $mollieClientHelper->getLines()
         ], 201);
     }
 
     #[Route('/api/v1/payment', name: 'app_payment', methods: ['POST'])]
-    public function payUserOrder(#[MapRequestPayload] CreateMollieOrderDto $request, MessageBusInterface $messageBus): JsonResponse
+    public function payUserOrder(#[MapRequestPayload] CreateMollieOrderDto $request, MessageBusInterface $messageBus, MollieClientHelper $mollieClientHelper): JsonResponse
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
 
-        $molliehelper = new MollieClientHelper(); 
+        // $mollieClientHelper = new MollieClientHelper(); 
         $mollie = new MollieApiClient();
         $mollie->setApiKey($this->getParameter('mollie.test'));            
         $statusTransfer = new StatusTransfer();
         
-        $request->iban !== '' ?? $molliehelper->setSubscription(true);
-        $newUserOrder = $molliehelper->setupOrderToPay($request)->getOrderToPay();
+        $request->iban !== '' ?? $mollieClientHelper->setSubscription(true);
+        $newUserOrder = $mollieClientHelper->setupOrderToPay($request)->getOrderToPay();
 
         /** @var ShopOrder $shopOrder Object */
         $shopOrder = $this->shopOrderRepository->findOneBy(['orderOwnedBy' => $this->getUser()]);
@@ -333,7 +307,7 @@ class OrderController extends AbstractController
             $customer = $mollie->customers->create($newCustomer);
             $mollieCustomerId = $customer->id;
 
-            if($molliehelper->subscription) {
+            if($mollieClientHelper->getSubscription()) {
                 $customer->createMandate([
                     "method" => \Mollie\Api\Types\MandateMethod::DIRECTDEBIT,
                     "consumerAccount" => $request->iban, // NL34ABNA0243341423
@@ -357,44 +331,41 @@ class OrderController extends AbstractController
         * Generate a unique subscription id for this example. It is important to include this unique attribute
         * in the webhookUrl (below) so new payments can be associated with this subscription.
         */
-        if($molliehelper->subscription){
-            
-            $subscriptionLength = $request->subscriptionDetail->subscriptionLength;
-            $subscriptionMonthOrWeek = $request->subscriptionDetail->subscriptionTimeUnit;
-            $subscriptionAmount = $request->subscriptionDetail->subscriptionAmount;
-            
-            $subscriptionId = (new SubscriptionUUID)->create();
-            // $subscriptionMessage = new CreateSubscriptionMessage($subscriptionId);
-            // $messageBus->dispatch($subscriptionMessage);
-            
-            $subscription = new Subscription();
-            $subscriptionLengthConvertToEnum = SubscriptionLengthTypeEnum::from($subscriptionLength);
-            
-            $subscription->setUuid($subscriptionId);
-            $subscription->setSubscriptionOwnedBy($this->getUser());
-            $subscription->setStatus(MolliePaymentStatusEnum::OPEN);
-            $subscription->setTransferId(null); // webhook also setUpdateAt
-            $subscription->setAmount($subscriptionAmount);
-            $subscription->setDuration($subscriptionLengthConvertToEnum); //SubscriptionLengthTypeEnum
-            $subscription->setDateEnd('+' . $subscriptionLength . ' ' . $subscriptionMonthOrWeek); //SubscriptionLengthTypeEnum    
-                
-            $customer->createSubscription([
-                "amount" => [
-                    "value" => $subscriptionAmount, // You must send the correct number of decimals, thus we enforce the use of strings
-                    "currency" => $request->amount->currency,// "EUR",
-                ],
-                "times" => $subscriptionLength, // request
-                "interval" => $subscriptionLength . " " . $subscriptionMonthOrWeek, // "1 day"
-                "description" => "Subscription #{$subscriptionId}",
-                "webhookUrl" => $request->webhookUrl . '/api/webhook/MollieSubscriptionPayment',
-                "metadata" => [
-                    "subscription_id" => $subscriptionId,
-                ],
-            ]);
-                
-            $this->entityManager->persist($subscription);
-            $this->entityManager->flush();            
+        if($mollieClientHelper->getSubscription()){
+
+            $mollieClientHelper->createUserSubscription($transferId);
+
+            if(count($mollieClientHelper->getUserSubscriptionOrderLines()) === 0) goto end;
+
+            foreach($mollieClientHelper->getUserSubscriptionOrderLines() as $subscribeUser)
+            {
+                /** @var SubscriptionOrderLine $subscribeUserToProduct  */
+                $subscribeUserToProduct = $subscribeUser;
+
+                $subscriptionAmount = $subscribeUserToProduct->amountSubscription;
+                $subscriptionLength = $subscribeUserToProduct->lengthSubscription;
+                $subscriptionMonthOrWeek = $subscribeUserToProduct->timeUnitSubscription;
+
+                /** @var SubscriptionUUID $subscriptionId */
+                $subscriptionId = $subscribeUserToProduct->getUserSubscriptionId();
+
+                $customer->createSubscription([
+                    "amount" => [
+                        "value" => $subscriptionAmount, // You must send the correct number of decimals, thus we enforce the use of strings
+                        "currency" => $request->amount->currency,// "EUR",
+                    ],
+                    "times" => $subscriptionLength, // request
+                    "interval" => $subscriptionLength . " " . $subscriptionMonthOrWeek, // "1 day"
+                    "description" => "Subscription #{$subscriptionId->toString()}",
+                    "webhookUrl" => $request->webhookUrl . '/api/webhook/MollieSubscriptionPayment',
+                    "metadata" => [
+                        "subscription_id" => $subscriptionId,
+                    ],
+                ]);
+            }          
         }
+
+        end:
 
         return new JsonResponse(['redirect' => $createPayment->getCheckoutUrl()], 200);
     }

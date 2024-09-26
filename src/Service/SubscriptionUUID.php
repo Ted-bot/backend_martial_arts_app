@@ -3,21 +3,29 @@
 
 namespace App\Service;
 
-use DateTimeZone;
-use DateTimeImmutable;
-use Symfony\Component\Uid\Uuid;
-use Symfony\Component\Uid\UuidV7;
-use Symfony\Component\Uid\Factory\UuidFactory;
+use Symfony\Component\Uid\UuidV4;
 
 class SubscriptionUUID
 {    
-    public function create(): Uuid
+    private UuidV4 $uuidFactory;
+
+    public function __construct(){
+        $this->uuidFactory = new UuidV4();
+    }
+    public function create(): uuidV4
     {
-        return (new UuidFactory())->create();
+        return $this->uuidFactory;
+    }
+    
+    public function toString(): string{
+        /** @var UuidV4 $uuid */
+        $uuid = $this->uuidFactory;
+        
+        return $uuid->__toString();
     }
 
-    public function fromString(string $value): Uuid
+    public static function fromString(string $uuidV4 = '7038677a-dbf9-4ad2-8b97-841787a6c33d')
     {
-        return Uuid::fromString($value);
+        return UuidV4::fromString($uuidV4);
     }
 }

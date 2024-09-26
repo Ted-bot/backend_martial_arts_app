@@ -42,7 +42,6 @@ class OrderCalulator
      */ 
     public function divide(int|float $value)
     {
-        // dd(['inputDivide' => $this->result, 'value' => $value]);
         $this->result = BigDecimal::ofUnscaledValue($this->result)->dividedBy($value, 2, RoundingMode::HALF_UP);
         return $this;
     }
