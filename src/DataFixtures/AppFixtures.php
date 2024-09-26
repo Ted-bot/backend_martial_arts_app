@@ -317,7 +317,7 @@ class AppFixtures extends Fixture
             $randomAddress = AddressFactory::random();
             $address = $this->addressRepo->findOneBy(['id' => $randomAddress->getId()]);
 
-            $userAddress->setRelatedUser($user);
+            $userAddress->setAddressUser($user);
             $userAddress->setAddress($address);
             $userAddress->setDefault(true);
 
@@ -330,7 +330,7 @@ class AppFixtures extends Fixture
             $randomAddress = AddressFactory::random();
             $address = $this->addressRepo->findOneBy(['id' => $randomAddress->getId()]);
 
-            $userAddress->setRelatedUser($user);
+            $userAddress->setAddressUser($user);
             $userAddress->setAddress($address);
             $userAddress->setDefault(false);
 
@@ -355,7 +355,7 @@ class AppFixtures extends Fixture
                 $product = $this->productRepo->findOneBy(['name'=> $name]);
 
                 // $productTax = $this->prVatRepo->findOneBy(['product'=> $product->getId()]);
-                $shippingAddress = $this->userAddressRepo->findOneBy(['relatedUser'=> $user->getId(), 'isDefault' => true ]);
+                $shippingAddress = $this->userAddressRepo->findOneBy(['addressUser'=> $user->getId(), 'isDefault' => true ]);
 
                 // $quantity = [1,2,3];
                 // $orderLine->setQty($quantity[array_rand($quantity)]);

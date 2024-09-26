@@ -80,12 +80,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     #[Groups(['user:read', 'user:write','profile:read'])]
+    #[ApiProperty(security: 'is_granted("Role_Admin")')]
     private array $roles = [];
 
     /**
      * @var string The hashed password
      */
     #[ORM\Column]
+    #[ApiProperty(security: 'is_granted("Role_Admin")')]
     private ?string $password = null;
 
     #[ORM\OneToOne(mappedBy: 'userUniq', targetEntity: UserProfile::class,cascade: ['persist', 'remove'])]
@@ -139,6 +141,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column(length: 255)]
     #[Groups(['user:read', 'user:write', 'profile:read'])]
+    #[ApiProperty(security: 'is_granted("Role_Admin")')]
     protected ?string $conversion = null;
 
     /**
@@ -146,18 +149,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column(length: 25)]
     #[Groups(['user:read', 'user:write', 'profile:read'])]
+    #[ApiProperty(security: 'is_granted("Role_Admin")')]
     private ?DateTimeImmutable $createdAt;
 
     /**
      * @var Collection<int, Product>
      */
     #[ORM\OneToMany(targetEntity: Product::class, mappedBy: 'relatedUser')]
+    #[ApiProperty(security: 'is_granted("Role_Admin")')]
     private Collection $products;
 
     /**
      * @var Collection<int, UserAddress>
      */
-    #[ORM\OneToMany(targetEntity: UserAddress::class, mappedBy: 'relatedUser')]
+    #[ORM\OneToMany(targetEntity: UserAddress::class, mappedBy: 'addressUser')]
+    #[ApiProperty(security: 'is_granted("Role_Admin")')]
     private Collection $userAddresses;
 
     /**
@@ -167,9 +173,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private Collection $shopOrders;
 
     #[ORM\Column(length: 4, nullable: true)]
+    #[ApiProperty(security: 'is_granted("Role_Admin")')]
     private ?string $libReactState = null;
 
     #[ORM\Column(length: 5, nullable: true)]
+    #[ApiProperty(security: 'is_granted("Role_Admin")')]
     private ?string $libReactCity = null;
 
     /**
@@ -236,6 +244,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      *
      * @see UserInterface
      */
+    #[ApiProperty(security: 'is_granted("Role_Admin")')]
     public function getUserIdentifier(): string
     {
         return (string) $this->email;
@@ -492,8 +501,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if ($this->userAddresses->removeElement($userAddress)) {
             // set the owning side to null (unless already changed)
-            if ($userAddress->getRelatedUser() === $this) {
-                $userAddress->setRelatedUser(null);
+            if ($userAddress->getAddressUser() === $this) {
+                $userAddress->setAddressUser(null);
             }
         }
 

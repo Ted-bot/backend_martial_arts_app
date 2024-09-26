@@ -170,7 +170,7 @@ class OrderController extends AbstractController
         $user = $this->userRepository->findOneBy(['id' => $this->getUser()]);
 
         /** @var UserAddress UserAddres Object */
-        $addressId = $this->userAddressRepo->findOneBy(['relatedUser' => $user->getId(), 'isDefault' => 'true']);
+        $addressId = $this->userAddressRepo->findOneBy(['addressUser' => $user->getId(), 'isDefault' => 'true']);
         
         if($addressId){
             $addressId->setDefault(false);
@@ -197,7 +197,7 @@ class OrderController extends AbstractController
 
         $newUserAddress = new UserAddress();
         $newUserAddress->setAddress($address);
-        $newUserAddress->setRelatedUser($user);
+        $newUserAddress->setAddressUser($user);
         $newUserAddress->setDefault(true);
 
         try {
@@ -241,7 +241,7 @@ class OrderController extends AbstractController
 
         $user = $this->userRepository->findOneBy(['id' => $this->getUser()]);
         $userLatestOrder = $this->shopOrderRepository->findOneBy(['orderOwnedBy' => $user]);        
-        $addressId = $this->userAddressRepo->findOneBy(['relatedUser' => $user->getId(), 'isDefault' => 'true']);
+        $addressId = $this->userAddressRepo->findOneBy(['addressUser' => $user->getId(), 'isDefault' => 'true']);
         
         // dd(['address'=>$addressId]);
         if($addressId !== null){
