@@ -70,19 +70,21 @@ class Subscription
     // #[ORM\Column(type: 'uuid', unique: true)]
     // #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
-    #[Groups(['subscription:read'])]
     private ?int $id;
     
     #[ORM\Column(type: 'uuid', unique:true)]
     #[ApiProperty(identifier: true)]
+    #[Groups(['tokenmanager:read', 'profile:read', 'user:read'])]
+    // note: set restriction for admin
     private ?Uuid $uuid = null;
 
     #[ORM\Column(enumType: MolliePaymentStatusEnum::class, length: 255)]
-    #[Groups(['subscription:read', 'user:read'])]
+    #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
     private ?MolliePaymentStatusEnum $status;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    #[Groups(['subscription:read'])]
+    #[Groups(['subscription:read', 'profile:read', 'user:read'])]
+    // note: set restriction only accessable by admin
     private ?string $amount;
 
     #[ORM\Column(length: 30, nullable: true)]
@@ -92,32 +94,42 @@ class Subscription
     #[ORM\ManyToOne(inversedBy: 'relatedSubscriptions')]
     #[ORM\JoinColumn(nullable: false)]
     #[ORM\Column(enumType: SubscriptionTypeEnum::class)]
-    #[Groups(['subscription:read', 'user:read'])]
+    #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
     private ?SubscriptionLengthTypeEnum $duration;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['subscription:read', 'user:read'])]
+    #[Groups(['subscription:read', 'user:read','tokenmanager:read', 'profile:read'])]
     private ?DateTimeInterface $dateStart;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['subscription:read', 'user:read'])]
+    #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
     private ?DateTimeInterface $dateEnd;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Groups(['subscription:read', 'user:read'])]
+    #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
     private ?DateTimeInterface $createdAt;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     #[Groups(['subscription:read', 'user:read'])]
     private ?DateTimeInterface $updatedAt = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(inversedBy: 'subscriptions')]   
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['user:read'])]
+    // note: set restriction 
     private ?User $subscriptionOwnedBy = null;
 
     #[ORM\ManyToOne(inversedBy: 'subscriptions')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['tokenmanager:read', 'profile:read', 'user:read'])]
     private ?Product $subscribedProduct;
+
+    #[ORM\OneToOne(mappedBy: 'relatedSubscription', cascade: ['persist', 'remove'])]
+    #[Groups(['user:read'])]
+    private ?TokenManager $tokenManager = null;
+
+    // #[ORM\ManyToOne(inversedBy: 'relatedSubscription')]
+    // private ?TokenManager $tokenManager = null;
 
     public function __construct()
     {
@@ -275,6 +287,40 @@ class Subscription
     public function setSubscribedProduct(?Product $subscribedProduct): static
     {
         $this->subscribedProduct = $subscribedProduct;
+
+        return $this;
+    }
+
+    // public function getTokenManager(): ?TokenManager
+    // {
+    //     return $this->tokenManager;
+    // }
+
+    // public function setTokenManager(?TokenManager $tokenManager): static
+    // {
+    //     $this->tokenManager = $tokenManager;
+
+    //     return $this;
+    // }
+
+    public function getTokenManager(): ?TokenManager
+    {
+        return $this->tokenManager;
+    }
+
+    public function setTokenManager(?TokenManager $tokenManager): static
+    {
+        // unset the owning side of the relation if necessary
+        if ($tokenManager === null && $this->tokenManager !== null) {
+            $this->tokenManager->setRelatedSubscription(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($tokenManager !== null && $tokenManager->getRelatedSubscription() !== $this) {
+            $tokenManager->setRelatedSubscription($this);
+        }
+
+        $this->tokenManager = $tokenManager;
 
         return $this;
     }

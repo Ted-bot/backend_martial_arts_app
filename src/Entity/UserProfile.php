@@ -47,9 +47,11 @@ class UserProfile
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Groups(['profile:read','profile:write'])]
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $username = null;
 
+    #[Groups(['profile:read','profile:write'])]
     #[ORM\Column(length: 1024, nullable: true)]
     private ?string $description = null;
 
@@ -58,27 +60,42 @@ class UserProfile
 
     #[ORM\OneToOne(inversedBy: 'userProfile', targetEntity: User::class, cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['profile:read'])]
     private ?User $userUniq = null;
 
+    #[Groups(['profile:read'])]
     #[ORM\ManyToOne(inversedBy: 'profileGroup')]
     private ?Group $groupStudent = null;
 
     /**
      * @var Collection<int, PostEvent>
      */
+    #[Groups(['profile:read'])]
     #[ORM\OneToMany(targetEntity: PostEvent::class, mappedBy: 'relatedUser')]
     private Collection $postEvents;
 
     /**
      * @var Collection<int, PostEvent>
      */
-    #[ORM\ManyToMany(targetEntity: PostEvent::class, mappedBy: 'subscribe')]
+    // #[Groups(['profile:read'])]
+    #[ORM\ManyToMany(targetEntity: PostEvent::class, mappedBy: 'subscribe')]    
     private Collection $subscribeToEvents;
+
+    /**
+     * @var Collection<int, TokenManager>
+     */
+    #[Groups(['profile:read'])]
+    #[ORM\OneToMany(targetEntity: TokenManager::class, mappedBy: 'userProfile')]
+    private Collection $tokenManagers;
+
+    // #[ORM\OneToOne(mappedBy: 'userProfile', cascade: ['persist', 'remove'])]
+    // private ?TokenManager $tokenManager = null;
 
     public function __construct()
     {
         $this->postEvents = new ArrayCollection();
         $this->subscribeToEvents = new ArrayCollection();
+        $this->tokenManagers = new ArrayCollection();
     }
 
     // #[ORM\ManyToOne(inversedBy: 'user_profile_create_post_event')]
@@ -93,13 +110,11 @@ class UserProfile
         return $this->id;
     }
 
-    #[Groups('profile:read')]
     public function getUserName(): ?string
     {
         return $this->username;
     }
 
-    #[Groups('profile:write')]
     public function setUserName(?string $username): static
     {
         $this->username = $username;
@@ -107,13 +122,11 @@ class UserProfile
         return $this;
     }
 
-    #[Groups('profile:read')]
     public function getDescription(): ?string
     {
         return $this->description;
     }
 
-    #[Groups('profile:write')]
     public function setDescription(?string $description): static
     {
         $this->description = $description;
@@ -121,13 +134,11 @@ class UserProfile
         return $this;
     }
 
-    #[Groups('profile:read')]
     public function getWebsiteUrl(): ?string
     {
         return $this->websiteUrl;
     }
 
-    #[Groups('profile:write')]
     public function setWebsiteUrl(?string $websiteUrl): static
     {
         $this->websiteUrl = $websiteUrl;
@@ -135,13 +146,11 @@ class UserProfile
         return $this;
     }
 
-    #[Groups('profile:read')]
     public function getUserUniq(): ?User
     {
         return $this->userUniq;
     }
 
-    #[Groups('profile:write')]
     public function setUserUniq(?User $userUniq): static
     {
         $this->userUniq = $userUniq;
@@ -246,6 +255,53 @@ class UserProfile
     {
         if ($this->subscribeToEvents->removeElement($subscribeToEvent)) {
             $subscribeToEvent->removeSubscribe($this);
+        }
+
+        return $this;
+    }
+
+    // public function getTokenManager(): ?TokenManager
+    // {
+    //     return $this->tokenManager;
+    // }
+
+    // public function setTokenManager(TokenManager $tokenManager): static
+    // {
+    //     // set the owning side of the relation if necessary
+    //     if ($tokenManager->getUserProfile() !== $this) {
+    //         $tokenManager->setUserProfile($this);
+    //     }
+
+    //     $this->tokenManager = $tokenManager;
+
+    //     return $this;
+    // }
+
+    /**
+     * @return Collection<int, TokenManager>
+     */
+    public function getTokenManagers(): Collection
+    {
+        return $this->tokenManagers;
+    }
+
+    public function addTokenManager(TokenManager $tokenManager): static
+    {
+        if (!$this->tokenManagers->contains($tokenManager)) {
+            $this->tokenManagers->add($tokenManager);
+            $tokenManager->setUserProfile($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTokenManager(TokenManager $tokenManager): static
+    {
+        if ($this->tokenManagers->removeElement($tokenManager)) {
+            // set the owning side to null (unless already changed)
+            if ($tokenManager->getUserProfile() === $this) {
+                $tokenManager->setUserProfile(null);
+            }
         }
 
         return $this;

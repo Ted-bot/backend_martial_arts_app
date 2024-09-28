@@ -5,8 +5,10 @@ namespace App\Controller\Api;
 use App\Class\Role;
 use App\Entity\User;
 use App\Entity\Address;
+use App\Entity\Product;
 use App\Entity\OrderLine;
 use App\Entity\ShopOrder;
+use App\Entity\ProductVat;
 use Brick\Math\BigDecimal;
 use App\Entity\UserAddress;
 use App\Entity\Subscription;
@@ -17,20 +19,12 @@ use App\Enum\CurrencyTypeEnum;
 use Mollie\Api\MollieApiClient;
 use App\Dto\CreateMollieOrderDto;
 use App\Service\SubscriptionUUID;
-use App\Repository\UserRepository;
 use App\Service\MollieClientHelper;
 use App\Request\CustomerInfoRequest;
 use App\Enum\MolliePaymentStatusEnum;
-use App\Repository\AddressRepository;
-use App\Repository\ProductRepository;
 use Symfony\Component\Intl\Currencies;
 use App\Enum\CountryToCurrencyTypeEnum;
-use App\Repository\OrderLineRepository;
-use App\Repository\ShopOrderRepository;
 use App\Service\MollieClient as Mollie;
-use App\Repository\ProductVatRepository;
-use App\Repository\UserAddressRepository;
-use App\Repository\StatusTransferRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Dto\MollieClientDto\SubscriptionOrderLine;
@@ -48,14 +42,6 @@ class OrderController extends AbstractController
 
     public function __construct(
         private SubscriptionUUID $subscriptionUUID,
-        protected UserRepository $userRepository,
-        public ShopOrderRepository $shopOrderRepository,
-        private OrderLineRepository $orderLinesRepo,
-        protected ProductRepository $prRepo,
-        protected ProductVatRepository $prVatRepo,
-        protected UserAddressRepository $userAddressRepo,
-        protected AddressRepository $addressRepo,
-        private StatusTransferRepository $statusTransferRepo,
         private EntityManager $entityManager,
     )
     {}
@@ -65,10 +51,13 @@ class OrderController extends AbstractController
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
 
-        $shoppingCart = $this->prRepo->findOneBy(['sku' => $request->getPayload()->get('sku')]);
+        $shoppingCart = $this->entityManager->getRepository(Product::class)
+        ->findOneBy(['sku' => $request->getPayload()->get('sku')]);
+
         $user = $this->getUser();
 
-        $userLatestOrder = $this->shopOrderRepository->findOneBy([
+        $userLatestOrder = $this->entityManager->getRepository(ShopOrder::class)
+        ->findOneBy([
             'orderOwnedBy' => $user,
             'orderStatus' => MolliePaymentStatusEnum::OPEN
         ]);
@@ -146,11 +135,13 @@ class OrderController extends AbstractController
         
         $splitFirstAndLastName = explode(" ", $request->firstAndLastName);
 
-        /** @var User User Object */
-        $user = $this->userRepository->findOneBy(['id' => $this->getUser()]);
+        /** @var User $user Object */
+        $user = $this->entityManager->getRepository(User::class)
+        ->findOneBy(['id' => $this->getUser()]);
 
-        /** @var UserAddress UserAddres Object */
-        $addressId = $this->userAddressRepo->findOneBy(['addressUser' => $user->getId(), 'isDefault' => 'true']);
+        /** @var UserAddress $adressId Object */
+        $addressId = $this->entityManager->getRepository(UserAddress::class)
+        ->findOneBy(['addressUser' => $user->getId(), 'isDefault' => 'true']);
         
         if($addressId){
             $addressId->setDefault(false);
@@ -214,12 +205,25 @@ class OrderController extends AbstractController
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
 
-        $user = $this->userRepository->findOneBy(['id' => $this->getUser()]);
-        $userLatestOrder = $this->shopOrderRepository->findOneBy(['orderOwnedBy' => $user]);        
-        $addressId = $this->userAddressRepo->findOneBy(['addressUser' => $user->getId(), 'isDefault' => 'true']);
+        $this->setPreviousSubscriptionAsExprired();
+
+        /** @var User $user Object  */
+        $user = $this->entityManager->getRepository(User::class)
+        ->findOneBy(['id' => $this->getUser()]);
+
+        /**  @var ShopOrder $userLatestOrder */
+        $userLatestOrder = $this->entityManager->getRepository(ShopOrder::class)
+        ->findOneBy(['orderOwnedBy' => $user]);      
+
+        /** @var UserAddress $addressId Object */
+        $addressId = $this->entityManager->getRepository(UserAddress::class)
+        ->findOneBy(['addressUser' => $user->getId(), 'isDefault' => 'true']);
         
         if($addressId !== null){
-            $userAddress = $this->addressRepo->findOneBy(['id' => $addressId->getAddress()]);
+            /** @var Address $userAddress Object */
+            $userAddress = $this->entityManager->getRepository(Address::class)
+            ->findOneBy(['id' => $addressId->getAddress()]);
+
             $userCountry = CountryTypeEnum::toString($userAddress->getCountry());
             $exchangeToCountry = CountryToCurrencyTypeEnum::getCurrencyType($userAddress->getCountry());
             $symbol = Currencies::getSymbol($exchangeToCountry);
@@ -232,8 +236,15 @@ class OrderController extends AbstractController
         $prodUrlNr = 0;
         foreach( $userLatestOrder->getOrderLines() as $order ){
             $prodUrlNr++;
-            $userSelectedProduct = $this->prRepo->findOneBy(['id' => $order->getProduct()->getId()]);
-            $userProductTax = $this->prVatRepo->findOneBy(['product' => $userSelectedProduct->getId()]);
+
+            /** @var Product $product Object */
+            $userSelectedProduct = $this->entityManager->getRepository(Product::class)
+            ->findOneBy(['id' => $order->getProduct()->getId()]);
+
+            /** @var ProductVat $userProductVar Object */
+            $userProductTax = $this->entityManager->getRepository(ProductVat::class)
+            ->findOneBy(['product' => $userSelectedProduct->getId()]);
+
             $mollieClientHelper->createOrderLine($order, $prodUrlNr, $userProductTax, $exchangeToCountry,$userSelectedProduct);
         }
         
@@ -280,23 +291,21 @@ class OrderController extends AbstractController
 
         // $mollieClientHelper = new MollieClientHelper(); 
         $mollie = new MollieApiClient();
-        $mollie->setApiKey($this->getParameter('mollie.test'));            
-        $statusTransfer = new StatusTransfer();
+        $mollie->setApiKey($this->getParameter('mollie.test'));       
         
         $request->iban !== '' ?? $mollieClientHelper->setSubscription(true);
         $newUserOrder = $mollieClientHelper->setupOrderToPay($request)->getOrderToPay();
 
         /** @var ShopOrder $shopOrder Object */
-        $shopOrder = $this->shopOrderRepository->findOneBy(['orderOwnedBy' => $this->getUser()]);
+        $shopOrder = $this->entityManager->getRepository(ShopOrder::class)
+        ->findOneBy(['orderOwnedBy' => $this->getUser()]);
 
         /** @var StatusTransfer $knownMollieCustomer Object */
-        $knownMollieCustomer = $this->statusTransferRepo->findOneBy(['userOrder' => $shopOrder->getId()]);
+        $knownMollieCustomer = $this->entityManager->getRepository(StatusTransfer::class)
+        ->findOneBy(['userOrder' => $shopOrder->getId()]);
 
-        // check if user has selected a subscription
-        if($knownMollieCustomer->getCustomer() != null){
-            $mollieCustomerId = $knownMollieCustomer->getCustomer();
-            $customer = $mollie->customers->get($knownMollieCustomer->getCustomer());
-        } else {
+        // check if user is known customer
+        if(!$knownMollieCustomer) {
             $newCustomer = [
                 "name" => $request->billingAddress->givenName,
                 "email" => $request->billingAddress->email,
@@ -314,12 +323,16 @@ class OrderController extends AbstractController
                     "consumerName" => $request->billingAddress->givenName . ' ' . $request->billingAddress->familyName
                 ]);
             }
-        }
+        } else {
+            $mollieCustomerId = $knownMollieCustomer->getCustomer();
+            $customer = $mollie->customers->get($knownMollieCustomer->getCustomer());
+        } 
 
         //Now make payment  error ApiException
         $createPayment = $customer->createPayment($newUserOrder); // error
         $transferId = $createPayment->id;            
 
+        $statusTransfer = new StatusTransfer();
         $statusTransfer->setUserOrder($shopOrder);
         $statusTransfer->setTransferId($transferId);
         $statusTransfer->setCustomer($mollieCustomerId);
@@ -332,6 +345,8 @@ class OrderController extends AbstractController
         * in the webhookUrl (below) so new payments can be associated with this subscription.
         */
         if($mollieClientHelper->getSubscription()){
+
+            $this->setPreviousSubscriptionAsExprired();
 
             $mollieClientHelper->createUserSubscription($transferId);
 
@@ -368,5 +383,24 @@ class OrderController extends AbstractController
         end:
 
         return new JsonResponse(['redirect' => $createPayment->getCheckoutUrl()], 200);
+    }
+
+    // use function in order page before proceding to payment page
+    public function setPreviousSubscriptionAsExprired()
+    {
+        /** @var Subscription $previousSubscription Object */
+        $previousSubscriptions = $this->entityManager->getRepository(Subscription::class)
+        ->findby(['status' => MolliePaymentStatusEnum::PAID, 'subscriptionOwnedBy' => $this->getUser()]); // status => paid setTo expired
+        
+        if(!$previousSubscriptions){
+            return;
+        }
+
+        foreach($previousSubscriptions as $previousSubscription){
+            $previousSubscription->setUpdatedAt();
+            $previousSubscription->setStatus(MolliePaymentStatusEnum::EXPIRED);
+        }
+
+        $this->entityManager->flush();
     }
 }

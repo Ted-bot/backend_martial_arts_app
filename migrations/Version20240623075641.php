@@ -33,7 +33,7 @@ final class Version20240623075641 extends AbstractMigration
         // END;
         // $$ language PLPGSQL"
         // );
-        $this->addSql('CREATE TABLE post_event_user_profile IF NOT EXISTS (post_event_id INT NOT NULL, user_profile_id INT NOT NULL, PRIMARY KEY(post_event_id, user_profile_id))');
+        $this->addSql('CREATE TABLE IF NOT EXISTS post_event_user_profile (post_event_id INT NOT NULL, user_profile_id INT NOT NULL, PRIMARY KEY(post_event_id, user_profile_id))');
         $this->addSql('CREATE INDEX IF NOT EXISTS IDX_76CD66F4CE1A612A ON post_event_user_profile (post_event_id)');
         $this->addSql('CREATE INDEX IF NOT EXISTS IDX_76CD66F46B9DD454 ON post_event_user_profile (user_profile_id)');
         $this->addSql('ALTER TABLE post_event_user_profile DROP CONSTRAINT FK_76CD66F4CE1A612A');

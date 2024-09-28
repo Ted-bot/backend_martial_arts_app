@@ -6,18 +6,15 @@ use Carbon\Carbon;
 use App\Class\Role;
 use App\Entity\User;
 use App\Entity\Address;
-use App\Entity\Country;
 use App\Entity\Product;
 use App\Entity\VatRate;
 use App\Entity\OrderLine;
 use App\Entity\ShopOrder;
 use App\Entity\ProductVat;
-// use App\Entity\Category;
 use Brick\Math\BigDecimal;
 use App\Class\SkuGenerator;
 use App\Entity\UserAddress;
-use App\Entity\CurrencyType;
-use App\Factory\UserFactory;
+use App\Entity\UserProfile;
 use Brick\Math\RoundingMode;
 use App\Enum\CountryTypeEnum;
 use App\Entity\StatusTransfer;
@@ -25,41 +22,26 @@ use App\Enum\CategoryTypeEnum;
 use App\Enum\CurrencyTypeEnum;
 use Zenstruck\Foundry\Factory;
 use App\Factory\AddressFactory;
-use App\Factory\CountryFactory;
-use App\Factory\ProductFactory;
-use App\Factory\VatRateFactory;
-use App\Entity\SubscriptionType;
-use App\Factory\CategoryFactory;
 use App\Factory\PostEventFactory;
 use App\Enum\SubscriptionTypeEnum;
 use App\Repository\UserRepository;
-use App\Factory\UserAddressFactory;
 use App\Factory\UserProfileFactory;
-use App\Factory\CurrencyTypeFactory;
-use App\Entity\ProductVatRateFactory;
-use App\Enum\MolliePaymentStatusEnum;
 use App\Repository\AddressRepository;
-use App\Repository\CountryRepository;
 use App\Repository\ProductRepository;
 use App\Repository\VatRateRepository;
-use App\Repository\CategoryRepository;
-use App\Repository\ProductsRepository;
 use App\Repository\PostEventRepository;
 use App\Repository\ShopOrderRepository;
 use Doctrine\Persistence\ObjectManager;
 use App\Enum\SubscriptionLengthTypeEnum;
-use App\Factory\SubscriptionTypeFactory;
-
 use App\Repository\ProductVatRepository;
 use App\Repository\UserAddressRepository;
 use App\Repository\UserProfileRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\FixturesBundle\Fixture;
-use Symfony\Component\Clock\ClockInterface;
 
+use Symfony\Component\Clock\ClockInterface;
 use App\Repository\StatusTransferRepository;
 use App\Enum\SubscriptionDirectOrPeriodicTypeEnum;
-use Symfony\Component\Validator\Constraints\Currency;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class AppFixtures extends Fixture
@@ -111,36 +93,39 @@ class AppFixtures extends Fixture
         $manager->persist($user);
        
         foreach (range(1, 20) as $i) {
-            $user = new User();
-            $user->setEmail(Factory::faker()->unique()->email());
-            $user->setPassword(
+            $randomUser = new User();
+            $randomUser->setEmail(Factory::faker()->unique()->email());
+            $randomUser->setPassword(
                 $this->userPasswordHasherInterface->hashPassword(
                     $user, "test_pass"
                 )
             );
             $gender = Factory::faker()->boolean() ? 'man' : 'woman';
-            $user->setFirstName(Factory::faker()->firstName());
-            $user->setLastName(Factory::faker()->lastName());
-            $user->setPhoneNumber(substr(Factory::faker()->phoneNumber(), 1, 15));
-            $user->setGender($gender);
-            $user->setLocation(Factory::faker()->city());
-            $user->setDateOfBirth(Carbon::parse(Factory::faker()->dateTimeBetween('-30 years', '-8 years'))->format('Y-m-d'));
-            $user->setConversion(Factory::faker()->sentences(2, true));
-            $user->setLibReactState(2612);
-            $user->setLibReactCity(77340);
+            $randomUser->setFirstName(Factory::faker()->firstName());
+            $randomUser->setLastName(Factory::faker()->lastName());
+            $randomUser->setPhoneNumber(substr(Factory::faker()->phoneNumber(), 1, 15));
+            $randomUser->setGender($gender);
+            $randomUser->setLocation(Factory::faker()->city());
+            $randomUser->setDateOfBirth(Carbon::parse(Factory::faker()->dateTimeBetween('-30 years', '-8 years'))->format('Y-m-d'));
+            $randomUser->setConversion(Factory::faker()->sentences(2, true));
+            $randomUser->setLibReactState(2612);
+            $randomUser->setLibReactCity(77340);
 
-            $allUsers[$i] = $user;
-            $manager->persist($user);
+            $allUsers[$i] = $randomUser;
+            $manager->persist($randomUser);
         }
 
-        $manager->flush();
+        $testuserProfile = new UserProfile();
+        $testuserProfile->setUserUniq($user);
+        $manager->persist($testuserProfile);
+        $manager->flush();        
 
         UserProfileFactory::createSequence(
             function() use ($allUsers)  {
-                foreach ($allUsers as $user) {
+                foreach ($allUsers as $newuser) {
 
                     yield [
-                        'userUniq' => $user
+                        'userUniq' => $newuser
                     ];
                 }
             }
@@ -337,13 +322,14 @@ class AppFixtures extends Fixture
 
         $manager->flush();        
 
-        $paymentUpdate = new StatusTransfer();
-        $userOrder = $this->soRepo->findOneBy(['orderOwnedBy' =>  $user->getId()]);
-        $paymentUpdate->setTransferId('tr_DBPsz4sq7M');
-        $paymentUpdate->setUserOrder($userOrder);
+        // $paymentUpdate = new StatusTransfer();
+        // $userOrder = $this->soRepo->findOneBy(['orderOwnedBy' =>  $user->getId()]);
+        // $paymentUpdate->setCustomer('cst_oUiYsKKG3y');
+        // $paymentUpdate->setTransferId('tr_DBPsz4sq7M');
+        // $paymentUpdate->setUserOrder($userOrder);
 
-        $manager->persist($paymentUpdate);   
-        $manager->flush();   
+        // $manager->persist($paymentUpdate);   
+        // $manager->flush();   
     }
 
 }

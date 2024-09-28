@@ -61,11 +61,11 @@ class Product
     protected ?string $sku = null;   
 
     #[ORM\Column(length: 100)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'profile:read'])]
     protected ?string $name = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 17, scale: 2)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read','profile:read'])]
     protected ?string $price = null;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
@@ -93,13 +93,13 @@ class Product
     #[ORM\ManyToOne(inversedBy: 'relatedProducts')]
     #[ORM\JoinColumn(nullable: false)]
     #[ORM\Column(enumType: CurrencyTypeEnum::class)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'profile:read'])]
     protected ?CurrencyTypeEnum $currency;
 
     #[ORM\ManyToOne(inversedBy: 'relatedSubscriptions')]
     #[ORM\JoinColumn(nullable: false)]
     #[ORM\Column(enumType: SubscriptionTypeEnum::class)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'profile:read'])]
     private ?SubscriptionTypeEnum $duration;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
@@ -110,7 +110,7 @@ class Product
      * @var Collection<int, ProductVat>
      */
     #[ORM\OneToMany(targetEntity: ProductVat::class, mappedBy: 'product')]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'profile:read'])]
     protected Collection $productVats;
 
     /**
@@ -121,11 +121,11 @@ class Product
     private Collection $orderLines;
 
     #[ORM\Column(enumType: SubscriptionLengthTypeEnum::class)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'profile:read'])]
     private ?SubscriptionLengthTypeEnum $durationLength = null;
 
     #[ORM\Column]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'profile:read'])]
     private ?SubscriptionDirectOrPeriodicTypeEnum $directOrPeriodic;
 
     /**
@@ -141,7 +141,6 @@ class Product
         $this->createdAt = $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
         $this->productVats = new ArrayCollection();
         $this->orderLines = new ArrayCollection();
-        $this->susbcriptions = new ArrayCollection();
         $this->subscriptions = new ArrayCollection();
     }
 
