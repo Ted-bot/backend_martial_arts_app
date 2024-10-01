@@ -262,7 +262,7 @@ class AppFixtures extends Fixture
 
             $userAddress->setAddressUser($user);
             $userAddress->setAddress($address);
-            $userAddress->setDefault(true);
+            $userAddress->setDefault(true); // < true new address
 
             $manager->persist($userAddress);
         }
@@ -275,7 +275,7 @@ class AppFixtures extends Fixture
 
             $userAddress->setAddressUser($user);
             $userAddress->setAddress($address);
-            $userAddress->setDefault(false);
+            $userAddress->setDefault(false); // < false old address
 
             $manager->persist($userAddress);
         }

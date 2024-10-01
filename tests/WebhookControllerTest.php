@@ -217,7 +217,7 @@ class WebhookControllerTest extends ApiTestCase
         $this->persistAndFlush($shopOrder);
         // $shopOrder->addProduct($product);
         $this->persistAndFlush($line);
-        $product->setProductVat($prVatRate);            
+        $product->addProductVat($prVatRate);            
         $this->persistAndFlush($product);
         $shopOrder->addOrderLine($line);
         $this->persistAndFlush($shopOrder);

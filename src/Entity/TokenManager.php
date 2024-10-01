@@ -56,10 +56,10 @@ class TokenManager
     private ?Subscription $relatedSubscription = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $updatedAt = null;
+    private ?DateTimeImmutable $updatedAt = null;
 
     public function __construct(){
         $dateTime = new DateTimeImmutable();

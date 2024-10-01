@@ -65,7 +65,7 @@ class UserProfile
 
     #[Groups(['profile:read'])]
     #[ORM\ManyToOne(inversedBy: 'profileGroup')]
-    private ?Group $groupStudent = null;
+    private ?Group $groupStudent;
 
     /**
      * @var Collection<int, PostEvent>
@@ -203,35 +203,35 @@ class UserProfile
     //     return $this;
     // }
 
-    // /**
-    //  * @return Collection<int, PostEvent>
-    //  */
-    // public function getPostEvents(): Collection
-    // {
-    //     return $this->postEvents;
-    // }
+    /**
+     * @return Collection<int, PostEvent>
+     */
+    public function getPostEvents(): Collection
+    {
+        return $this->postEvents;
+    }
 
-    // public function addPostEvent(PostEvent $postEvent): static
-    // {
-    //     if (!$this->postEvents->contains($postEvent)) {
-    //         $this->postEvents->add($postEvent);
-    //         $postEvent->setRelatedUser($this);
-    //     }
+    public function addPostEvent(PostEvent $postEvent): static
+    {
+        if (!$this->postEvents->contains($postEvent)) {
+            $this->postEvents->add($postEvent);
+            $postEvent->setRelatedUser($this);
+        }
 
-    //     return $this;
-    // }
+        return $this;
+    }
 
-    // public function removePostEvent(PostEvent $postEvent): static
-    // {
-    //     if ($this->postEvents->removeElement($postEvent)) {
-    //         // set the owning side to null (unless already changed)
-    //         if ($postEvent->getRelatedUser() === $this) {
-    //             $postEvent->setRelatedUser(null);
-    //         }
-    //     }
+    public function removePostEvent(PostEvent $postEvent): static
+    {
+        if ($this->postEvents->removeElement($postEvent)) {
+            // set the owning side to null (unless already changed)
+            if ($postEvent->getRelatedUser() === $this) {
+                $postEvent->setRelatedUser(null);
+            }
+        }
 
-    //     return $this;
-    // }
+        return $this;
+    }
 
     /**
      * @return Collection<int, PostEvent>

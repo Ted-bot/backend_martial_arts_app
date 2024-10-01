@@ -149,7 +149,6 @@ class MollieClientHelper extends AbstractController
                 $subscription->setDuration($subscriptionLengthConvertToEnum); //SubscriptionLengthTypeEnum
                 $subscription->setDateEnd('+' . $subscriptionLength . ' ' . $subscriptionMonthOrWeek); //SubscriptionLengthTypeEnum    
                 $subscription->setUpdatedAt();
-                $subscription->setStatus(MolliePaymentStatusEnum::OPEN);
     
                 $this->entityManager->persist($subscription);
                 $this->entityManager->flush();

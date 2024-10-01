@@ -277,7 +277,7 @@ class Product
         return $this->productVats;
     }
 
-    public function setProductVat(ProductVat $productVat): static
+    public function addProductVat(ProductVat $productVat): static
     {
         if (!$this->productVats->contains($productVat)) {
             $this->productVats->add($productVat);

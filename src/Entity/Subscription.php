@@ -115,8 +115,7 @@ class Subscription
 
     #[ORM\ManyToOne(inversedBy: 'subscriptions')]   
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['user:read'])]
-    // note: set restriction 
+    #[Groups(['user:read'])]    // note: set restriction 
     private ?User $subscriptionOwnedBy = null;
 
     #[ORM\ManyToOne(inversedBy: 'subscriptions')]
@@ -238,6 +237,9 @@ class Subscription
     public function setCreatedAt(DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
+
+        $dateTime = new DateTime('now',new DateTimeZone('Europe/Amsterdam'));
+        // $this->createdAt = $dateTime;
 
         return $this;
     }
