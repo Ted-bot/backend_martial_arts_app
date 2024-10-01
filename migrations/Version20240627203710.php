@@ -14,7 +14,7 @@ final class Version20240627203710 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'create table payment type';
     }
 
     public function up(Schema $schema): void

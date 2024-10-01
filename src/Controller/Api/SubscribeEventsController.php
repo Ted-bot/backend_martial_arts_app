@@ -64,12 +64,6 @@ class SubscribeEventsController extends AbstractController
         $timeEvent = date_format($findEvent->getStartDate(),'d-M H:m');
         $datetime = new DateTimeImmutable();
         $currentTimeEvent = $datetime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
-        
-        // dd([
-        //     'currentTime' => $currentTimeEvent,
-        //     'SelectedTimeEvent'=> $findEvent->getStartDate(),
-        //     'DeniedAccess' => ($currentTimeEvent > $findEvent->getStartDate())
-        // ]);        
 
         if(!$findEvent->isPublished()){
             return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);

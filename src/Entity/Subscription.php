@@ -4,10 +4,12 @@ namespace App\Entity;
 
 use DateTime;
 use DateTimeZone;
+use Carbon\Carbon;
 use DateTimeImmutable;
 use DateTimeInterface;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Patch;
@@ -21,12 +23,11 @@ use ApiPlatform\Metadata\GetCollection;
 use App\Enum\SubscriptionLengthTypeEnum;
 use App\Repository\SubscriptionRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
-// use ApiPlatform\Serializer\Filter\PropertyFilter;
 
 #[ORM\Entity(repositoryClass: SubscriptionRepository::class)]
-#[ApiResource(
+#[ApiResource(    
     shortName: 'Subscription',
-    filters: ['subscription.property_filter'],
+    filters: ['app.subscription.property_filter'],
     description: 'Subscriptions of Users',
     operations: [
         new Get(),
@@ -40,6 +41,24 @@ use Symfony\Component\Serializer\Attribute\Groups;
     ],
     denormalizationContext: [
         'groups' => ['subscription:write']
+    ],    
+)]
+#[ApiResource(
+    uriTemplate: '/users/{email}/subscriptions/{status}.{_format}',
+    shortName: 'Subscription',
+    operations: [new Get()],
+    uriVariables: [
+        'email' => new Link(
+            identifiers: ['email'],
+            fromProperty: 'subscriptions',
+            fromClass: User::class
+        ),
+        'status' => new Link(
+            identifiers: ['status']
+        ),        
+    ],
+    normalizationContext: [
+        'groups' => ['subscription:read']
     ],
 )]
 class Subscription
@@ -51,49 +70,65 @@ class Subscription
     // #[ORM\Column(type: 'uuid', unique: true)]
     // #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
-    #[Groups(['subscription:read'])]
     private ?int $id;
     
     #[ORM\Column(type: 'uuid', unique:true)]
     #[ApiProperty(identifier: true)]
+    #[Groups(['tokenmanager:read', 'profile:read', 'user:read'])]
+    // note: set restriction for admin
     private ?Uuid $uuid = null;
 
     #[ORM\Column(enumType: MolliePaymentStatusEnum::class, length: 255)]
-    #[Groups(['subscription:read', 'user:read'])]
+    #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
     private ?MolliePaymentStatusEnum $status;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    #[Groups(['subscription:read'])]
+    #[Groups(['subscription:read', 'profile:read', 'user:read'])]
+    // note: set restriction only accessable by admin
     private ?string $amount;
 
     #[ORM\Column(length: 30, nullable: true)]
-    #[Groups(['subscription:read'])]
+    #[Groups(['subscription:read', 'user:read'])]
     private ?string $transferId = null;
 
     #[ORM\ManyToOne(inversedBy: 'relatedSubscriptions')]
     #[ORM\JoinColumn(nullable: false)]
     #[ORM\Column(enumType: SubscriptionTypeEnum::class)]
-    #[Groups(['subscription:read', 'user:read'])]
+    #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
     private ?SubscriptionLengthTypeEnum $duration;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['subscription:read', 'user:read'])]
+    #[Groups(['subscription:read', 'user:read','tokenmanager:read', 'profile:read'])]
     private ?DateTimeInterface $dateStart;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['subscription:read', 'user:read'])]
+    #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
     private ?DateTimeInterface $dateEnd;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Groups(['subscription:read', 'user:read'])]
+    #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
     private ?DateTimeInterface $createdAt;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     #[Groups(['subscription:read', 'user:read'])]
     private ?DateTimeInterface $updatedAt = null;
 
-    #[ORM\ManyToOne(inversedBy: 'subscriptions')]
+    #[ORM\ManyToOne(inversedBy: 'subscriptions')]   
+    #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['user:read'])]    // note: set restriction 
     private ?User $subscriptionOwnedBy = null;
+
+    #[ORM\ManyToOne(inversedBy: 'subscriptions')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['tokenmanager:read', 'profile:read', 'user:read'])]
+    private ?Product $subscribedProduct;
+
+    #[ORM\OneToOne(mappedBy: 'relatedSubscription', cascade: ['persist', 'remove'])]
+    #[Groups(['user:read'])]
+    private ?TokenManager $tokenManager = null;
+
+    // #[ORM\ManyToOne(inversedBy: 'relatedSubscription')]
+    // private ?TokenManager $tokenManager = null;
 
     public function __construct()
     {
@@ -155,11 +190,19 @@ class Subscription
         return $this;
     }
 
+    #[ApiProperty(security: 'is_granted("Role_Admin")')]
     public function getDateStart(): ?\DateTimeInterface
     {
         return $this->dateStart;
     }
+    
+    #[Groups(['user:read', 'subscription:read'])]
+    public function getStartDate(): ?string
+    {
+        return Carbon::parse($this->dateStart)->format('d-m-Y');//->diffForHumans()
+    }
 
+    #[ApiProperty(security: 'is_granted("Role_Admin")')]
     public function setDateStart(DateTimeInterface $dateStart): static
     {
         $this->dateStart = $dateStart;
@@ -172,13 +215,17 @@ class Subscription
         return $this->dateEnd;
     }
 
+    #[Groups(['user:read', 'subscription:read'])]
+    public function getEndDate(): ?string
+    {
+        return Carbon::parse($this->dateEnd)->format('d-m-Y');
+    }
+
     public function setDateEnd(string $dateEnd): static
     {
         $dateTime = new DateTime('now',new DateTimeZone('Europe/Amsterdam'));
         $test = DateTime::createFromFormat('d-m-Y',$dateTime->format('d-m-Y'),new DateTimeZone('Europe/Amsterdam'));
         $this->dateEnd = $test->modify($dateEnd);
-        // $this->dateEnd = $dateEnd;
-
         return $this;
     }
 
@@ -190,6 +237,9 @@ class Subscription
     public function setCreatedAt(DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
+
+        $dateTime = new DateTime('now',new DateTimeZone('Europe/Amsterdam'));
+        // $this->createdAt = $dateTime;
 
         return $this;
     }
@@ -227,6 +277,52 @@ class Subscription
     public function setSubscriptionOwnedBy(?User $subscriptionOwnedBy): static
     {
         $this->subscriptionOwnedBy = $subscriptionOwnedBy;
+
+        return $this;
+    }
+
+    public function getSubscribedProduct(): ?Product
+    {
+        return $this->subscribedProduct;
+    }
+
+    public function setSubscribedProduct(?Product $subscribedProduct): static
+    {
+        $this->subscribedProduct = $subscribedProduct;
+
+        return $this;
+    }
+
+    // public function getTokenManager(): ?TokenManager
+    // {
+    //     return $this->tokenManager;
+    // }
+
+    // public function setTokenManager(?TokenManager $tokenManager): static
+    // {
+    //     $this->tokenManager = $tokenManager;
+
+    //     return $this;
+    // }
+
+    public function getTokenManager(): ?TokenManager
+    {
+        return $this->tokenManager;
+    }
+
+    public function setTokenManager(?TokenManager $tokenManager): static
+    {
+        // unset the owning side of the relation if necessary
+        if ($tokenManager === null && $this->tokenManager !== null) {
+            $this->tokenManager->setRelatedSubscription(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($tokenManager !== null && $tokenManager->getRelatedSubscription() !== $this) {
+            $tokenManager->setRelatedSubscription($this);
+        }
+
+        $this->tokenManager = $tokenManager;
 
         return $this;
     }

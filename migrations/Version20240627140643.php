@@ -14,7 +14,7 @@ final class Version20240627140643 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'create table shop order vat rate';
     }
 
     public function up(Schema $schema): void

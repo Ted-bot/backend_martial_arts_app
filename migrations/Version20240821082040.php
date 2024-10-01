@@ -14,7 +14,7 @@ final class Version20240821082040 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'add duration_length field to table products';
     }
 
     public function up(Schema $schema): void

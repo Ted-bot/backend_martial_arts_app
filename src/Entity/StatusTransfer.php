@@ -32,7 +32,7 @@ class StatusTransfer
     private ?string $transferId = null;
 
     #[ORM\Column(length: 25, nullable: true)]
-    private ?string $customer = null;
+    private null|string $customer = null;
 
     public function __construct()
     {
@@ -95,7 +95,7 @@ class StatusTransfer
         return $this;
     }
 
-    public function getCustomer(): ?string
+    public function getCustomer(): null|string
     {
         return $this->customer;
     }

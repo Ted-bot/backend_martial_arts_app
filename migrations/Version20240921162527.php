@@ -14,7 +14,7 @@ final class Version20240921162527 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'note: delete migration if see fit: recreated subscription owned by';
     }
 
     public function up(Schema $schema): void

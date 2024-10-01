@@ -33,7 +33,7 @@ use Symfony\Component\Serializer\Attribute\Ignore;
 // #[ApiResource]
 #[ApiResource(
     shortName: 'Product',
-    filters: ['product.search_filter'],
+    filters: ['app.product.search_filter'],
     description: 'Available Products',
     operations: [
         new Get(),
@@ -61,11 +61,11 @@ class Product
     protected ?string $sku = null;   
 
     #[ORM\Column(length: 100)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'profile:read'])]
     protected ?string $name = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 17, scale: 2)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read','profile:read'])]
     protected ?string $price = null;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
@@ -93,13 +93,13 @@ class Product
     #[ORM\ManyToOne(inversedBy: 'relatedProducts')]
     #[ORM\JoinColumn(nullable: false)]
     #[ORM\Column(enumType: CurrencyTypeEnum::class)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'profile:read'])]
     protected ?CurrencyTypeEnum $currency;
 
     #[ORM\ManyToOne(inversedBy: 'relatedSubscriptions')]
     #[ORM\JoinColumn(nullable: false)]
     #[ORM\Column(enumType: SubscriptionTypeEnum::class)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'profile:read'])]
     private ?SubscriptionTypeEnum $duration;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
@@ -110,7 +110,7 @@ class Product
      * @var Collection<int, ProductVat>
      */
     #[ORM\OneToMany(targetEntity: ProductVat::class, mappedBy: 'product')]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'profile:read'])]
     protected Collection $productVats;
 
     /**
@@ -121,12 +121,18 @@ class Product
     private Collection $orderLines;
 
     #[ORM\Column(enumType: SubscriptionLengthTypeEnum::class)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'profile:read'])]
     private ?SubscriptionLengthTypeEnum $durationLength = null;
 
     #[ORM\Column]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'profile:read'])]
     private ?SubscriptionDirectOrPeriodicTypeEnum $directOrPeriodic;
+
+    /**
+     * @var Collection<int, Subscription>
+     */
+    #[ORM\OneToMany(targetEntity: Subscription::class, mappedBy: 'subscribedProduct')]
+    private Collection $subscriptions;
 
     public function __construct(
     )
@@ -135,6 +141,7 @@ class Product
         $this->createdAt = $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
         $this->productVats = new ArrayCollection();
         $this->orderLines = new ArrayCollection();
+        $this->subscriptions = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -270,7 +277,7 @@ class Product
         return $this->productVats;
     }
 
-    public function setProductVat(ProductVat $productVat): static
+    public function addProductVat(ProductVat $productVat): static
     {
         if (!$this->productVats->contains($productVat)) {
             $this->productVats->add($productVat);
@@ -362,6 +369,39 @@ class Product
     public function setDirectOrPeriodic(SubscriptionDirectOrPeriodicTypeEnum $directOrPeriodic): static
     {
         $this->directOrPeriodic = $directOrPeriodic;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Subscription>
+     */
+    public function getSubscriptions(): Collection
+    {
+        return $this->subscriptions;
+    }
+
+    // note: add user to product so all users with subscription can be found through product
+    public function addSubscription(Subscription $subscription): static
+    {
+        if (!$this->subscriptions->contains($subscription)) {
+            $this->subscriptions->add($subscription);
+            $subscription->setSubscribedProduct($this);
+        }
+
+        return $this;
+    }
+
+
+    // note: add user to product so all users with subscription can be found through product
+    public function removeSubscription(Subscription $subscription): static
+    {
+        if ($this->subscriptions->removeElement($subscription)) {
+            // set the owning side to null (unless already changed)
+            if ($subscription->getSubscribedProduct() === $this) {
+                $subscription->setSubscribedProduct(null);
+            }
+        }
 
         return $this;
     }

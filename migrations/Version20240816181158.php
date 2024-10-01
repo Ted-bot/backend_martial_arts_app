@@ -14,7 +14,7 @@ final class Version20240816181158 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'add field transfer id to table status_transfer';
     }
 
     public function up(Schema $schema): void

@@ -57,7 +57,6 @@ class RegistrationContoller extends AbstractController
         ): JsonResponse
     {
         $user->createNewUserObj($request);
-        // dd(['userFirstName' => $user->getFirstName()]);
 
         $hashedPassword = $passwordHasher->hashPassword(
             $user,

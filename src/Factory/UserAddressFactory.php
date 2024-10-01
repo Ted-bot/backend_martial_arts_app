@@ -53,7 +53,7 @@ final class UserAddressFactory extends PersistentProxyObjectFactory
         return [
             'address' => AddressFactory::new(),
             'isDefault' => self::faker()->boolean(),
-            'relatedUser' => UserFactory::new(),
+            'addressUser' => UserFactory::new(),
         ];
     }
 

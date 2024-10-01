@@ -39,11 +39,8 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
      */
     public function supports(Request $request): ?bool
     {
-        // dd('support');
         $pathV1Valid = strpos($request->getPathInfo(), '/api/v1/');
         $pathV2Valid = strpos($request->getPathInfo(), '/api/v2/');
-        // dd(['v1 '=> $pathV1Valid, 'v2' => $pathV2Valid]);
-        // dd($request->getPathInfo());
         return $pathV1Valid === 0 || $pathV2Valid === 0  && $request->isMethod('POST');
     }
     
@@ -59,37 +56,16 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
         if(!$token) {
             throw new BadCredentialsException();            
         }
-        dd(['token' => $token]);
+        // dd(['token' => $token]);
 
         return $token;
     }
-
-    // public function getUser($credentials, UserProviderInterface $userProvider)
-    // {
-    //     $key = $this->jwtEncoder->decode($credentials);
-
-    //     // dd($key);
-
-    //     if(!$key) {
-    //         throw new AuthenticationException('invalid token!');
-    //     }
-
-    //     $email = $key['username'];
-
-    //     return $this->userRepository->findOneBy(['email'=> $email]);
-    // }
-
-    // public function checkCredentials($credentials)
-    // {
-    //     return true;
-    // }
 
     public function authenticate(Request $request): Passport
     {
         $data = $request->toArray();
         $email = $data['username'];
         $password = $data['password'];
-        // dd($email);
         $user = $this->userRepository->findOneBy(['email' => $email]);
         $user->getUserIdentifier();
 
@@ -110,7 +86,6 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?JsonResponse
     {
-        // return new JsonResponse([],200);
         return null;
     }
 
@@ -119,15 +94,5 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
         // $request->getSession()->set(Security::AUTHENTICATION_ERROR, $exception);
 
         return new JsonResponse(['errors' => 'Login credentials are incorrect!'], 401);
-        // dd('failure');
-        // $data = [
-        //     // you may want to customize or obfuscate the message first
-        //     'message' => strtr($exception->getMessageKey(), $exception->getMessageData())
-
-        //     // or to translate this message
-        //     // $this->translator->trans($exception->getMessageKey(), $exception->getMessageData())
-        // ];
-
-        // return new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
     }
 }

@@ -14,7 +14,7 @@ final class Version20240827140519 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'add customer field to status transfer';
     }
 
     public function up(Schema $schema): void

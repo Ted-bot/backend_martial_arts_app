@@ -2,11 +2,14 @@
 
 namespace App\Tests;
 
+use App\Entity\TokenManager;
+use App\Entity\UserProfile;
+use App\Service\SubscriptionUUID;
 use DateTime;
 use App\Class\Role;
 use App\Entity\User;
-use DateTimeInterface;
 use App\Entity\Address;
+use App\Entity\Product;
 use App\Entity\VatRate;
 use App\Entity\OrderLine;
 use App\Entity\ShopOrder;
@@ -20,23 +23,16 @@ use App\Enum\CategoryTypeEnum;
 use App\Enum\CurrencyTypeEnum;
 use Zenstruck\Foundry\Factory;
 use Symfony\Component\Uid\Uuid;
-use App\Factory\ShopOrderFactory;
-use App\Service\SubscriptionUUID;
+use Zenstruck\Foundry AS Foundry;
 use App\Enum\SubscriptionTypeEnum;
-use App\Repository\UserRepository;
 use App\Enum\MolliePaymentStatusEnum;
 use Zenstruck\Foundry\Test\Factories;
-use App\Factory\StatusTransferFactory;
-use App\Entity\Product;
 use App\Enum\SubscriptionLengthTypeEnum;
 use Doctrine\ORM\EntityManagerInterface;
 use Zenstruck\Foundry\Test\ResetDatabase;
-use App\Repository\SubscriptionRepository;
 use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
 use App\Enum\SubscriptionDirectOrPeriodicTypeEnum;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-// use Uuid
-// use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 // class WebhookControllerTest extends ApiTestCase
 class WebhookControllerTest extends ApiTestCase
@@ -49,7 +45,6 @@ class WebhookControllerTest extends ApiTestCase
 
     public function testLogin(): void
     {
-        // $client = static::createClient();
         $this->setUp();
         
         $data = [ 
@@ -61,29 +56,25 @@ class WebhookControllerTest extends ApiTestCase
             '/api/login_check', 
             $data,
         );
-        $this->entityManager->refresh();
-
-        // dd(['repsonseTest' => $client->getResponse()->getKernelResponse()]);
 
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
-
     }
 
     public function testWebhook(): void
     {
         $this->getSingleUserWithOrder();
 
-        $data = ['json' => ['id' => 'tr_8VmbyUYxYH']];
+        $data = ['json' => ['id' => 'tr_4iSFHM2xRc']];
 
-        // dd($data);
-
+        // $this->client->getProfile();
         $this->client->request(
             'POST', 
             '/api/webhook/MollieDirectPayment',
             $data,
         );
         
-        $this->assertEquals(202, $this->client->getResponse()->getKernelResponse()->getStatusCode());
+        $this->assertEquals('',$this->client->getResponse()->getContent());
+        // $this->assertEquals(202,$this->client->getResponse()->getStatusCode());
     }
 
     public function testSubscriptionWebhook(): void
@@ -93,9 +84,6 @@ class WebhookControllerTest extends ApiTestCase
         $em = $this->getEntityManager();
         $user = $em->getRepository(User::class)->find(1);
 
-        // dd($user);
-
-        // $subscriptionId = (new SubscriptionUUID)->create();
         $subscriptionId = Uuid::fromRfc4122('1ef6c98c-f478-6cfc-a022-b3cca17359bc');
         $subscription = new Subscription();
         $subscription->setStatus(MolliePaymentStatusEnum::OPEN);
@@ -104,17 +92,11 @@ class WebhookControllerTest extends ApiTestCase
         $subscription->setTransferId(null); // webhook also setUpdateAt
         $subscription->setAmount("32.50");
         $subscription->setDuration(SubscriptionLengthTypeEnum::MONTH_FOUR); //SubscriptionLengthTypeEnum
-        // $currentTime->modify('+' . $setDurationProduct . ' ' . $addMonthOrWeek)->format('Y-m-d')
         $subscription->setDateEnd('+' . 3 . ' ' . 'month'); //SubscriptionLengthTypeEnum
 
         $this->persistAndFlush($subscription);
-        // $em =  $this->getEntityManager();
-        // $findSubscription = $em->getRepository(Subscription::class)->findOneBy(['subscriptionOwnedBy' => $user]);
 
-        // $this->assertIsObject($findSubscription);
-
-        // $data = ['json' => ['id' => 'tr_LSGyD4eoXA', 'subscriptionId' => $subscriptionId]];
-        $data = ['json' => ['id' => 'tr_8VmbyUYxYH']];
+        $data = ['json' => ['id' => 'tr_4iSFHM2xRc']];
 
         $this->client->request(
             'POST', 
@@ -189,7 +171,7 @@ class WebhookControllerTest extends ApiTestCase
   
         $this->persistAndFlush($shippingAddress);
 
-        $userAddress->setRelatedUser($user);
+        $userAddress->setAddressUser($user);
         $userAddress->setAddress($shippingAddress);
         $userAddress->setDefault(true);
 
@@ -211,7 +193,7 @@ class WebhookControllerTest extends ApiTestCase
         
         $product->setName('Group Membership');
         $product->setPrice("130.00");
-        $product->setDescription(Factory::faker()->sentences(1, true));
+        $product->setDescription(Foundry\faker()->sentences(1, true));
         $product->setCategory(CategoryTypeEnum::SUB);
         $product->setCurrencyType(CurrencyTypeEnum::EUR);
         $product->setDuration(SubscriptionTypeEnum::MONTH);
@@ -235,7 +217,7 @@ class WebhookControllerTest extends ApiTestCase
         $this->persistAndFlush($shopOrder);
         // $shopOrder->addProduct($product);
         $this->persistAndFlush($line);
-        $product->setProductVat($prVatRate);            
+        $product->addProductVat($prVatRate);            
         $this->persistAndFlush($product);
         $shopOrder->addOrderLine($line);
         $this->persistAndFlush($shopOrder);
@@ -243,11 +225,54 @@ class WebhookControllerTest extends ApiTestCase
         $shopOrder = $em->getRepository(ShopOrder::class)->find($shopOrder->getId());
         $this->persistAndFlush($shopOrder);
         
-        $statusTransfer->setTransferId('tr_8VmbyUYxYH');
+        $statusTransfer->setTransferId('tr_4iSFHM2xRc');
         $statusTransfer->setUserOrder($shopOrder);
         $statusTransfer->setStatus(MolliePaymentStatusEnum::OPEN);
-        $statusTransfer->setCustomer('cst_HNAZwFuErE');
+        $statusTransfer->setCustomer('cst_oUiYsKKG3y');
 
         $this->persistAndFlush($statusTransfer);
+
+        /**
+         * @var UserProfile $userProfile
+         */
+        $userProfile = $this->userProfile($user);
+        $this->persistAndFlush($userProfile);        
+
+        $subscription = new Subscription();
+        $uuidHelper = new SubscriptionUUID();
+        
+        
+        $timeSub = new DateTime();
+        $subscription->setTransferId('tr_4iSFHM2xRc');
+        // $subscription->setTokenManager($tokenManger);
+        $subscription->setUuid($uuidHelper->create());
+        $subscription->setAmount('32.50');
+        $subscription->setDateStart($timeSub);
+        $subscription->setDateEnd($timeSub->modify('+ 5 days')->format('d-m-Y'));
+        $subscription->setStatus(MolliePaymentStatusEnum::PAID);
+        $subscription->setDuration(SubscriptionLengthTypeEnum::MONTH_FOUR);
+        $subscription->setSubscriptionOwnedBy( $user);
+        $subscription->setSubscribedProduct($product);
+        $this->persistAndFlush($subscription);
+        
+        $uuidHelper = new SubscriptionUUID();
+        // $tokenManger = new TokenManager();
+        
+        // $tokenManger->setUuid($uuidHelper->create());
+        // $tokenManger->setTokens(100);
+        // $tokenManger->setRelatedSubscription($subscription);
+        // $tokenManger->setUserProfile($userProfile);
+
+        // $this->persistAndFlush($tokenManger);
+    }
+
+    public function userProfile($user){
+        $userProfile = new UserProfile();
+        $userProfile->setDescription('ik ga iedereen slopen');
+        $userProfile->setUserName('tedd in ha building');
+        $userProfile->setUserUniq($user);
+
+        return $userProfile;
+
     }
 }

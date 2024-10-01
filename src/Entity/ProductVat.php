@@ -2,10 +2,11 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use App\Repository\ProductVatRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use App\Repository\ProductVatRepository;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ProductVatRepository::class)]
 #[ApiResource]
@@ -21,6 +22,7 @@ class ProductVat
     private ?VatRate $VatRate = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 17, scale: 4)]
+    #[Groups(['profile:read'])]
     protected ?string $VatAmount = null;
 
     #[ORM\ManyToOne(inversedBy: 'productVats')]

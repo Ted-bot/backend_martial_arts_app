@@ -2,31 +2,36 @@
 
 namespace App\Service;
 
-use App\Dto\CreateMollieOrderRequest;
 use DateTime;
+use App\Entity\Product;
 use Brick\Math\BigDecimal;
-use Brick\Math\RoundingMode;
-use App\Enum\CurrencyTypeEnum;
-use Doctrine\ORM\EntityManager;
-use Mollie\Api\MollieApiClient;
-use App\Dto\CreateMollieOrderDto;
-use App\Enum\SubscriptionTypeEnum;
-use Mollie\Api\Types\SequenceType;
 use App\Dto\OrderAmountDto;
 use App\Dto\OrderAddressDto;
+use App\Entity\Subscription;
+use Brick\Math\RoundingMode;
 use App\Dto\OrderMetaDataDto;
+use App\Enum\CategoryTypeEnum;
+use App\Enum\CurrencyTypeEnum;
+use Mollie\Api\MollieApiClient;
+use App\Dto\CreateMollieOrderDto;
 use App\Dto\OrderSubscriptionDto;
+use App\Service\SubscriptionUUID;
+use App\Enum\SubscriptionTypeEnum;
+use Mollie\Api\Types\SequenceType;
+use App\Dto\CreateMollieOrderRequest;
+use App\Enum\MolliePaymentStatusEnum;
+use App\Repository\ProductRepository;
+use App\Enum\SubscriptionLengthTypeEnum;
+use App\Dto\MollieClientDto\SubscriptionOrderLine;
+use Doctrine\ORM\EntityManagerInterface as EntityManager;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-// use OrderAmountDto
-// OrderAddressDto
-// OrderMetaDataDto
-// SequenceType
-// OrderSubscriptionDto
 
-
-class MollieClientHelper
+class MollieClientHelper extends AbstractController
 {
-    public $em;
+    // public $em;
+    public array $userSubscriptionOrderLines;
     public $mollie;
     public OrderAmountDto $amount;
     public string $description;
@@ -46,7 +51,7 @@ class MollieClientHelper
     public array $orderLine;
     public string $sequenceType;
 
-    public function __construct()
+    public function __construct(private ProductRepository $productRepo, private EntityManager $entityManager)
     // public function __construct($secretKey)
     {
         // $this->em = $entityManager;
@@ -62,6 +67,40 @@ class MollieClientHelper
 
     public function setupOrderToPay(CreateMollieOrderDto $request): self
     {
+        foreach($request->lines as $line){           
+            
+            // set each line in a this helper class as a property 
+            // and execute function after paymentId is created
+            
+            // $productUrl = $line->productUrl; // test with "sku" untill ["slug"] created
+            $productUrl = $line["sku"]; 
+            // dump($productUrl . ' temperarly set as sku! ');
+            
+            // strip product url and get slug to check if product exist and has subscription
+            
+            /** @var Product */
+            $product = $this->productRepo->findOneBy(['sku' => $productUrl]);
+            
+            if($product === null){
+                continue;
+            }
+            
+            if($product->getCategory() !== CategoryTypeEnum::SUB){
+                continue;
+            }
+
+            $productSubscription = new SubscriptionOrderLine(
+                $product,
+                $request->subscriptionDetail->subscriptionLength,
+                $request->subscriptionDetail->subscriptionTimeUnit,
+                $request->subscriptionDetail->subscriptionAmount
+            );
+            
+            $this->setUserSubscriptionOrderLines($productSubscription);
+            
+            // When PaymentId is available Execute creating Subscription(s)
+            // $this->createUserSubscription();
+        }
 
         $this->setAmount($request->amount);
         $this->setBillingAddress($request->billingAddress);
@@ -78,6 +117,49 @@ class MollieClientHelper
         // $this->setLines($request->redirectUrl);
 
         return $this;
+    }
+
+    public function createUserSubscription(string $tranferId)
+    {
+        foreach($this->getUserSubscriptionOrderLines() as $subscribeUserToProduct)
+        {
+            try {
+                /** @var SubscriptionOrderLine $requestCreateSubscription */
+                $requestCreateSubscription = $subscribeUserToProduct;
+    
+                /** @var Product $product */
+                $product = $requestCreateSubscription->getProductSubscription();
+    
+                $subscriptionLength = $requestCreateSubscription->getLengthSubscription();
+                $subscriptionMonthOrWeek = $requestCreateSubscription->getTimeUnitSubscription();
+                $subscriptionAmount = $requestCreateSubscription->getAmountSubscription();
+                
+                $subscriptionId = new SubscriptionUUID();
+                $subscription = new Subscription();
+                
+                $requestCreateSubscription->setUserSubscriptionId($subscriptionId);
+                
+                $subscriptionLengthConvertToEnum = SubscriptionLengthTypeEnum::from($subscriptionLength);
+                $subscription->setSubscribedProduct($product);
+                $subscription->setUuid($subscriptionId->create());
+                $subscription->setSubscriptionOwnedBy($this->getUser());
+                $subscription->setStatus(MolliePaymentStatusEnum::OPEN);
+                $subscription->setTransferId($tranferId); // set transfer Id After paymendId is created
+                $subscription->setAmount($subscriptionAmount);
+                $subscription->setDuration($subscriptionLengthConvertToEnum); //SubscriptionLengthTypeEnum
+                $subscription->setDateEnd('+' . $subscriptionLength . ' ' . $subscriptionMonthOrWeek); //SubscriptionLengthTypeEnum    
+                $subscription->setUpdatedAt();
+    
+                $this->entityManager->persist($subscription);
+                $this->entityManager->flush();
+
+            } catch(UniqueConstraintViolationException $e){
+
+                // log error an internal issue has occurred
+                dd(['error creating subscripton' => $e]);
+
+            }
+        }
     }
 
     public function getOrderToPay(): array
@@ -505,6 +587,26 @@ class MollieClientHelper
     public function setSubscription(bool $value)
     {
         $this->subscription = $value;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of userSubscriptionOrderLines
+     */ 
+    public function getUserSubscriptionOrderLines()
+    {
+        return $this->userSubscriptionOrderLines;
+    }
+
+    /**
+     * Set the value of userSubscriptionOrderLines
+     *
+     * @return  self
+     */ 
+    public function setUserSubscriptionOrderLines($userSubscriptionOrderLines)
+    {
+        $this->userSubscriptionOrderLines[] = $userSubscriptionOrderLines;
 
         return $this;
     }

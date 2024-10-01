@@ -2,152 +2,149 @@
 
 namespace App\Entity;
 
+// use ApiPlatform\Metadata\ApiProperty;
 use DateTimeZone;
 use Carbon\Carbon;
 use App\Class\Role;
 use DateTimeImmutable;
 use App\Entity\Product;
-// use App\Dto\CreateUserDto;
-use App\Request\CreateUserRequest;
 use App\Entity\UserProfile;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
+use App\Request\CreateUserRequest;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use Doctrine\Common\Collections\Collection;
-use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Serializer\Attribute\Groups;
+// use Symfony\Component\Serializer\Attribute\Groups;
+use ApiPlatform\Elasticsearch\Filter\OrderFilter;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\SerializedName;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
+#[ApiResource(
+    shortName: 'User',
+    operations: [new Get(    
+            uriTemplate: '/user_by_email/{email}/email',
+            uriVariables: 'email'
+        )],
+)]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USER', fields: ['email', 'phone_number'])]
-#[ApiResource(
-    description: 'User Entity',
-    filters: ['user.search_filter', 'user.property_filter'], //user.property_filter
-    operations: [
-        new Get(),
-        new GetCollection(),
-        new Post(),
-        new Patch(),
-        new Put(),
-        new Delete(),
-    ],
-    normalizationContext: [
-        'groups' => ['user:read']
-    ],
-    denormalizationContext: [
-        'groups' => ['user:write']
-    ],
-    
-)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    // #[ApiProperty(identifier: false)]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:read','profile:read'])]
     private ?int $id = null;
 
+    // // #[ApiProperty(indentifier: true)]
+    // #[Groups(['user:read', 'user:write','profile:read'])]
     /**
      * @var string Email of user
      */
-    #[ORM\Column(length: 180)]
-    #[Groups(['user:read', 'user:write','profile:read'])]
+    #[ORM\Column(length: 180, unique: true)]
     private ?string $email = null;
 
+    // #[Groups(['user:read', 'user:write','profile:read'])]
+    // #[ApiProperty(security: 'is_granted("Role_Admin")')]
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
-    #[Groups(['user:read', 'user:write','profile:read'])]
     private array $roles = [];
 
+    // #[ApiProperty(security: 'is_granted("Role_Admin")')]
     /**
      * @var string The hashed password
      */
     #[ORM\Column]
     private ?string $password = null;
 
-    #[Groups(['user:read'])]
-    #[ORM\OneToOne(mappedBy: 'userUniq', targetEntity: UserProfile::class,cascade: ['persist', 'remove'])]
+    // #[Groups(['user:read'])]
+    #[ORM\OneToOne(mappedBy: 'userUniq', targetEntity: UserProfile::class,cascade: ['persist'])] //, 'remove'
     private ?UserProfile $userProfile = null;
 
+    // #[Groups(['user:read', 'user:write','profile:read', 'subscription:read'])]
     /**
      * @var string Email of user
      */
     #[ORM\Column(length: 25)]
-    #[Groups(['user:read', 'user:write','profile:read'])]
-    private ?string $firstName = null;
+    private $firstName = null;
 
+    // #[Groups(['user:read', 'user:write','profile:read'])]
     /**
      * @var string Lastname of user
      */
     #[ORM\Column(length: 25)]
-    #[Groups(['user:read', 'user:write','profile:read'])]
     private ?string $lastName = null;
 
+    // #[Groups(['user:read', 'user:write','profile:read'])]
     /**
      * @var string Phonenumber of user
      */
     #[ORM\Column(length: 15)]
-    #[Groups(['user:read', 'user:write','profile:read'])]
     private ?string $phoneNumber = null;
 
+    // #[Groups(['user:read', 'user:write','profile:read'])]
     /**
      * @var string A "Y-m-d H:i:s" formatted value
      */
     #[ORM\Column(length: 10)]
-    #[Groups(['user:read', 'user:write','profile:read'])]
     private ?string $dateOfBirth = null;
         
+    // #[Groups(['user:read', 'user:write','profile:read'])]
     /**
      * @var string Gender of user
      */
     #[ORM\Column(length: 6)]
-    #[Groups(['user:read', 'user:write','profile:read'])]
     private ?string $gender = null;
 
+    // #[Groups(['user:read', 'user:write', 'profile:read'])]
     /**
      * @var string Location of user
      */
     #[ORM\Column(length: 50)]
-    #[Groups(['user:read', 'user:write', 'profile:read'])]
     private ?string $location = null;
 
+    // #[Groups(['user:read', 'user:write', 'profile:read'])]
+    // #[ApiProperty(security: 'is_granted("Role_Admin")')]
     /**
      * @var string Conversion of user
      */
     #[ORM\Column(length: 255)]
-    #[Groups(['user:read', 'user:write', 'profile:read'])]
     protected ?string $conversion = null;
 
+    // #[Groups(['user:read', 'user:write', 'profile:read'])]
+    // #[ApiProperty(security: 'is_granted("Role_Admin")')]
     /**
      * @var string datetime created account of user
      */
     #[ORM\Column(length: 25)]
-    #[Groups(['user:read', 'user:write', 'profile:read'])]
     private ?DateTimeImmutable $createdAt;
 
+    // #[ApiProperty(security: 'is_granted("Role_Admin")')]
     /**
      * @var Collection<int, Product>
      */
-    #[ORM\OneToMany(targetEntity: Product::class, mappedBy: 'userUniq')]
+    #[ORM\OneToMany(targetEntity: Product::class, mappedBy: 'relatedUser')]
     private Collection $products;
 
+    // #[ApiProperty(security: 'is_granted("Role_Admin")')]
     /**
      * @var Collection<int, UserAddress>
      */
-    #[ORM\OneToMany(targetEntity: UserAddress::class, mappedBy: 'relatedUser')]
+    #[ORM\OneToMany(targetEntity: UserAddress::class, mappedBy: 'addressUser')]
     private Collection $userAddresses;
 
     /**
@@ -156,25 +153,28 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: ShopOrder::class, mappedBy: 'orderOwnedBy')]
     private Collection $shopOrders;
 
+    // #[ApiProperty(security: 'is_granted("Role_Admin")')]
     #[ORM\Column(length: 4, nullable: true)]
     private ?string $libReactState = null;
 
+    // #[ApiProperty(security: 'is_granted("Role_Admin")')]
     #[ORM\Column(length: 5, nullable: true)]
     private ?string $libReactCity = null;
 
+    // #[Groups(['user:read', 'subscription:read'])]
     /**
      * @var Collection<int, Subscription>
      */
-    #[Groups(['user:read'])]
+    #[Link(toProperty: 'subscription')]
     #[ORM\OneToMany(targetEntity: Subscription::class, mappedBy: 'subscriptionOwnedBy')]
-    private Collection $subscriptions;
+    public Collection $subscriptions;
 
     public function __construct()
     {
         $dateTime = new DateTimeImmutable();
         $this->createdAt = $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
         $this->setRoles([Role::ROLE_USER_STUDENT]);
-        // $this->roles = ;
+        // $this->roles = [Role::ROLE_USER_STUDENT];
         $this->products = new ArrayCollection();
         $this->userAddresses = new ArrayCollection();
         $this->shopOrders = new ArrayCollection();
@@ -207,12 +207,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->id;
     }
 
+//     public function setId(int $id): void
+// {
+//     $this->id = $id;
+// }
+
     public function getEmail(): ?string
     {
         return (string) $this->email;
     }
 
-    #[Groups('user:write')]
+    // #[Groups('user:write')]
     public function setEmail(string $email): static
     {
         $this->email = (string) $email;
@@ -220,6 +225,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    // #[ApiProperty(security: 'is_granted("Role_Admin")')]
     /**
      * A visual identifier that represents this user.
      *
@@ -235,8 +241,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      *
      * @return list<string>
      */
-
-    
     public function getRoles(): array
     {
         $roles = $this->roles;
@@ -246,10 +250,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return array_unique($roles);
     }
 
+    // #[Groups('user:write')]
     /**
      * @param list<string> $roles
      */
-    #[Groups('user:write')]
     public function setRoles(array $roles): static
     {
         $this->roles = $roles;
@@ -265,7 +269,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->password;
     }
 
-    #[Groups('user:write')]
+    // #[Groups('user:write')]
     public function setPassword(string $password): static
     {
         $this->password = $password;
@@ -287,7 +291,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->userProfile;
     }
 
-    #[Groups('user:write')]
+    // #[Groups('user:write')]
     public function setUserProfile(?UserProfile $userProfile): static
     {
         // unset the owning side of the relation if necessary
@@ -315,7 +319,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->firstName;
     }
 
-    #[Groups('user:write')]
+    // #[Groups('user:write')]
     public function setFirstName(string $firstName): static
     {
         $this->firstName = $firstName;
@@ -328,7 +332,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->lastName;
     }
 
-    #[Groups('user:write')]
+    // #[Groups('user:write')]
     public function setLastName(string $lastName): static
     {
         $this->lastName = $lastName;
@@ -341,7 +345,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->phoneNumber;
     }
 
-    #[Groups('user:write')]
+    // #[Groups('user:write')]
     public function setPhoneNumber(string $phoneNumber): static
     {
         $this->phoneNumber = $phoneNumber;
@@ -354,7 +358,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->gender;
     }
 
-    #[Groups('user:write')]
+    // #[Groups('user:write')]
     public function setGender(string $gender): static
     {
         $this->gender = $gender;
@@ -367,7 +371,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->location;
     }
 
-    #[Groups('user:write')]
+    // #[Groups('user:write')]
     public function setLocation(string $location): static
     {
         $this->location = $location;
@@ -387,7 +391,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    #[Groups('user:write')]
+    // #[Groups('user:write')]
     #[SerializedName('conversion')]
     public function setTextConversion(string $conversion): static
     {
@@ -404,12 +408,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->dateOfBirth;
     }
 
+    // #[Groups('user:write')]
     /**
      * Set the value of dateOfBirth
      *
      * @return  self
      */ 
-    #[Groups('user:write')]
     public function setDateOfBirth($dateOfBirth)
     {
         $this->dateOfBirth = $dateOfBirth;
@@ -417,13 +421,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    #[Groups('user:read')]
+    // #[Groups('user:read')]
     public function getCreatedAt()
     {
         return $this->createdAt;
     }
 
-    #[Groups('user:read')]
+    // #[Groups('user:read')]
     public function getCreatedAtAgo()
     {
         return Carbon::parse($this->createdAt)->diffForHumans();
@@ -471,7 +475,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->userAddresses->contains($userAddress)) {
             $this->userAddresses->add($userAddress);
-            $userAddress->setRelatedUser($this);
+            $userAddress->setAddressUser($this);
         }
 
         return $this;
@@ -481,8 +485,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if ($this->userAddresses->removeElement($userAddress)) {
             // set the owning side to null (unless already changed)
-            if ($userAddress->getRelatedUser() === $this) {
-                $userAddress->setRelatedUser(null);
+            if ($userAddress->getAddressUser() === $this) {
+                $userAddress->setAddressUser(null);
             }
         }
 

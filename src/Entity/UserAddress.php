@@ -2,12 +2,14 @@
 
 namespace App\Entity;
 
-use App\Repository\UserAddressRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use App\Repository\UserAddressRepository;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 #[ORM\Entity(repositoryClass: UserAddressRepository::class)]
+#[ApiResource]
 class UserAddress
 {
     #[ORM\Id]
@@ -17,7 +19,7 @@ class UserAddress
 
     #[ORM\ManyToOne(inversedBy: 'userAddresses')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $relatedUser = null;
+    private ?User $addressUser = null;
 
     #[ORM\ManyToOne(inversedBy: 'userAddresses')]
     #[ORM\JoinColumn(nullable: false)]
@@ -42,14 +44,14 @@ class UserAddress
         return $this->id;
     }
 
-    public function getRelatedUser(): ?User
+    public function getAddressUser(): ?User
     {
-        return $this->relatedUser;
+        return $this->addressUser;
     }
 
-    public function setRelatedUser(?User $relatedUser): static
+    public function setAddressUser(?User $addressUser): static
     {
-        $this->relatedUser = $relatedUser;
+        $this->addressUser = $addressUser;
 
         return $this;
     }

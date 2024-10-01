@@ -6,21 +6,18 @@ use App\Entity\User;
 use App\Entity\Product;
 use App\Entity\OrderLine;
 use App\Entity\ShopOrder;
+use App\Entity\UserProfile;
 use App\Entity\Subscription;
-use App\Repository\OrderLineRepository;
+use App\Entity\TokenManager;
 use Psr\Log\LoggerInterface;
 use App\Entity\StatusTransfer;
 use App\Enum\CategoryTypeEnum;
 use Mollie\Api\MollieApiClient;
-use App\Repository\UserRepository;
 use App\Enum\MolliePaymentStatusEnum;
-use App\Repository\ProductRepository;
-use App\Repository\ShopOrderRepository;
 use Mollie\Api\Exceptions\ApiException;
-use App\Repository\SubscriptionRepository;
 use Doctrine\Common\Collections\Collection;
-use App\Repository\StatusTransferRepository;
 use Symfony\Component\RemoteEvent\RemoteEvent;
+use App\Service\SubscriptionUUID AS TokenManagerUUID;
 use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Symfony\Component\RemoteEvent\Consumer\ConsumerInterface;
 use Symfony\Component\RemoteEvent\Attribute\AsRemoteEventConsumer;
@@ -32,14 +29,7 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
 
     public function __construct(
         private LoggerInterface $transferEventLogger,
-        // private StatusTransfer $statusTransfer,
         private EntityManager $entityManager,
-        private ShopOrderRepository $soRepo,
-        private OrderLineRepository $orderLinesRepo,
-        private UserRepository $userRepo,
-        private ProductRepository $prRepo,
-        private StatusTransferRepository $stRepo,
-        private SubscriptionRepository $subRepo,
     )
     {
         $this->logger = $transferEventLogger;
@@ -47,6 +37,7 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
 
     public function consume(RemoteEvent $event): void
     {         
+        // dd('Paid');
         $statusTransfer = new StatusTransfer();
 
         try {
@@ -54,20 +45,22 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
             $mollie->setApiKey('test_hqd6Sq8D72UUKebcT9RnVhkd6k96x2');
             $payment = $mollie->payments->get($event->getId());
 
-            /** @var StatusTransfer $previousTransfer Object */
-            $previousTransfer = $this->entityManager->getRepository(StatusTransfer::class)->findOneBy(['transferId' => $payment->id]);
-            
+            /** @var StatusTransfer $currentTransfer Object */
+            $currentTransfer = $this->entityManager->getRepository(StatusTransfer::class)
+            ->findOneBy(['transferId' => $payment->id, 'status' => MolliePaymentStatusEnum::OPEN]);
+
             /** @var ShopOrder $shopOrderUpdate Object */
-            $shopOrderUpdate = $previousTransfer->getUserOrder();
+            $shopOrderUpdate = $currentTransfer->getUserOrder();
+            $statusPayment = MolliePaymentStatusEnum::tryFrom($payment->status);
 
             if ($payment->isPaid() || $payment->isAuthorized()) {
-
                 // $statusPayment = MolliePaymentStatusEnum::tryFrom($payment->status);
                 $statusTransfer->setUserOrder($shopOrderUpdate);
                 $statusTransfer->setStatus(MolliePaymentStatusEnum::PAID);
                 $statusTransfer->setTransferId($event->getId());
-                $statusTransfer->setCustomer($previousTransfer->getCustomer());
+                $statusTransfer->setCustomer($currentTransfer->getCustomer());
 
+                $shopOrderUpdate->setOrderStatus($statusPayment);
                 // $shopOrderUpdate->setStatus($statusPayment);
                 $this->logger->debug(
                     'An event occurred in transfer remote event!',
@@ -82,20 +75,12 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
                         ]
                     ]
                 );
-                // if($statusPayment !== null){
-                // dd('test');
-                $shopOrderUpdate->setOrderStatus(MolliePaymentStatusEnum::PAID);
-                // }                    
-                
+
                 $this->entityManager->persist($statusTransfer);
                 $this->entityManager->flush();  
-                
-                // $this->entityManager->persist($shopOrderUpdate);
-                $this->entityManager->flush();  
-                
+                                
                 $this->checkForSubscription($shopOrderUpdate->getId(), $event->getId());
                 
-
                 // $this->bus->dispatch(new SendWebhookMessage($consumerPaid));
 
             } elseif ($payment->isCanceled() || $payment->isFailed()) {
@@ -104,13 +89,13 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
                 */
                 // $consumerCancelled = new MessageComponent(id: $payment->id, status: $payment->status);
               
-                $statusPayment = MolliePaymentStatusEnum::tryFrom($payment->status);
+                
                 // $statusPayment = MolliePaymentStatusEnum::tryFrom($payment->status);
                 
                 $statusTransfer->setUserOrder($shopOrderUpdate);
                 $statusTransfer->setStatus($statusPayment);
                 $statusTransfer->setTransferId($event->getId());
-                $statusTransfer->setCustomer($previousTransfer->getCustomer());
+                $statusTransfer->setCustomer($currentTransfer->getCustomer());
 
                 $shopOrderUpdate->setOrderStatus($statusPayment);
                 
@@ -158,8 +143,6 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
 
             }
 
-
-
         } catch (ApiException $e) {
             echo "API call failed: " . htmlspecialchars($e->getMessage());
             $this->logger->debug('Webhook Consumer Error: while trying to handle transfer request!', [
@@ -168,31 +151,90 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
         }
     }
 
-    public function checkForSubscription($id, $transferId): void
+    // set function in orderpage when user purchases
+    // public function setPreviousSubscriptionAsExprired(array $uuidArray)
+    // {
+    //     foreach($uuidArray as $uuid){
+    //         /** @var Subscription $previousSubscription Object */
+    //         $previousSubscription = $this->entityManager->getRepository(Subscription::class)
+    //         ->findby(['uuid' => $uuid]); // status => paid setTo expired
+
+    //         $previousSubscription->setUpdatedAt();
+    //         $previousSubscription->setStatus(MolliePaymentStatusEnum::EXPIRED);
+    //     }
+
+    //     $this->entityManager->flush();
+    // }
+
+    public function checkForSubscription($id, $transferId)
     {
+        $paidStatus = MolliePaymentStatusEnum::PAID;
+
         /** @var ShopOrder $shopOrder */
-        $shopOrder = $this->soRepo->findOneBy(['id' => $id]); 
+        $shopOrder = $this->entityManager->getRepository(ShopOrder::class)->findOneBy(
+            ['id' => $id, 'orderStatus' => $paidStatus],
+             ['id' => 'DESC']
+        ); 
 
         /** @var Collection<int, OrderLine> */        
         $lines = $shopOrder->getOrderLines();
+        
+        $subscriptionIdArray = [];
 
         foreach($lines as $line){
-
             /** @var Product $product */
             $product = $line->getProduct();
-
             if($product->getCategory() !== CategoryTypeEnum::SUB){
                 return;
             }
             
-            /** @var Subscription $subscription */
-            $subscription = $this->entityManager->getRepository(Subscription::class)->findOneBy(['subscriptionOwnedBy' => $shopOrder->getOrderOwnedBy()], ['id' => 'DESC']);
-            // $subscription = $this->subRepo->findOneBy(['subscriptionOwnedBy' => $shopOrder->getOrderOwnedBy()]);
-            $subscription->setUpdatedAt();
-            $subscription->setStatus(MolliePaymentStatusEnum::PAID);
-            $subscription->setTransferId($transferId);
-            $this->entityManager->persist($subscription);
-            $this->entityManager->flush();
+            /** @var Subscription[] $subscriptions */
+            $subscriptions = $this->entityManager->getRepository(Subscription::class)
+            ->findBy([
+                'subscriptionOwnedBy' => $shopOrder->getOrderOwnedBy()->getId(),
+                'subscribedProduct' => $line->getProduct(),
+                'status' => MolliePaymentStatusEnum::OPEN],
+                 ['id' => 'DESC']
+            );
+
+            // dd(['Subscription UUID FOund' => $subscription, 'owner' => $shopOrder->getOrderOwnedBy()->getId()]);
+            foreach($subscriptions as $subscription){
+                // dd([';hallo' => $subscription]);
+                $subscriptionIdArray[] = $subscription->getUuid(); // create short uniq subscription slug
+                $subscription->setUpdatedAt();
+                $subscription->setStatus(MolliePaymentStatusEnum::PAID);
+                $subscription->setTransferId($transferId);
+                // $this->entityManager->persist($subscription);
+                $this->entityManager->flush();
+            }
         }
+        $userId = $shopOrder->getOrderOwnedBy();
+        $this->callTokenManager($userId, $subscriptionIdArray); //
+    }   
+
+    public function callTokenManager($userId, array $subscriptionIdArray){
+
+        /** @var UserProfile $profileUser */
+        $profileUser = $this->entityManager->getRepository(UserProfile::class)
+        ->findOneBy(['userUniq' => $userId]);
+
+        foreach($subscriptionIdArray as $subscriptionUUID){
+            $tokenManager = new TokenManager();
+            
+            /** @var Subscription $subscription */
+            $subscription = $this->entityManager->getRepository(Subscription::class)
+            ->findOneBy(['uuid' => $subscriptionUUID]);
+            
+            $tokenManager->setUserProfile($profileUser);
+            $tokenManager->setUuid($subscriptionUUID);
+            $tokenManager->setTokens(100); // note: create service to calculate
+            $tokenManager->setRelatedSubscription($subscription);
+            
+            $profileUser->addTokenManager($tokenManager);
+
+            $this->entityManager->persist($profileUser);
+            $this->entityManager->persist($tokenManager);
+        }     
+        $this->entityManager->flush();
     }
 }

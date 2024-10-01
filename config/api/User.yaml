@@ -1,5 +1,6 @@
-App\Entity\User:
-    # ...
-    collectionOperations:
-        get:
-            filters: ['user.search_filter', 'user.property_filter']
+# App\Entity\User:
+#     # ...
+#     collectionOperations:
+#         get:
+#             filters: ['annotated_app_entity_user_api_platform_elasticsearch_filter_order_filter']
+            # filters: ['app.user.search_filter', 'app.user.property_filter']

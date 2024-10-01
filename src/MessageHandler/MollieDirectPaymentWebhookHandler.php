@@ -20,12 +20,5 @@ final class MollieDirectPaymentWebhookHandler
     public function __invoke(SendWebhookMessage $mollieDirectPayment)
     {
         dd(['WebhookMessageHandler' => $mollieDirectPayment->getOrderId()]);
-        // $client = $this->forward("App\Controller\YourController::ControllerFunction");
-        // $this->client->request('POST', 'http://localhost/webhook/mollie_direct_payment', ['verify_peer' => false, 'body' => ['order_id' => $mollieDirectPayment->getOrderId()]]);
-        // $this->client->request('POST', 'http://localhost/webhook/mollie_direct_payment', ['verify_peer' => false, 'body' => ['order_id' => $mollieDirectPayment->getOrderId()]]);
-        // $this->client->request('POST', 'http://localhost/webhook/mollie_direct_payment', ['body' => ['order_id' => $mollieDirectPayment->getOrderId()]]);
-        // dd(['handler/MollieDirectPaymentWebhookHandler' => '$mollieDirectPayment->order_id']);
-        // send message order id is updated
-        // $mollieDirectPayment->order_id;
     }
 }

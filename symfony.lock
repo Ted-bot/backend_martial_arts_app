@@ -386,6 +386,9 @@
             "config/routes/webhook.yaml"
         ]
     },
+    "symfonycasts/micro-mapper": {
+        "version": "v0.2.0"
+    },
     "tilleuls/forgot-password-bundle": {
         "version": "1.6",
         "recipe": {
