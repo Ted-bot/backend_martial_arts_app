@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\User;
 use App\Entity\UserProfile;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -27,16 +28,6 @@ class UserProfileRepository extends ServiceEntityRepository
         // execute the queries on the database
         $this->getEntityManager()->flush();
     }
-
-    // public function add(UserProfile $entity, bool $flush = false): void
-    // {
-    //     // $this->getEntityManager()->persist($entity);
-
-    //     if ($flush) {
-    //         $this->getEntityManager()->flush();
-    //     }
-    // }
-
     // public function remove(UserProfile $entity, bool $flush = false): void
     // {
     //     $this->getEntityManager()->remove($entity);

@@ -67,7 +67,9 @@ class UserProfileApi
     public ?string $username = null;
     public ?string $description = null;
     public ?string $websiteUrl = null;
-    public ?UserApi $userUniq = null;
+    
+    /** @var UserApi $userUniq */
+    public $userUniq = null;
     
     /** @var UserProfileApi Object > */    
     public $groupStudent;

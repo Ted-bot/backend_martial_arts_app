@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Dto;
+namespace App\Dto\User;
 
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Constraints\PasswordStrength;
 
-class CreateUserDto
+class ConstructCreateUserDto
 {
     public function __construct(
         #[Assert\NotBlank]

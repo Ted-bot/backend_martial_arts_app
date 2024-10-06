@@ -21,6 +21,7 @@ use App\Service\SubscriptionUUID AS TokenManagerUUID;
 use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Symfony\Component\RemoteEvent\Consumer\ConsumerInterface;
 use Symfony\Component\RemoteEvent\Attribute\AsRemoteEventConsumer;
+use App\Repository\StatusTransferRepository;
 
 #[AsRemoteEventConsumer('MollieDirectPayment')]
 final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
@@ -30,6 +31,7 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
     public function __construct(
         private LoggerInterface $transferEventLogger,
         private EntityManager $entityManager,
+        private StatusTransferRepository $stRepo,
     )
     {
         $this->logger = $transferEventLogger;
@@ -38,7 +40,7 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
     public function consume(RemoteEvent $event): void
     {         
         // dd('Paid');
-        $statusTransfer = new StatusTransfer();
+        // $statusTransfer = new StatusTransfer();
 
         try {
             $mollie = new MollieApiClient();
@@ -46,22 +48,33 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
             $payment = $mollie->payments->get($event->getId());
 
             /** @var StatusTransfer $currentTransfer Object */
-            $currentTransfer = $this->entityManager->getRepository(StatusTransfer::class)
-            ->findOneBy(['transferId' => $payment->id, 'status' => MolliePaymentStatusEnum::OPEN]);
+            $currentTransfer = $this->stRepo->findOneBy([
+                'transferId' => $payment->id,
+                 'status' => MolliePaymentStatusEnum::OPEN
+            ]);
 
             /** @var ShopOrder $shopOrderUpdate Object */
-            $shopOrderUpdate = $currentTransfer->getUserOrder();
+            $shopOrderUpdate = $currentTransfer?->getUserOrder();
+
+            // dd(['paymentId' => $payment->id,'currentTransfer' => $currentTransfer]);
+
             $statusPayment = MolliePaymentStatusEnum::tryFrom($payment->status);
 
             if ($payment->isPaid() || $payment->isAuthorized()) {
                 // $statusPayment = MolliePaymentStatusEnum::tryFrom($payment->status);
-                $statusTransfer->setUserOrder($shopOrderUpdate);
-                $statusTransfer->setStatus(MolliePaymentStatusEnum::PAID);
-                $statusTransfer->setTransferId($event->getId());
-                $statusTransfer->setCustomer($currentTransfer->getCustomer());
+                // $statusTransfer->setUserOrder($shopOrderUpdate);
+                // $statusTransfer->setStatus(MolliePaymentStatusEnum::PAID);
+                // $statusTransfer->setTransferId($event->getId());
+                // $statusTransfer->setCustomer($currentTransfer->getCustomer());                
+                $currentTransfer->setUserOrder($shopOrderUpdate);
+                
+                $currentTransfer->setStatus(MolliePaymentStatusEnum::PAID);
+                $shopOrderUpdate->setOrderStatus($statusPayment);
+                $currentTransfer->setTransferId($event->getId());
+                $currentTransfer->setCustomer($currentTransfer->getCustomer());
 
                 $shopOrderUpdate->setOrderStatus($statusPayment);
-                // $shopOrderUpdate->setStatus($statusPayment);
+
                 $this->logger->debug(
                     'An event occurred in transfer remote event!',
                     [
@@ -76,7 +89,7 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
                     ]
                 );
 
-                $this->entityManager->persist($statusTransfer);
+                // $this->entityManager->persist($statusTransfer);
                 $this->entityManager->flush();  
                                 
                 $this->checkForSubscription($shopOrderUpdate->getId(), $event->getId());
@@ -92,14 +105,14 @@ final class MollieDirectPaymentWebhookConsumer implements ConsumerInterface
                 
                 // $statusPayment = MolliePaymentStatusEnum::tryFrom($payment->status);
                 
-                $statusTransfer->setUserOrder($shopOrderUpdate);
-                $statusTransfer->setStatus($statusPayment);
-                $statusTransfer->setTransferId($event->getId());
-                $statusTransfer->setCustomer($currentTransfer->getCustomer());
+                $currentTransfer->setUserOrder($shopOrderUpdate);
+                $currentTransfer->setStatus($statusPayment);
+                $currentTransfer->setTransferId($event->getId());
+                $currentTransfer->setCustomer($currentTransfer->getCustomer());
 
                 $shopOrderUpdate->setOrderStatus($statusPayment);
                 
-                foreach([$shopOrderUpdate, $statusTransfer] as $key => $updateData){
+                foreach([$shopOrderUpdate, $currentTransfer] as $key => $updateData){
                     $this->entityManager->persist($updateData);
                     $this->entityManager->flush();  
                 }  

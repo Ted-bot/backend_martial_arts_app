@@ -17,7 +17,7 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
-use App\Request\CreateUserRequest;
+use App\Dto\User\CreateUserDto;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
@@ -181,7 +181,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->subscriptions = new ArrayCollection();
     }
 
-    public function createNewUserObj(CreateUserRequest $user)
+    public function createNewUserObj(CreateUserDto $user)
     {
         $this->setFirstName($user->firstName);
         $this->setLastName($user->lastName);
@@ -194,7 +194,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->setGender($user->gender);
         $this->setLocation($user->location);
         $this->setConversion($user->conversion);
-        $this->setRoles([Role::ROLE_USER_STUDENT]);
+        // $this->setRoles([Role::ROLE_USER_STUDENT]);
 
         $this->setLibReactState($user->stateId);
         $this->setLibReactCity($user->cityId);
@@ -244,9 +244,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
-        // $roles[] = Role::ROLE_USER_STUDENT;
-
         return array_unique($roles);
     }
 

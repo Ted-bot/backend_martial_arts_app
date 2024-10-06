@@ -66,15 +66,23 @@ class ShopOrderApi {
     // #[Groups(["read_customer"])] // "write_customer",
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
     public ?int $id = null;
-    public ?UserApi $orderOwnedBy = null;
+    
+    /** @var UserApi $orderOwnedBy */
+    public $orderOwnedBy = null;
+
     public ?string $totalAmount = null;
-    public ?DateTimeInterface $orderDate = null;
-    public ?UserAddressApi $shippingAddress = null;
-    public ?MolliePaymentStatusEnum $orderStatus = null;
+    
+    /** @var DateTimeInterface $orderDate */
+    public $orderDate = null;
+     
+     /** @var UserAddressApi $shippingAddress */
+    public $shippingAddress = null;
+     
+     /** @var MolliePaymentStatusEnum $orderStatus */
+    public $orderStatus = null;
     
     /** @var array<int, OrderlineApi > */
     public $orderLines;
-// public $orderLines;
     
     /** @var array<int, StatusTransferApi > */
     private $statusTransfers;

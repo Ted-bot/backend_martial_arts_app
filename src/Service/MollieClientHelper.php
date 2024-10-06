@@ -5,24 +5,22 @@ namespace App\Service;
 use DateTime;
 use App\Entity\Product;
 use Brick\Math\BigDecimal;
-use App\Dto\OrderAmountDto;
-use App\Dto\OrderAddressDto;
 use App\Entity\Subscription;
 use Brick\Math\RoundingMode;
-use App\Dto\OrderMetaDataDto;
 use App\Enum\CategoryTypeEnum;
 use App\Enum\CurrencyTypeEnum;
-use Mollie\Api\MollieApiClient;
-use App\Dto\CreateMollieOrderDto;
-use App\Dto\OrderSubscriptionDto;
 use App\Service\SubscriptionUUID;
 use App\Enum\SubscriptionTypeEnum;
 use Mollie\Api\Types\SequenceType;
-use App\Dto\CreateMollieOrderRequest;
 use App\Enum\MolliePaymentStatusEnum;
 use App\Repository\ProductRepository;
 use App\Enum\SubscriptionLengthTypeEnum;
-use App\Dto\MollieClientDto\SubscriptionOrderLine;
+use App\Dto\MollieClient\OrderAmountDto;
+use App\Dto\MollieClient\OrderAddressDto;
+use App\Dto\MollieClient\OrderMetaDataDto;
+use App\Dto\MollieClient\CreateMollieOrderDto;
+use App\Dto\MollieClient\OrderSubscriptionDto;
+use App\Dto\MollieClient\SubscriptionOrderLine;
 use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -30,7 +28,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class MollieClientHelper extends AbstractController
 {
-    // public $em;
+    /** @var array<int, SubscriptionOrderLine> */
     public array $userSubscriptionOrderLines;
     public $mollie;
     public OrderAmountDto $amount;
@@ -73,13 +71,13 @@ class MollieClientHelper extends AbstractController
             // and execute function after paymentId is created
             
             // $productUrl = $line->productUrl; // test with "sku" untill ["slug"] created
-            $productUrl = $line["sku"]; 
+            $productSku = $line["sku"]; 
             // dump($productUrl . ' temperarly set as sku! ');
             
             // strip product url and get slug to check if product exist and has subscription
             
             /** @var Product */
-            $product = $this->productRepo->findOneBy(['sku' => $productUrl]);
+            $product = $this->productRepo->findOneBy(['sku' => $productSku]);
             
             if($product === null){
                 continue;
@@ -90,7 +88,7 @@ class MollieClientHelper extends AbstractController
             }
 
             $productSubscription = new SubscriptionOrderLine(
-                $product,
+                $product->getId(),
                 $request->subscriptionDetail->subscriptionLength,
                 $request->subscriptionDetail->subscriptionTimeUnit,
                 $request->subscriptionDetail->subscriptionAmount
@@ -126,10 +124,14 @@ class MollieClientHelper extends AbstractController
             try {
                 /** @var SubscriptionOrderLine $requestCreateSubscription */
                 $requestCreateSubscription = $subscribeUserToProduct;
+
+                $productId = $requestCreateSubscription->getProductSubscriptionId();
+
+                /** @var  Product $product */
+                $product = $this->entityManager->getRepository(Product::class)
+                    ->findOneBy(['id' => $productId]);
     
-                /** @var Product $product */
-                $product = $requestCreateSubscription->getProductSubscription();
-    
+                // dd(['product' => $product]);
                 $subscriptionLength = $requestCreateSubscription->getLengthSubscription();
                 $subscriptionMonthOrWeek = $requestCreateSubscription->getTimeUnitSubscription();
                 $subscriptionAmount = $requestCreateSubscription->getAmountSubscription();
@@ -144,7 +146,7 @@ class MollieClientHelper extends AbstractController
                 $subscription->setUuid($subscriptionId->create());
                 $subscription->setSubscriptionOwnedBy($this->getUser());
                 $subscription->setStatus(MolliePaymentStatusEnum::OPEN);
-                $subscription->setTransferId($tranferId); // set transfer Id After paymendId is created
+                // $subscription->setTransferId($tranferId); // paymentID will be sent after first payment set transfer Id After paymendId is created
                 $subscription->setAmount($subscriptionAmount);
                 $subscription->setDuration($subscriptionLengthConvertToEnum); //SubscriptionLengthTypeEnum
                 $subscription->setDateEnd('+' . $subscriptionLength . ' ' . $subscriptionMonthOrWeek); //SubscriptionLengthTypeEnum    
@@ -604,7 +606,7 @@ class MollieClientHelper extends AbstractController
      *
      * @return  self
      */ 
-    public function setUserSubscriptionOrderLines($userSubscriptionOrderLines)
+    public function setUserSubscriptionOrderLines(SubscriptionOrderLine $userSubscriptionOrderLines)
     {
         $this->userSubscriptionOrderLines[] = $userSubscriptionOrderLines;
 

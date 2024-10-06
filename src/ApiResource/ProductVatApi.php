@@ -54,8 +54,12 @@ class ProductVatApi
 
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
     public ?int $id = null;
-    public ?VatRateApi $vatRate = null;
+    
+    /** @var VatRateApi $varRate */
+    public $vatRate = null;
     public ?string $vatAmount = null;
-    public ?ProductApi $product = null;
+    
+    /** @var ProductApi $product */
+    public $product = null;
     
 }

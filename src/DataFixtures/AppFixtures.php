@@ -142,7 +142,7 @@ class AppFixtures extends Fixture
                         'title' => $titles[array_rand($titles)],
                         'description' => Factory::faker()->sentences(2, true),
                         'relatedUser' => UserProfileFactory::first(),
-                        'createdAt' => Factory::faker()->dateTimeBetween('-1 month','now'),
+                        'createdAt' => Factory::faker()->dateTimeBetween('-1 month','+1 week'),
                         'startDate' => $startDate,
                         'endDate' => $endDate,
                         'allDay' => Factory::faker()->boolean()

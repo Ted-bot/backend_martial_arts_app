@@ -5,15 +5,16 @@ namespace App\Entity;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
+use App\Repository\PostEventRepository;
 use App\Repository\UserProfileRepository;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ApiResource(
@@ -74,12 +75,12 @@ class UserProfile
     #[ORM\OneToMany(targetEntity: PostEvent::class, mappedBy: 'relatedUser')]
     private Collection $postEvents;
 
+    // #[Groups(['profile:read'])]
     /**
      * @var Collection<int, PostEvent>
      */
-    // #[Groups(['profile:read'])]
-    #[ORM\ManyToMany(targetEntity: PostEvent::class, mappedBy: 'subscribe')]    
-    private Collection $subscribeToEvents;
+    #[ORM\ManyToMany(targetEntity: PostEvent::class, mappedBy: 'subscribe', fetch: 'EXTRA_LAZY')]    
+    private ?Collection $subscribeToEvents = null;
 
     /**
      * @var Collection<int, TokenManager>
@@ -170,10 +171,18 @@ class UserProfile
         return $this;
     }
 
-    // #[Groups('profile:read')]
-    // public function getAllPostEvents(): ?PostEvent
+    /** @return Collection<int, PostEvent> */
+    public function getUserPublisedSubscribedEvents()
+    {
+        return $this->subscribeToEvents->matching(PostEventRepository::findUserSubscribedPublishedEventPostEvents());
+    }
+
+    // public function getUserSubscribedToEvents($id)
     // {
-    //     return $this->getAllPostEvents;
+    //     // $postEventRepo = new PostEventRepository();
+    //     $userSubscribedEvents = $this->subscribeToEvents->isPublished();
+    //     // $userSubscribedEvents = $this->postEventRepository->findOneBy(['id' => $id]);
+    //     return $userSubscribedEvents;
     // }
 
     // #[Groups('profile:write')] //? function might be removable

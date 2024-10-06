@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Dto;
+namespace App\Dto\MollieClient;
 
-// use 
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Dto\MollieClient\OrderAmountDto;
 
-use App\Dto\OrderAmountDto;
 class OrderLinesDto {
 
     public function __construct(

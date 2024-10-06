@@ -1,11 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Dto;
+namespace App\Dto\MollieClient;
 
-use App\Dto\OrderAmountDto;
-use App\Dto\OrderAddressDto;
-use App\Dto\OrderMetaDataDto;
+use App\Dto\MollieClient\OrderAmountDto;
+use App\Dto\MollieClient\OrderAddressDto;
+use App\Dto\MollieClient\OrderMetaDataDto;
+use App\Dto\MollieClient\OrderSubscriptionDto;
 use Mollie\Api\Types\SequenceType;
 use Symfony\Component\Validator\Constraints as Assert;
 

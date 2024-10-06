@@ -58,9 +58,15 @@ class StatusTransferApi {
     }
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
     public ?int $id = null;
-    public ?ShopOrderApi $userOrder;
-    public ?MolliePaymentStatusEnum $status = null;
-    public ?DateTimeImmutable $createdAt = null;
+    
+   /** @var ShopOrderApi $userOrder */ 
+    public $userOrder;
+     
+    /** @var MolliePaymentStatusEnum $status */ 
+    public $status = null;
+     
+    /** @var DateTimeImmutable $createdAt */ 
+    public $createdAt = null;
     public ?string $transferId = null;
     public null|string $customer = null;
 }

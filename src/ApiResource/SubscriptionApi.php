@@ -66,13 +66,29 @@ class SubscriptionApi
     public ?MolliePaymentStatusEnum $status  = null;
     public ?string $amount = null;
     public ?string $transferId = null;
-    public ?SubscriptionLengthTypeEnum $duration  = null;
-    public ?DateTimeInterface $dateStart  = null;
-    public ?DateTimeInterface $dateEnd  = null;
-    public ?DateTimeInterface $createdAt  = null;
-    public ?DateTimeInterface $updatedAt = null;
-    public ?UserApi $subscriptionOwnedBy = null;
-    public ?ProductApi $subscribedProduct = null;
-    public ?TokenManagerApi $tokenManager = null;
+    
+    /** @var SubscriptionLengthTypeEnum $duration */
+    public $duration  = null;
+     
+     /** @var DateTimeInterface $dateStart */
+    public $dateStart  = null;
+     
+     /** @var DateTimeInterface $dateEnd */
+    public $dateEnd  = null;
+     
+     /** @var DateTimeInterface $createdAt */
+    public $createdAt  = null;
+     
+     /** @var DateTimeInterface $updatedAt */
+    public $updatedAt = null;
+     
+     /** @var UserApi $subscriptionOwnedBy */
+    public $subscriptionOwnedBy = null;
+     
+     /** @var ProductApi $subscribedProduct */
+    public $subscribedProduct = null;
+     
+     /** @var TokenManagerApi $tokenManager */
+    public $tokenManager = null;
 // public ?TokenManager $tokenManager = null;
 }

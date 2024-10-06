@@ -1,6 +1,6 @@
 <?php 
 
-namespace App\Dto\MollieClientDto;
+namespace App\Dto\MollieClient;
 
 use App\Entity\Product;
 use App\Service\SubscriptionUUID;
@@ -11,8 +11,8 @@ class SubscriptionOrderLine
     private SubscriptionUUID $userSubscriptionId;
 
     public function __construct(
-        #[Assert\Type('Valid')]
-        public Product $productSubscription,
+        #[Assert\Type('int')]
+        public int $productSubscriptionId,
 
         #[Assert\Type('int')]
         public string $lengthSubscription,
@@ -46,21 +46,21 @@ class SubscriptionOrderLine
         }
 
         /**
-         * Get the value of productSubscription
+         * Get the value of productSubscriptionId
          */ 
-        public function getProductSubscription(): Product
+        public function getProductSubscriptionId(): int
         {
-                return $this->productSubscription;
+                return $this->productSubscriptionId;
         }
 
         /**
-         * Set the value of productSubscription
+         * Set the value of productSubscriptionId
          *
          * @return  self
          */ 
-        public function setProductSubscription($productSubscription): static
+        public function setProductSubscription($productSubscriptionId): static
         {
-                $this->productSubscription = $productSubscription;
+                $this->productSubscriptionId = $productSubscriptionId;
 
                 return $this;
         }

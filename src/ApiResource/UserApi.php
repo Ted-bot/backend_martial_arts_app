@@ -84,7 +84,8 @@ final class UserApi
 
     public ?string $location = null;
 
-    public ?DateTimeImmutable $createdAt;
+    /** @var DateTimeImmutable */
+    public $createdAt;
 
     public ?string $conversion = null;
     

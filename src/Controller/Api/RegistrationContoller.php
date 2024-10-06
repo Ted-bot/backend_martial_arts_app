@@ -3,9 +3,8 @@
 namespace App\Controller\Api;
 
 use App\Entity\User;
-use App\Dto\CreateUserDto;
 use App\Encoder\NixillaJWTEncoder;
-use App\Request\CreateUserRequest;
+use App\Dto\User\CreateUserDto;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -48,7 +47,7 @@ class RegistrationContoller extends AbstractController
         methods: 'POST',
         )]
     public function v2Create(
-        CreateUserRequest $request,
+        CreateUserDto $request,
         // #[MapRequestPayload] CreateUserDto $request,
         EntityManager $entityManager,
         JWTTokenManagerInterface $JWTManager,

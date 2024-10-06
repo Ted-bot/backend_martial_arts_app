@@ -57,6 +57,7 @@ class GroupApi
     /** @var array<int, UserProfileApi> */
     public $profileGroups;
     
-    public ?UserProfileApi $profile = null;
+    /** @var UserProfileApi $profile */
+    public $profile = null;
     
 }

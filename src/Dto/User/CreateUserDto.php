@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Request;
+namespace App\Dto\User;
 
+use App\Request\AbstractJsonRequest;
 use Symfony\Component\Validator\Constraints\Date;
 use Symfony\Component\Validator\Constraints\Type;
 use Symfony\Component\Validator\Constraints\Email;
@@ -11,7 +12,7 @@ use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\PasswordStrength;
 
-class CreateUserRequest extends AbstractJsonRequest
+class CreateUserDto extends AbstractJsonRequest
 {
     #[NotBlank(message: 'This field cannot be empty')]
     #[Type('string')]

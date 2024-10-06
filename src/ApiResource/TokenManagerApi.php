@@ -69,10 +69,21 @@ class TokenManagerApi
                     
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
     public ?int $id = null;
-    public ?Uuid $uuid = null;
+    
+    /** @var Uuid $uuid */
+    public $uuid = null;
+    
     public ?int $tokens = null;
-    public ?UserProfileApi $userProfile;
-    public ?SubscriptionApi $relatedSubscription;
-    public ?DateTimeImmutable $createdAt;
-    public ?DateTimeImmutable $updatedAt;
+    
+   /** @var UserProfileApi $userProfile */ 
+    public $userProfile;
+     
+    /** @var SubscriptionApi $relatedSubscription */ 
+    public $relatedSubscription;
+     
+    /** @var DateTimeImmutable $createdAt */ 
+    public $createdAt;
+     
+    /** @var DateTimeImmutable $updatedAt */ 
+    public $updatedAt;
 }

@@ -18,21 +18,21 @@ class StatusTransfer
 
     #[ORM\ManyToOne(inversedBy: 'statusTransfers')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?ShopOrder $userOrder;
+    protected ?ShopOrder $userOrder;
 
     // #[ORM\Column(type: 'App\Entity\Enum\MolliePaymentStatusEnum')]
     #[ORM\Column(enumType: MolliePaymentStatusEnum::class)]
     // #[ORM\JoinColumn(nullable: true)]
-    private ?MolliePaymentStatusEnum $status = null;
+    protected ?MolliePaymentStatusEnum $status = null;
 
     #[ORM\Column]
     private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(length: 15)]
-    private ?string $transferId = null;
+    protected ?string $transferId = null;
 
     #[ORM\Column(length: 25, nullable: true)]
-    private null|string $customer = null;
+    protected null|string $customer = null;
 
     public function __construct()
     {

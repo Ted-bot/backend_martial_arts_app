@@ -49,7 +49,6 @@ use Doctrine\ORM\Mapping as ORM;
 )]
 class ProductApi 
 {
-
     public function  __construct()
     {
         $this->relatedUser = new UserApi();
@@ -81,9 +80,11 @@ class ProductApi
     
     public ?ProductVatApi $productVat;
 
-    public ?DateTimeImmutable $createdAt = null;
+    /** @var DateTimeImmutable */
+    public $createdAt = null;
 
-    public ?SubscriptionTypeEnum $duration = null;
+    /** @var SubscriptionTypeEnum */
+    public $duration = null;
 
     /** @var UserApi Object */
     public $relatedUser;
@@ -91,13 +92,17 @@ class ProductApi
     /** @var array<int, OrderLineApi> */
     public $orderLines;
     
-    public ?OrderLineApi $orderLine;
-    public ?SubscriptionApi $subscription;
+   /** @var OrderLineApi */ 
+    public $orderLine;
+    /** @var SubscriptionApi */ 
+    public $subscription;
 
-    public ?SubscriptionLengthTypeEnum $durationLength = null;
+    /** @var SubscriptionLengthTypeEnum */ 
+    public $durationLength = null;
 
-    public ?SubscriptionDirectOrPeriodicTypeEnum $directOrPeriodic = null;
+    /** @var SubscriptionDirectOrPeriodicTypeEnum */ 
+    public $directOrPeriodic = null;
 
     /** @var array<int, SubscriptionApi> */
-    public  $subscriptions;
+    public $subscriptions;
 }

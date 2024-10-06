@@ -36,9 +36,9 @@ class SubscribeEventsController extends AbstractController
         $this->managerRegistry = $managerRegistry;
     }
 
-    #[Route('/api/subscribe/events', 
-    name: 'api_subscribe_events',
-    methods: 'POST',)]
+    // #[Route('/api/subscribe/events', 
+    // name: 'api_subscribe_events',
+    // methods: 'POST',)]
     public function subscribe(
         Request $request,
         UserProfileRepository $userProfileRepository,
@@ -104,9 +104,9 @@ class SubscribeEventsController extends AbstractController
         }        
     }
 
-    #[Route('/api/subscribe/events/delete',
-    name: 'api_unsubscribe_events',
-    methods: 'POST',)]
+    // #[Route('/api/subscribe/events/delete',
+    // name: 'api_unsubscribe_events',
+    // methods: 'POST',)]
     public function unscubscribe(Request $request, EntityManager $post, UserProfileRepository $userProfileRepository): Response
     {
         $eventId = $request->get('event_id');        

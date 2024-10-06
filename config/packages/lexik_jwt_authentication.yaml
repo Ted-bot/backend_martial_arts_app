@@ -14,8 +14,8 @@ lexik_jwt_authentication:
     #     service: acme_api.encoder.nixilla_jwt_encoder
 # token extraction settings
     token_extractors:
-        # look for a token as Authorization Header
+    #     # look for a token as Authorization Header
         authorization_header:
             enabled: true
-            prefix:  Bearer
+            prefix:
             name:    X-Authorization

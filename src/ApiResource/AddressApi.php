@@ -57,7 +57,9 @@ class AddressApi
     public ?string $location = null;
     public ?string $region = null;
     public ?string $postalCode = null;
-    public ?CountryTypeEnum $country = null;
+    
+    /** @var CountryTypeEnum $country */
+    public $country = null;
     
     /** @var array<int, UserAddressApi> */
     public $userAddresses;

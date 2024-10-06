@@ -61,7 +61,7 @@ class Product
     protected ?string $sku = null;   
 
     #[ORM\Column(length: 100)]
-    #[Groups(['product:read', 'profile:read'])]
+    #[Groups(['product:read', 'profile:read', 'subscription:read'])]
     protected ?string $name = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 17, scale: 2)]
@@ -71,7 +71,7 @@ class Product
     #[ORM\ManyToOne(inversedBy: 'products')]
     #[ORM\JoinColumn(nullable: false)]
     #[ORM\Column(enumType: CategoryTypeEnum::class)]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'subscription:read'])]
     protected ?CategoryTypeEnum $category;
 
     #[ORM\Column(length: 510)]
@@ -83,7 +83,7 @@ class Product
     private ?array $images = null;
 
     #[ORM\Column]
-    #[Groups(['product:read'])]
+    #[Groups(['product:read', 'subscription:read'])]
     protected ?bool $isPublished = true;
 
     #[ORM\Column]

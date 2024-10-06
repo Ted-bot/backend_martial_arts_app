@@ -17,17 +17,17 @@ use App\Enum\CountryTypeEnum;
 use App\Entity\StatusTransfer;
 use App\Enum\CurrencyTypeEnum;
 use Mollie\Api\MollieApiClient;
-use App\Dto\CreateMollieOrderDto;
+use App\Dto\MollieClient\CreateMollieOrderDto;
 use App\Service\SubscriptionUUID;
 use App\Service\MollieClientHelper;
-use App\Request\CustomerInfoRequest;
+use App\Dto\MollieClient\CustomerInfoDto;
 use App\Enum\MolliePaymentStatusEnum;
 use Symfony\Component\Intl\Currencies;
 use App\Enum\CountryToCurrencyTypeEnum;
 use App\Service\MollieClient as Mollie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
-use App\Dto\MollieClientDto\SubscriptionOrderLine;
+use App\Dto\MollieClient\SubscriptionOrderLine;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Doctrine\ORM\EntityManagerInterface as EntityManager;
@@ -125,7 +125,7 @@ class OrderController extends AbstractController
 
     #[Route('/api/v1/order/address', name: 'app_order_address', methods: ['POST'])]
     public function orderAddress(
-        CustomerInfoRequest $request,
+        CustomerInfoDto $request,
         // #[MapRequestPayload] CustomerInfoDto $request,
         // EntityManager $entityManager,
         Address $address,
@@ -328,17 +328,18 @@ class OrderController extends AbstractController
             $customer = $mollie->customers->get($knownMollieCustomer->getCustomer());
         } 
 
-        //Now make payment  error ApiException
+        //Now make payment  error ApiException ? getPrevious open status  payment id
         $createPayment = $customer->createPayment($newUserOrder); // error
         $transferId = $createPayment->id;            
 
-        $statusTransfer = new StatusTransfer();
-        $statusTransfer->setUserOrder($shopOrder);
-        $statusTransfer->setTransferId($transferId);
-        $statusTransfer->setCustomer($mollieCustomerId);
-
-        $this->entityManager->persist($statusTransfer);
-        $this->entityManager->flush();        
+        if(!$knownMollieCustomer?->getTransferId() !== $transferId){
+            $statusTransfer = new StatusTransfer();
+            $statusTransfer->setUserOrder($shopOrder);
+            $statusTransfer->setTransferId($transferId);
+            $statusTransfer->setCustomer($mollieCustomerId);
+            $this->entityManager->persist($statusTransfer);
+            $this->entityManager->flush();        
+        }
         
         /*
         * Generate a unique subscription id for this example. It is important to include this unique attribute

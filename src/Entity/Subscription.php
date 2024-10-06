@@ -63,29 +63,29 @@ use Symfony\Component\Serializer\Attribute\Groups;
 )]
 class Subscription
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
     // #[ApiProperty(identifier: false)]
     // #[ORM\Column(type: 'uuid', unique: true)]
     // #[ORM\GeneratedValue(strategy: 'CUSTOM')]
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
     private ?int $id;
     
+    // note: set restriction for admin
     #[ORM\Column(type: 'uuid', unique:true)]
     #[ApiProperty(identifier: true)]
     #[Groups(['tokenmanager:read', 'profile:read', 'user:read'])]
-    // note: set restriction for admin
     private ?Uuid $uuid = null;
 
     #[ORM\Column(enumType: MolliePaymentStatusEnum::class, length: 255)]
     #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
-    private ?MolliePaymentStatusEnum $status;
+    private ?MolliePaymentStatusEnum $status = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     #[Groups(['subscription:read', 'profile:read', 'user:read'])]
     // note: set restriction only accessable by admin
-    private ?string $amount;
+    private ?string $amount = null;
 
     #[ORM\Column(length: 30, nullable: true)]
     #[Groups(['subscription:read', 'user:read'])]
@@ -95,19 +95,19 @@ class Subscription
     #[ORM\JoinColumn(nullable: false)]
     #[ORM\Column(enumType: SubscriptionTypeEnum::class)]
     #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
-    private ?SubscriptionLengthTypeEnum $duration;
+    private ?SubscriptionLengthTypeEnum $duration = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Groups(['subscription:read', 'user:read','tokenmanager:read', 'profile:read'])]
-    private ?DateTimeInterface $dateStart;
+    private ?DateTimeInterface $dateStart = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
-    private ?DateTimeInterface $dateEnd;
+    private ?DateTimeInterface $dateEnd = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
-    private ?DateTimeInterface $createdAt;
+    private ?DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     #[Groups(['subscription:read', 'user:read'])]
@@ -118,10 +118,10 @@ class Subscription
     #[Groups(['user:read'])]    // note: set restriction 
     private ?User $subscriptionOwnedBy = null;
 
-    #[ORM\ManyToOne(inversedBy: 'subscriptions')]
+    #[ORM\ManyToOne(inversedBy: 'subscriptions')] // , fetch: "EAGER"
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['tokenmanager:read', 'profile:read', 'user:read'])]
-    private ?Product $subscribedProduct;
+    private ?Product $subscribedProduct = null;
 
     #[ORM\OneToOne(mappedBy: 'relatedSubscription', cascade: ['persist', 'remove'])]
     #[Groups(['user:read'])]

@@ -2,22 +2,25 @@
 
 namespace App\Repository;
 
+use DateTimeZone;
+use DateTimeImmutable;
 use App\Entity\PostEvent;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\EntityManagerInterface as EntityManager;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
  * @extends ServiceEntityRepository<PostEvent>
  */
 class PostEventRepository extends ServiceEntityRepository
 {
-    public EntityManager $em;
-    public function __construct(ManagerRegistry $registry, EntityManager $em)
+    // public EntityManager $em;
+    public function __construct(ManagerRegistry $registry) //, EntityManager $em
     {
         parent::__construct($registry, PostEvent::class);
-        $this->em = $em;
+        // $this->em = $em;
     }
 
     public function findAllPostEventsById(): array
@@ -29,7 +32,7 @@ class PostEventRepository extends ServiceEntityRepository
         ->getResult();
     }
 
-    public function countSubscribtionsByEventId($id): array
+    public function countUserSubscribedToEventByUserId($id): array
     {
         return $this->createQueryBuilder('p')
         ->select('COUNT(p.id)')
@@ -37,6 +40,21 @@ class PostEventRepository extends ServiceEntityRepository
         ->leftJoin('p.subscribe','subscribe')
         ->groupBy('p.id')
         ->setParameter('id', $id)
+        ->getQuery()
+        ->getResult();
+    }
+
+    public function countSubscribtionsByEventId($id, $status): array
+    {
+        return $this->createQueryBuilder('p')
+        ->select('COUNT(p.id)')
+        ->where('subscribe.userProfile = :id')
+        // ->where('p.id = :id')
+        ->where(['p.isPublished = :status'])
+        ->leftJoin('p.subscribe','subscribe') // subscribe is relation table UserProfile
+        ->groupBy('p.id')
+        ->setParameter('id', $id)
+        ->setParameter('status', $status)
         ->getQuery()
         ->getResult();
     }
@@ -65,6 +83,42 @@ class PostEventRepository extends ServiceEntityRepository
         return $query;
     }
 
+    public static function findUserSubscribedPublishedEventPostEvents($operator = 'lt')
+    {
+        return Criteria::create()
+            ->andWhere((Criteria::expr()->eq('isPublished', true)))
+            ->andWhere((Criteria::expr()->$operator('startDate', (new DateTimeImmutable())
+                ->setTimezone(new DateTimeZone('Europe/Amsterdam')))
+            ))
+            ;
+    }
+
+    public function findUserPreviousSubscribedAndPublishedEvents($id)
+    {
+        return $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->leftJoin('p.subscribe', 'userProfile')
+            ->where('userProfile.userUniq = :id')
+            ->addCriteria(self::findUserSubscribedPublishedEventPostEvents())
+            ->setParameter('id',$id)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findUserUpcomingSubscribedAndPublishedEvent($id)
+    {
+        return $this->createQueryBuilder('p')
+            ->select('p.startDate')
+            ->addSelect('p.endDate')
+            ->leftJoin('p.subscribe', 'userProfile')
+            ->where('userProfile.userUniq = :id')
+            ->addCriteria(self::findUserSubscribedPublishedEventPostEvents('gt'))
+            ->setParameter('id',$id)
+            ->orderBy('p.startDate','ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
     //    /**
     //     * @return PostEvent[] Returns an array of PostEvent objects
     //     */

@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace App\Dto;
+namespace App\Dto\MollieClient;
 
-// use Symfony\Component\Mime\Address;
 use App\Request\AbstractJsonRequest;
 use Symfony\Component\Validator\Constraints as Assert;
 
