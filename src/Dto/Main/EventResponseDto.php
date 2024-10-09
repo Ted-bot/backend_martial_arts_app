@@ -2,9 +2,10 @@
 
 namespace App\Dto\Main;
 
+use App\Entity\PostEvent;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class ResponseDto
+class EventResponseDto
 {
     public function __construct(
         #[Assert\Type('string')]
@@ -12,6 +13,10 @@ class ResponseDto
         
         #[Assert\Type('int')]
         public int $status = 200,
+        
+        /** @var PostEvent $showUserSelectedEvent */
+        #[Assert\Type('valid')]
+        public $showUserSelectedEvent = null,
     )
     {}
 }

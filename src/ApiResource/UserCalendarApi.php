@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use App\Controller\Api\SubscribeEventActionController;
+use App\Controller\Api\UserCalendarActionController;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ApiResource(
@@ -15,12 +16,12 @@ use Symfony\Component\Validator\Constraints as Assert;
         new GetCollection(
             // security: 'is_granted("ROLE_ADMIN")',
         ),
-        new Post(
+        new Get(
             // provider: UserDashboardStateProvider::class,
             // name: 'get_user_data',
-            uriTemplate: '/subscribe/{email}/event/{id}',
-            uriVariables: ['email', 'id'],
-            controller: SubscribeEventActionController::class,
+            uriTemplate: '/subscribe/{email}/events',
+            uriVariables: 'email',
+            controller: UserCalendarActionController::class,
             read: false,
             status: 201
             // serialize: false
@@ -29,7 +30,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         ],
         
 )]
-class UserSubscribeToEventApi
+class UserCalendarApi
 {
 
 }
