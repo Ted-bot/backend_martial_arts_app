@@ -8,10 +8,10 @@ class ResponseDto
 {
     public function __construct(
         #[Assert\Type('string')]
-        public string $message = '',
+        public string $message = 'Security: InValid Request Made!',
         
         #[Assert\Type('int')]
-        public int $status = 200,
+        public int $status = 400,
     )
     {}
 }

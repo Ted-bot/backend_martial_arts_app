@@ -56,46 +56,22 @@ class SubscribeEventActionController extends AbstractController
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
 
-        // $eventId = $request->getPayload();        
         $eventId = $request->getPayload()->get('event_id');        
-        // $eventId = $request->request->all('event_id');        
-        // dd(['hallo' => $eventId]);
+        $addOrRemoveEvent = $request->getPayload()->get('select');  
         $eventIsNumber = is_numeric($eventId);
         $response  = new ResponseDto();
-        $eventResponse = new EventResponseDto();
 
-        if(!$eventIsNumber){
-            $response->message = 'Security: InValid Request Made!';
-            $response->status = 400;
-            return $response;
-            // return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
-        } 
-        
-        if(!$this->eventRepo->findOneBy(['id' => $eventId])){
-            $response->message = 'Security: InValid Request Made!';
-            $response->status = 400;
-            return $response;
-            // return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
-        } 
+        if(!$eventIsNumber) return $response;        
+        if(!$this->eventRepo->findOneBy(['id' => $eventId])) return $response;
         
         $findEvent = $this->eventRepo->findOneBy(['id' => $eventId]);
         $timeEvent = date_format($findEvent->getStartDate(),'d-M H:m');
         $datetime = new DateTimeImmutable();
         $currentTimeEvent = $datetime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
         
-        if(!$findEvent->isPublished()){
-            $response->message = 'Security: InValid Request Made!';
-            $response->status = 400;
-            return $response;
-            // return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
-        }
-        
-        if($currentTimeEvent > $findEvent->getStartDate()){
-            $response->status = 400;
-            $response->message = 'Security: InValid Request Made!';
-            return $response;
-            // return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
-        }
+        if(!$findEvent->isPublished()) return $response;         
+        if($currentTimeEvent > $findEvent->getStartDate()) return $response; 
+
         /** @var User $currentUser */
         $currentUser = $this->getUser();
 
@@ -106,41 +82,45 @@ class SubscribeEventActionController extends AbstractController
         );
 
         if(!$subscription) {
-            $response = new ResponseDto();
             $response->message = 'No valid Subscription'; // create Dto
-            $response->status = 400; // create Dto
             return $response;
         }
         
         /** @var TokenManager $updateSubTokenManger */
         $userSubscriptionTokenManager = $subscription->getTokenManager();
         $userCurrentTokens = (int) $userSubscriptionTokenManager->getTokens();
-        
-        if($userCurrentTokens === 0) {
-            $response = new ResponseDto();
-            $response->message = 'Not enough Tokens';
-            $response->status = 400;
-            return $response;
-        } // create Dto 
-        
-        $updateTokens = BigDecimal::of($userCurrentTokens)->minus(10)->__tostring();
-        
-        $updateTokens = $userSubscriptionTokenManager->setTokens((int) $updateTokens);
 
-        $userProfile = $userProfileRepository->find($currentUser->getId());
-        $manageUpcomingEvent = $findEvent->addSubscribe($userProfile);
+        /** @var UserProfile $userProfile */
+        $userProfile = $currentUser->getUserProfile();
 
+        if($addOrRemoveEvent >= 2) return new ResponseDto(message: "Security: could not handle select option!");
+        
         /** @var PostEvent $userSelectedEvent */
-        $userSelectedEvent = $findEvent;
+        $userSelectedEvent = $this->entityManager->getRepository(PostEvent::class)
+        ->getArrayPublishedAndUserSubscribedEventIds($currentUser->getId(), $eventId);
+        
+        if(!!$addOrRemoveEvent){
+            if($userCurrentTokens === 0) {
+                $response->message = 'Not enough Tokens';
+                return $response;
+            } // create Dto 
 
-        $selectedEventDto = new CalendarItemDto();
-        $selectedEventDto->id = $userSelectedEvent->getId();
-        $selectedEventDto->title = $userSelectedEvent->getTitle();
-        $selectedEventDto->startDate = $userSelectedEvent->getStartDate();
-        $selectedEventDto->endDate = $userSelectedEvent->getEndDate();
-        $selectedEventDto->resource = $userSelectedEvent->getDescription();
+            if($userSelectedEvent) return new ResponseDto(message: "You have all ready Signed up for {$timeEvent}!");
+            
+            $updateTokens = BigDecimal::of($userCurrentTokens)->minus(10)->__tostring();            
+            $manageUpcomingEvent = $findEvent->addSubscribe($userProfile);
+        } else {           
+            
+            
+            if(!$userSelectedEvent) return new ResponseDto(message:'You have already unsubscribed!'); 
 
-        // $selectedEventDto = $this->mapDtoToEntity( $userSelectedEvent, PostEventApi::class);
+            $updateTokens = BigDecimal::of($userCurrentTokens)->plus(10)->__tostring();
+            $manageUpcomingEvent = $findEvent->removeSubscribe($userProfile);
+        }
+        
+        $userSubscriptionTokenManager->setTokens((int) $updateTokens);    
+        $responseMessage = $addOrRemoveEvent ? 'assigned to' : 'unscubsribed from';
+        $responseEndMessage = $addOrRemoveEvent ? 'Cant wait to se you there' : 'We hope to see you another time!';
 
         $this->entityManager->beginTransaction();
         
@@ -149,11 +129,10 @@ class SubscribeEventActionController extends AbstractController
             $this->entityManager->flush();
             $this->entityManager->commit();
 
-            $eventResponse->message = "You have assigned to {$findEvent->title} \n on {$timeEvent}, Cant wait to se you there !";
-            $eventResponse->showUserSelectedEvent = $selectedEventDto;
-
-            return $eventResponse;
-            
+            $response->status = 201;
+            $response->message = "You have {$responseMessage} {$findEvent->title} \n on {$timeEvent}, {$responseEndMessage} !";
+            return $response;
+    
         } catch (Throwable $e) {
 
             $this->entityManager->rollback();
@@ -168,11 +147,8 @@ class SubscribeEventActionController extends AbstractController
                 'error' => $e->getMessage()
             ]);
 
-            $response->status = 400;
-            $response = new ResponseDto();
             $response->message = 'Excuse use something went wrong from our side.., please try again later';
             return $response;
-            // return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);    
         }        
     }
 

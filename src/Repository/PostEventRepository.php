@@ -109,9 +109,9 @@ class PostEventRepository extends ServiceEntityRepository
     {
         return Criteria::create()
             ->andWhere((Criteria::expr()->eq('isPublished', true)))
-            ->andWhere((Criteria::expr()->$operator('startDate', (new DateTimeImmutable())
-                ->setTimezone(new DateTimeZone('Europe/Amsterdam')))
-            ))
+            // ->andWhere((Criteria::expr()->$operator('startDate', (new DateTimeImmutable())
+            //     ->setTimezone(new DateTimeZone('Europe/Amsterdam')))
+            // ))
             ;
     }
 
@@ -125,6 +125,20 @@ class PostEventRepository extends ServiceEntityRepository
             ->setParameter('id',$id)
             ->getQuery()
             ->getResult();
+    }
+
+    public function getArrayPublishedAndUserSubscribedEventIds($id, $matchUserSelectedEventId)
+    {
+        return $this->createQueryBuilder('p')
+            ->select('p.id')
+            ->leftJoin('p.subscribe', 'userProfile')
+            ->addCriteria(self::findUserSubscribedPublishedEventPostEvents())
+            ->andWhere('userProfile.userUniq = :id')
+            ->andWhere('p.id = :selectedEventId')
+            ->setParameter('id',$id)
+            ->setParameter('selectedEventId',$matchUserSelectedEventId)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 
     public function findUserUpcomingSubscribedAndPublishedEvent($id)
