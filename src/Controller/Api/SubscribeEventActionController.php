@@ -46,12 +46,10 @@ class SubscribeEventActionController extends AbstractController
         LoggerInterface $eventSubscriptionLogger,
     ){
         $this->logger = $eventSubscriptionLogger;
-        // $this->managerRegistry = $managerRegistry;
     }
 
     public function __invoke(
         Request $request,
-        UserProfileRepository $userProfileRepository
     )
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
@@ -81,10 +79,7 @@ class SubscribeEventActionController extends AbstractController
             ['createdAt' => 'DESC']
         );
 
-        if(!$subscription) {
-            $response->message = 'No valid Subscription'; // create Dto
-            return $response;
-        }
+        if(!$subscription) new ResponseDto(message: 'No valid Subscription');
         
         /** @var TokenManager $updateSubTokenManger */
         $userSubscriptionTokenManager = $subscription->getTokenManager();
@@ -100,19 +95,13 @@ class SubscribeEventActionController extends AbstractController
         ->getArrayPublishedAndUserSubscribedEventIds($currentUser->getId(), $eventId);
         
         if(!!$addOrRemoveEvent){
-            if($userCurrentTokens === 0) {
-                $response->message = 'Not enough Tokens';
-                return $response;
-            } // create Dto 
-
+            if($userCurrentTokens === 0) return new ResponseDto('Not enough Tokens');
             if($userSelectedEvent) return new ResponseDto(message: "You have all ready Signed up for {$timeEvent}!");
             
             $updateTokens = BigDecimal::of($userCurrentTokens)->minus(10)->__tostring();            
             $manageUpcomingEvent = $findEvent->addSubscribe($userProfile);
         } else {           
-            
-            
-            if(!$userSelectedEvent) return new ResponseDto(message:'You have already unsubscribed!'); 
+            if(!$userSelectedEvent) return new ResponseDto(message:"You have already unsubscribed from {$timeEvent}!"); 
 
             $updateTokens = BigDecimal::of($userCurrentTokens)->plus(10)->__tostring();
             $manageUpcomingEvent = $findEvent->removeSubscribe($userProfile);
@@ -152,62 +141,4 @@ class SubscribeEventActionController extends AbstractController
         }        
     }
 
-    // #[Route('/api/subscribe/events/delete',
-    // name: 'api_unsubscribe_events',
-    // methods: 'POST',)]
-    // public function unscubscribe(Request $request, EntityManager $post, UserProfileRepository $userProfileRepository): Response
-    // {
-    //     $eventId = $request->get('event_id');        
-    //     $eventIsNumber = is_numeric($eventId);
-
-    //     if(!$eventIsNumber){
-    //         return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
-    //     } 
-        
-    //     if(!$this->eventRepo->findOneBy(['id' => $eventId])){
-    //         return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
-    //     } 
-        
-    //     $findEvent = $this->eventRepo->findOneBy(['id' => $eventId]);
-    //     $timeEvent = date_format($findEvent->getStartDate(),'d-M H:m');
-    //     $datetime = new DateTimeImmutable();
-    //     $currentTimeEvent = $datetime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
-
-    //     if(!$findEvent->isPublished()){
-    //         return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
-    //     }
-
-    //     if($currentTimeEvent > $findEvent->getStartDate()){
-    //         return new Response('Security: InValid Request Made!', Response::HTTP_EXPECTATION_FAILED);
-    //     }
-
-    //     $currentUser = $this->getUser();
-    //     $userProfile = $userProfileRepository->find($currentUser->getId());
-    //     $unassignToEvent = $findEvent->removeSubscribe($userProfile);
-    //     $this->entityManager->beginTransaction();
-
-    //     try {            
-    //         $this->entityManager->persist($unassignToEvent);
-    //         $this->entityManager->flush();
-    //         $this->entityManager->commit();
-            
-    //         return new JsonResponse(['success' => "You have un-assigned to upcoming event:{$findEvent->title} \n on {$timeEvent}, Hope to see you soon!"], Response::HTTP_CREATED);
-            
-    //     } catch (Throwable $e) {
-
-    //         $this->entityManager->rollback();
-    //         $this->managerRegister->resetManager();
-    //         $this->entityManager->flush();
-    //         $this->entityManager->commit();
-            
-    //         $this->logger->debug('An error occurred when signin up for a event!', [
-    //             'user' => $currentUser->getId(),
-    //             'profile' => $userProfile->getId(),
-    //             'time' => $currentTimeEvent,
-    //             'error' => $e->getMessage()
-    //         ]);
-
-    //         return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);    
-    //     } 
-    // }
 }

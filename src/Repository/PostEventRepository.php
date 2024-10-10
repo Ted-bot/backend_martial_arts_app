@@ -109,9 +109,16 @@ class PostEventRepository extends ServiceEntityRepository
     {
         return Criteria::create()
             ->andWhere((Criteria::expr()->eq('isPublished', true)))
-            // ->andWhere((Criteria::expr()->$operator('startDate', (new DateTimeImmutable())
-            //     ->setTimezone(new DateTimeZone('Europe/Amsterdam')))
-            // ))
+            ->andWhere((Criteria::expr()->$operator('startDate', (new DateTimeImmutable())
+                ->setTimezone(new DateTimeZone('Europe/Amsterdam')))
+            ))
+            ;
+    }
+
+    public static function findUserSubscribedEventForCalendar($operator = 'lt')
+    {
+        return Criteria::create()
+            ->andWhere((Criteria::expr()->eq('isPublished', true)))
             ;
     }
 
@@ -132,7 +139,7 @@ class PostEventRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('p')
             ->select('p.id')
             ->leftJoin('p.subscribe', 'userProfile')
-            ->addCriteria(self::findUserSubscribedPublishedEventPostEvents())
+            ->addCriteria(self::findUserSubscribedEventForCalendar())
             ->andWhere('userProfile.userUniq = :id')
             ->andWhere('p.id = :selectedEventId')
             ->setParameter('id',$id)
