@@ -100,7 +100,7 @@ class AppFixtures extends Fixture
                     $user, "test_pass"
                 )
             );
-            $gender = Factory::faker()->boolean() ? 'man' : 'woman';
+            $gender = Factory::faker()->boolean() ? 'male' : 'female';
             $randomUser->setFirstName(Factory::faker()->firstName());
             $randomUser->setLastName(Factory::faker()->lastName());
             $randomUser->setPhoneNumber(substr(Factory::faker()->phoneNumber(), 1, 15));
