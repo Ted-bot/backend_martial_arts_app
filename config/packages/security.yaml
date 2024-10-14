@@ -17,38 +17,29 @@ security:
             entity:
                 class: App\Entity\User
                 property: email
-        jwt:
-            lexik_jwt: ~
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-        main:
-            # pattern: ^/api/dashboard/
-            lazy: true
-        # login:
-            # user_checker: lexik_jwt_authentication.security.jwt_authenticator
+
+        api:
+            pattern: ^/api
+            stateless: true
+            entry_point: jwt
             json_login:
-                provider: app_user_provider
                 check_path: /api/login_check
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
             logout: 
-                path: /ap/api_logout
-
-        # api:
-        #     pattern: ^/api/
-        #     stateless: true
-            provider: app_user_provider
+                path: /api/logout
             jwt: ~
-                # authenticator: app.custom_authenticator
-        api_token_refresh:
-            provider: jwt
-            pattern: ^/api/token/refresh
-            stateless: true
-            # user_checker: user_checker_service_id
-            refresh_jwt: ~
-            # custom_authenticator: App\Security\ApiKeyAuthenticator
+            refresh_jwt: 
+                check_path:  api_refresh_token
+                # provider:  app_user_provider
+        
+        main:
+            lazy: true
+            provider: app_user_provider
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
@@ -63,11 +54,11 @@ security:
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/products, roles: PUBLIC_ACCESS }
         - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
-        - { path: ^/api/v1/login, roles: PUBLIC_ACCESS }
+        # - { path: ^/api/v1/login, roles: PUBLIC_ACCESS }
         # - { path: ^/webhook/MollieDirectPayment, roles: PUBLIC_ACCESS }
         - { path: ^/api/webhook/MollieDirectPayment, roles: PUBLIC_ACCESS }
         - { path: ^/api/webhook/MollieSubscriptionPayment, roles: PUBLIC_ACCESS }
-        - { path: ^/api/(login|token/refresh), roles: PUBLIC_ACCESS }
+        - { path: ^/api/(login_check|token/refresh), roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/dashboard, roles: ROLE_USER_STUDENT }
         - { path: ^/api/v1/payment, roles: ROLE_USER_STUDENT }
         - { path: ^/api/v1/order/address, roles: ROLE_USER_STUDENT }
