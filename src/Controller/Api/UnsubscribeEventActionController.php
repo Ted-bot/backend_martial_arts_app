@@ -20,7 +20,7 @@ use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Doctrine\Persistence\ManagerRegistry;
 
-class SubscribeEventsController extends AbstractController
+class UnsubscribeEventActionController extends AbstractController
 {
     private $logger;
     private $managerRegister;

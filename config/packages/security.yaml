@@ -30,10 +30,12 @@ security:
             # user_checker: lexik_jwt_authentication.security.jwt_authenticator
             json_login:
                 provider: app_user_provider
-            # form_login: ~
                 check_path: /api/login_check
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
+            logout: 
+                path: /ap/api_logout
+
         # api:
         #     pattern: ^/api/
         #     stateless: true
@@ -72,7 +74,6 @@ security:
         - { path: ^/api/v1/order/payment, roles: ROLE_USER_STUDENT }
         - { path: ^/api/v1/order/create, roles: ROLE_USER_STUDENT }
         - { path: ^/api/subscribe/events, roles: ROLE_USER_STUDENT }
-        - { path: ^/api/user_dashboard, roles: ROLE_USER_STUDENT }
 
 when@test:
     security:

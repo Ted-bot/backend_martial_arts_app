@@ -120,12 +120,12 @@ class RegistrationContoller extends AbstractController
     // }
 
     #[Route(
-        '/api/v1/logout', 
+        '/api/logout', 
         name: 'api_logout'
         )]
     public function v1Logout()
     {
-
+        throw new \Exception('Never user this method!');
     }
 
     #[Route(

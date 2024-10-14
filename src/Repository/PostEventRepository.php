@@ -5,7 +5,9 @@ namespace App\Repository;
 use DateTimeZone;
 use DateTimeImmutable;
 use App\Entity\PostEvent;
+use Doctrine\ORM\Query\Expr;
 use Doctrine\ORM\QueryBuilder;
+use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\EntityManagerInterface as EntityManager;
@@ -70,18 +72,38 @@ class PostEventRepository extends ServiceEntityRepository
         ->getResult();
     }
 
-    public function findAllQuery(
-        bool $withSubscribtions = false
-    ): QueryBuilder
-    {   $query = $this->createQueryBuilder('p');
+    
+    // public function findUserAgenda(
+    //     int $userId
+    // )
+    // {   
+//     $query =  $this->createQueryBuilder('p')
+//             ->select('p.id')
+//             ->addSelect('p.startDate')
+//             ->addSelect('p.endDate')
+//             ->addSelect('p.title')
+// ->andWhere('p.isPublished = true')
+// ->getQuery()
+//             ->getResult();
+        // $test = $this->
+        // $query = $this->createQueryBuilder('p')
+        //     ->select('p.id')
+        //     ->addSelect('p.startDate')
+        //     ->addSelect('p.endDate')
+        //     ->addSelect('p.title')
+        //     ->addSelect("CASE
+        //                 WHEN p.id = userSubscribedEvent.id THEN '1'
+        //                 ELSE '0'
+        //             END AS subscribedToEvent")
+        //     ->join('p.subscribe','userProfile',"WITH", 'userProfile.userUniq = :id')
+        //     ->join('userProfile.subscribeToEvents','userSubscribedEvent')
+        //     ->andWhere('p.isPublished = true')
+        //     ->setParameter('id', $userId)
+        //     ->getQuery()
+        //     ->getResult();
 
-        if($withSubscribtions){
-            $query->leftJoin('p.subscribe','subcribtions')
-            ->addSelect('subscribtions');
-        }
-
-        return $query;
-    }
+        // return $query;
+    // }
 
     public static function findUserSubscribedPublishedEventPostEvents($operator = 'lt')
     {
@@ -90,6 +112,13 @@ class PostEventRepository extends ServiceEntityRepository
             ->andWhere((Criteria::expr()->$operator('startDate', (new DateTimeImmutable())
                 ->setTimezone(new DateTimeZone('Europe/Amsterdam')))
             ))
+            ;
+    }
+
+    public static function findUserSubscribedEventForCalendar($operator = 'lt')
+    {
+        return Criteria::create()
+            ->andWhere((Criteria::expr()->eq('isPublished', true)))
             ;
     }
 
@@ -103,6 +132,20 @@ class PostEventRepository extends ServiceEntityRepository
             ->setParameter('id',$id)
             ->getQuery()
             ->getResult();
+    }
+
+    public function getArrayPublishedAndUserSubscribedEventIds($id, $matchUserSelectedEventId)
+    {
+        return $this->createQueryBuilder('p')
+            ->select('p.id')
+            ->leftJoin('p.subscribe', 'userProfile')
+            ->addCriteria(self::findUserSubscribedEventForCalendar())
+            ->andWhere('userProfile.userUniq = :id')
+            ->andWhere('p.id = :selectedEventId')
+            ->setParameter('id',$id)
+            ->setParameter('selectedEventId',$matchUserSelectedEventId)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 
     public function findUserUpcomingSubscribedAndPublishedEvent($id)
