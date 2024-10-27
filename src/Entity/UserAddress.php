@@ -8,8 +8,8 @@ use App\Repository\UserAddressRepository;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 
+// #[ApiResource]
 #[ORM\Entity(repositoryClass: UserAddressRepository::class)]
-#[ApiResource]
 class UserAddress
 {
     #[ORM\Id]

@@ -2,6 +2,9 @@
 
 namespace App\ApiResource;
 
+use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use Doctrine\ORM\Mapping as ORM;
 use App\Entity\UserAddress;
 use ApiPlatform\Metadata\Get;
@@ -22,10 +25,11 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
+use App\State\UserAdressEntityToDtoStateProvider;
 
 #[ApiResource(
-    // shortName: 'useraddress',
-    provider: EntityToDtoStateProvider::class,
+    shortName: 'userAddress',
+    provider: UserAdressEntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
     paginationItemsPerPage: 10,
     // normalizationContext: ['groups' =>  ['read_customer']],
@@ -33,8 +37,14 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
     stateOptions: new Options(entityClass: UserAddress::class),
     operations: [
         new Get(
-            provider: EntityToDtoStateProvider::class,
-            processor: EntityClassDtoStateProcessor::class,
+            uriTemplate: '/user_address/{id}/id',
+            uriVariables: [
+                'id' => new Link(
+                    fromClass: UserAddressApi::class,
+                    toProperty: 'addressUser'
+                )
+            ],
+            filters: ['api_platform.doctrine.orm.boolean_filter']
         ),
         new GetCollection(),
         // new Post(
@@ -46,6 +56,8 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
         new Delete(),
     ],
 )]
+#[ApiFilter(BooleanFilter::class, properties: ['isDefault',])]
+#[ApiFilter(SearchFilter::class, properties: ['addressUser',])]
 class UserAddressApi 
 {
     public function __construct()

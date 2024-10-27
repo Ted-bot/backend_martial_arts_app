@@ -45,6 +45,12 @@ class Address
     #[ORM\OneToMany(targetEntity: UserAddress::class, mappedBy: 'address')]
     private Collection $userAddresses;
 
+    #[ORM\Column(length: 10, nullable: true)]
+    private ?string $libReactCity = null;
+
+    #[ORM\Column(length: 10, nullable: true)]
+    private ?string $libReactState = null;
+
     public function __construct()
     {
         $this->userAddresses = new ArrayCollection();
@@ -165,6 +171,30 @@ class Address
                 $userAddress->setAddress(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getLibReactCity(): ?string
+    {
+        return $this->libReactCity;
+    }
+
+    public function setLibReactCity(?string $libReactCity): static
+    {
+        $this->libReactCity = $libReactCity;
+
+        return $this;
+    }
+
+    public function getLibReactState(): ?string
+    {
+        return $this->libReactState;
+    }
+
+    public function setLibReactState(?string $libReactState): static
+    {
+        $this->libReactState = $libReactState;
 
         return $this;
     }

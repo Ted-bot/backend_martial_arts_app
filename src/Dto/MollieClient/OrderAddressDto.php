@@ -18,9 +18,9 @@ class OrderAddressDto {
         
         #[Assert\Length(
             max: 25,
-            maxMessage: 'Your organisation should contain max {{ limit }} characters'
+            maxMessage: 'Your organization should contain max {{ limit }} characters'
         )]
-        public $organisationName,
+        public $organizationName,
         
         #[Assert\NotBlank]
         #[Assert\Length(

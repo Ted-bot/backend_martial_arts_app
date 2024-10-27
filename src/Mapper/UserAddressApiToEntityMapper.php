@@ -52,7 +52,7 @@ class UserAddressApiToEntityMapper implements MapperInterface
             ]));
         }
 
-        $entity->setDefault($dto->isDefault);
+        if($dto->isDefault) $entity->setDefault($dto->isDefault);
         // $entity->addShopOrder($context["addShopOrder"]); // 
 
         return $entity; // return userAddress or upload

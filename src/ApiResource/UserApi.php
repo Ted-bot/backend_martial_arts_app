@@ -28,6 +28,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
 
+
 #[ApiResource(
     shortName: 'User',
     provider: EntityToDtoStateProvider::class,
@@ -44,12 +45,19 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
     //     ],
     stateOptions: new Options(entityClass: User::class),
     operations: [
-        new Get(),
+        new Get(    
+            uriTemplate: '/user_by_email/{email}/email',
+            uriVariables: 'email'
+        ),
         new GetCollection(),
         new Post(
             security: 'is_granted("PUBLIC_ACCESS")',
         ),
-        new Patch(),
+        new Patch(    
+            uriTemplate: '/user_by_email/{email}/email',
+            uriVariables: 'email'
+        ),
+        // new Patch(),
         new Put(),
         new Delete(),
     ],
@@ -107,7 +115,7 @@ final class UserApi
     /** @var array<int, UserAddressApi > */    
     public $userAddresses;
     
-    /** @var UserAddressApi Object */    
+    // /** @var UserAddressApi Object */    
     public $userAddress;
     
     /** @var array<int, ShopOrderApi> */    

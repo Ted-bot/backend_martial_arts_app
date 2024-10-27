@@ -30,13 +30,20 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
-#[ApiResource(
-    shortName: 'User',
-    operations: [new Get(    
-            uriTemplate: '/user_by_email/{email}/email',
-            uriVariables: 'email'
-        )],
-)]
+
+// #[ApiResource(
+//     shortName: 'User',
+//     operations: [
+//         new Get(    
+//             uriTemplate: '/user_by_email/{email}/email',
+//             uriVariables: 'email'
+//         ),
+//         new Patch(    
+//             uriTemplate: '/user_by_email/{email}/email',
+//             uriVariables: 'email'
+//         )
+//     ],
+// )]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USER', fields: ['email', 'phone_number'])]
@@ -144,7 +151,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, UserAddress>
      */
-    #[ORM\OneToMany(targetEntity: UserAddress::class, mappedBy: 'addressUser')]
+    #[ORM\OneToMany(targetEntity: UserAddress::class, mappedBy: 'addressUser', fetch: 'EAGER')]
     private Collection $userAddresses;
 
     /**
@@ -166,7 +173,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, Subscription>
      */
     #[Link(toProperty: 'subscription')]
-    #[ORM\OneToMany(targetEntity: Subscription::class, mappedBy: 'subscriptionOwnedBy')]
+    #[ORM\OneToMany(targetEntity: Subscription::class, mappedBy: 'subscriptionOwnedBy', fetch: 'LAZY')]
     public Collection $subscriptions;
 
     public function __construct()

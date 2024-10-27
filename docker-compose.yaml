@@ -2,45 +2,22 @@ services:
   php:
     build: 
       context: ./
-      # dockerfile: ./Dockerfile
       dockerfile: ./etc/docker/php/Dockerfile
-    # image: ghcr.io/eventpoints/php:main
-    # image: dunglas/frankenphp
-    # image: php:8.3.7-fpm-alpine
     extra_hosts: ["host.docker.internal:host-gateway"]
     container_name: php
     platform: linux/amd64
-    # ports:
-    #   # HTTP
-    #   - target: 80
-    #     published: 80
-    #     protocol: tcp
-    #   # HTTPS
-    #   - target: 443
-    #     published: 443
-    #     protocol: tcp
-    #   # HTTP/3
-    #   - target: 443
-    #     published: 443
     volumes:
       - .:/app:cached
       - php_socket:/var/run/php
-      # - php_socket:/var/run/php
-      # - ./etc/docker/php/php.ini:/usr/local/etc/php/php.ini
     networks:
       - martial_arts_app
-    # healthcheck:
-    #   interval: 10s
-    #   timeout: 3s
-    #   retries: 3
-    #   start_period: 30s
     depends_on:
       - database
     tty: true
 
+  # image: ghcr.io/eventpoints/caddy:main
+  # image: caddy:2
   caddy:
-    # image: ghcr.io/eventpoints/caddy:main
-    # image: caddy:2
     build: 
       context: .
       dockerfile: ./etc/docker/caddy/Dockerfile
@@ -95,7 +72,6 @@ services:
   frontend:
     container_name: frontend
     working_dir: /app
-    # restart: always
     build: ../frontend_martial_arts
     networks:
       - martial_arts_app
@@ -108,32 +84,22 @@ services:
     stdin_open: true
     tty: true
 
-  # static-site:
-  #   image: dockersamples/static-site
-  #   build: .
-  #   restart: always
-  #   networks:
-  #         - martial_arts_app
-  #   ports:
-  #     - "80:80"
-    
   ngrok:
     image: ngrok/ngrok:latest
     restart: unless-stopped
-    # restart: unless-stopped
     command:
       - "start"
       - "--all"
       - "--config"
       - "/etc/ngrok.yml"
     volumes:
-      - ./ngrok.yml:/etc/ngrok.yml
-    # environment:
-    #   NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+      - ./ngrok.yml:/etc/ngrok.yml    
     networks:
       - martial_arts_app
     ports:
       - 4040:4040
+    # environment:
+    #   NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
 
 volumes:
   php_socket:

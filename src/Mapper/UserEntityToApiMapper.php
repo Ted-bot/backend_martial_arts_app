@@ -5,20 +5,25 @@ namespace App\Mapper;
 use App\Entity\User;
 use App\Entity\Product;
 use App\Entity\ShopOrder;
+use App\Entity\UserAddress;
 use App\ApiResource\UserApi;
 use App\Entity\Subscription;
+use App\Repository\UserAddressRepository;
 use App\ApiResource\ProductApi;
 use App\ApiResource\ShopOrderApi;
+use App\ApiResource\UserAddressApi;
 use App\ApiResource\UserProfileApi;
 use Symfonycasts\MicroMapper\AsMapper;
 use Symfonycasts\MicroMapper\MapperInterface;
 use Symfonycasts\MicroMapper\MicroMapperInterface;
+use Doctrine\Common\Collections\Criteria;
 
 #[AsMapper(from: User::class, to: UserApi::class)]
 class UserEntityToApiMapper implements MapperInterface
 {
     public function __construct(
         private MicroMapperInterface $microMapper,
+        private UserAddressRepository $uAddressRepo,
     ){}
 
     public function load(object $from, string $toClass, array $context): object
@@ -28,6 +33,20 @@ class UserEntityToApiMapper implements MapperInterface
 
         $dto = new UserApi();
         $dto->id = $entity->getId();
+
+        $userAddresses = $entity->getUserAddresses();
+
+//         $criteria = Criteria::create()
+//             ->where(Criteria::expr()->eq("isDefault", "true"))
+//             // ->orderBy(array("username" => Criteria::ASC))
+//             // ->setFirstResult(1)
+//             // ->setMaxResults(1)
+// ;
+//         $defaultAddress = $userAddresses->matching($criteria);
+        $defaultAddress = $this->uAddressRepo->findUserDefaultAddress($dto->id);
+        // $defaultAddress = $userAddresses->matching($criteria);
+
+        $dto->userAddress = $defaultAddress;
 
         return $dto;
     }
@@ -92,6 +111,13 @@ class UserEntityToApiMapper implements MapperInterface
                 }, $entity->getSubscriptions()->toArray()
             );
         // }
+
+        $dto->userAddresses = array_map(function(UserAddress $userAddress) {
+            return $this->microMapper->map($userAddress, UserAddressApi::class, [
+                MicroMapperInterface::MAX_DEPTH => 0
+            ]); 
+            }, $entity->getUserAddresses()->toArray()
+        );
 
         // dd(['dto' => $dto]);
         return $dto;

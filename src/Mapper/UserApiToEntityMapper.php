@@ -103,13 +103,15 @@ class UserApiToEntityMapper implements MapperInterface
         $this->propertyAccessor->setValue($entity, 'products', $products);
 
         $userAddresses = [];
-        foreach($dto->userAddresses as $userAddress){
-            $userAddresses[] = $this->microMapper->map($userAddress, UserAddress::class,[
-                MicroMapperInterface::MAX_DEPTH => 0
-            ]);
+        if(!empty($dto->userAddresses)){
+            foreach($dto->userAddresses as $userAddress){
+                $userAddresses[] = $this->microMapper->map($userAddress, UserAddress::class,[
+                    MicroMapperInterface::MAX_DEPTH => 1
+                ]);
+            }
+            $this->propertyAccessor->setValue($entity, 'userAddresses', $userAddresses);
         }
-        $this->propertyAccessor->setValue($entity, 'userAddresses', $userAddresses);
-        
+
         $shopOrders = [];
         foreach($dto->shopOrders as $shopOrder){
             $shopOrders[] = $this->microMapper->map( $shopOrder, ShopOrder::class,[
