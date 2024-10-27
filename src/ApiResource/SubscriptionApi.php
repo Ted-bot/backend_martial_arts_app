@@ -40,6 +40,9 @@ use Symfony\Component\Serializer\Attribute\Groups;
     // normalizationContext: ['groups' => ['read_customer']],
     // security: 'is_granted("ROLE_USER_STUDENT")',
     stateOptions: new Options(entityClass: Subscription::class),
+    normalizationContext: [
+        'groups' => ['subscription:read']
+            ],
 // operations: [
     //     new Get(),
     //     new GetCollection(),
@@ -61,10 +64,18 @@ class SubscriptionApi
     
     // #[Groups(["read_customer"])] // "write_customer", 
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
+    #[Groups(['subscription:read'])]
+    #[ApiProperty(identifier:true)]
     public ?int $id = null;
     public ?Uuid $uuid = null;
+
+    #[Groups(['subscription:read'])]
     public ?MolliePaymentStatusEnum $status  = null;
+
+    // #[Groups('subscription:read')]
     public ?string $amount = null;
+
+    #[Groups(['subscription:read'])]
     public ?string $transferId = null;
     
     /** @var SubscriptionLengthTypeEnum $duration */

@@ -31,7 +31,7 @@ use App\Mapper\AddressApiToEntityMapper;
 use App\Mapper\AddressEntityToApiMapper;
 
 #[ApiResource(
-    shortName: 'address',
+    shortName: 'UserAddressDashboard',
     // provider: EntityToDtoStateProvider::class,
     // processor: EntityClassDtoStateProcessor::class,
     // paginationItemsPerPage: 10,
@@ -40,7 +40,7 @@ use App\Mapper\AddressEntityToApiMapper;
     // stateOptions: new Options(entityClass: UserAddress::class),
     operations: [
         new Post(
-            uriTemplate: '/address/{email}/id/{id}',
+            uriTemplate: '/user_address_dashboard/{email}/id/{id}',
             uriVariables: ['email', 'id'],
             // uriVariables: [
             //     'id' => new Link(
@@ -53,10 +53,6 @@ use App\Mapper\AddressEntityToApiMapper;
             status: 201
         ),
         new GetCollection(),
-        // new Post(
-        //     security: 'is_granted("PUBLIC_ACCESS")',
-        //     validationContext:['groups' => ['Default', 'postValidation']]
-        // ),
         new Get(),
         // new Put(),
         new Delete(),

@@ -56,6 +56,8 @@ final class AddressFactory extends PersistentProxyObjectFactory
             'country' => CountryFactory::new(),
             'postalCode' => self::faker()->text(5),
             'streetNumber' => self::faker()->randomNumber(),
+            'libReactState' => 2612,
+            'libReactCity' => 77340,
         ];
     }
 

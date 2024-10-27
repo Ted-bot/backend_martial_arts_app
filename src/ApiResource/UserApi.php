@@ -130,4 +130,13 @@ final class UserApi
     /** @var SubscriptionApi Object */
     public $subscription;
 
+    // public function getId()
+    // {
+    //     return $this->id;
+    // }
+
+    // public function setId(int $id): void
+    // {
+    //     $this->id = $id;
+    // }
 }

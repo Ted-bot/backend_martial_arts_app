@@ -5,6 +5,8 @@ api_platform:
     formats:
         jsonld: ['application/ld+json']
         json: ['application/json']
+        jsonapi:  ['application/vnd.api+json']
+        html:     ['text/html']
     messenger:
         enabled: true
         # jsonapi:  ['application/vnd.api+json']

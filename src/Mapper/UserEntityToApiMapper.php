@@ -8,15 +8,16 @@ use App\Entity\ShopOrder;
 use App\Entity\UserAddress;
 use App\ApiResource\UserApi;
 use App\Entity\Subscription;
-use App\Repository\UserAddressRepository;
 use App\ApiResource\ProductApi;
 use App\ApiResource\ShopOrderApi;
 use App\ApiResource\UserAddressApi;
 use App\ApiResource\UserProfileApi;
+use App\ApiResource\SubscriptionApi;
 use Symfonycasts\MicroMapper\AsMapper;
+use App\Repository\UserAddressRepository;
+use Doctrine\Common\Collections\Criteria;
 use Symfonycasts\MicroMapper\MapperInterface;
 use Symfonycasts\MicroMapper\MicroMapperInterface;
-use Doctrine\Common\Collections\Criteria;
 
 #[AsMapper(from: User::class, to: UserApi::class)]
 class UserEntityToApiMapper implements MapperInterface
@@ -105,7 +106,7 @@ class UserEntityToApiMapper implements MapperInterface
         // $dto->subscriptions = $entity->getSubscriptions()->toArray();
         // if($entity->getShopOrders()?->toArray()){
             $dto->subscriptions = array_map(function(Subscription $subscription) {
-                return $this->microMapper->map($subscription, UserApi::class, [
+                return $this->microMapper->map($subscription, SubscriptionApi::class, [
                     MicroMapperInterface::MAX_DEPTH => 1
                 ]); 
                 }, $entity->getSubscriptions()->toArray()

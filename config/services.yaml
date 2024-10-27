@@ -26,6 +26,9 @@ services:
             - '../src/DependencyInjection/'
             # - '../src/Entity/'
             - '../src/Kernel.php'
+
+    Lexik\Bundle\JWTAuthenticationBundle\Security\Authenticator\JWTAuthenticator:
+        autowire: true
             
     #api platform service
     app.product.search_filter:

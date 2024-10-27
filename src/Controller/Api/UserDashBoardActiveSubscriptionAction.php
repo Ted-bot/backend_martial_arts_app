@@ -19,7 +19,7 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 #[AsController]
-class UserDashBoardAction extends AbstractController
+class UserDashBoardActiveSubscriptionAction extends AbstractController
 {
     public function __construct(
         private EntityManager $entityManager,

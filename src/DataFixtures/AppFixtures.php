@@ -247,6 +247,8 @@ class AppFixtures extends Fixture
             $address->setPostalCode(substr(Factory::faker()->postcode(), 0, 4));
             $address->setAddressLine(Factory::faker()->address());
             $address->setStreetNumber(Factory::faker()->numberBetween(0, 5000));
+            $address->setLibReactCity(77340);
+            $address->setLibReactState(2612);
             
             $manager->persist($address);            
         }
