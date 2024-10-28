@@ -5,15 +5,14 @@ namespace App\ApiResource;
 use DateTimeImmutable;
 use App\Entity\Product;
 use App\ApiResource\UserApi;
-use App\Entity\Subscription;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
-use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
 use App\Enum\CategoryTypeEnum;
 use App\Enum\CurrencyTypeEnum;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
+use Doctrine\ORM\Mapping as ORM;
 use App\ApiResource\OrderLineApi;
 use App\Enum\SubscriptionTypeEnum;
 use App\ApiResource\SubscriptionApi;
@@ -27,8 +26,8 @@ use App\State\EntityClassDtoStateProcessor;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use App\Enum\SubscriptionDirectOrPeriodicTypeEnum;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints\NotBlank;
-use Doctrine\ORM\Mapping as ORM;
 
 
 #[ApiResource(
@@ -46,15 +45,15 @@ use Doctrine\ORM\Mapping as ORM;
     //     // new Put(),
         new Delete(),
     ],
+    // normalizationContext: [
+    //     'groups' => ['product:read']
+    //         ],
 )]
 class ProductApi 
 {
     public function  __construct()
     {
         $this->relatedUser = new UserApi();
-        // $this->subscription = new SubscriptionApi();
-        // $this->orderLine = new OrderLineApi();
-        // $this->productVat = new ProductVatApi();
     }
     
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
@@ -65,6 +64,7 @@ class ProductApi
 
     public ?string $sku = null;   
 
+    #[Groups(['product:read'])]
     public ?string $name = null;
 
     public ?string $price = null;

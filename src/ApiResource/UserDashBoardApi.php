@@ -1,7 +1,7 @@
 <?php
 
 namespace App\ApiResource;
-use Serializable;
+
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
@@ -9,28 +9,21 @@ use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
-// use App\Controller\Api\UserDashBoardAction;
-use App\State\UserDashboardStateProvider;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 use App\Controller\Api\UserDashBoardActiveSubscriptionAction;
 use App\Controller\Api\UserDashBoardCollectionSubscriptionAction;
 
 #[ApiResource(
-    shortName: 'UserDashboardSubscriptionsApi',
+    shortName: 'UserSubscriptions',
     operations: [
         new GetCollection(
             uriTemplate: '/user_subscriptions/{email}/dashboard.{_format}',
             uriVariables: 'email',
             controller: UserDashBoardCollectionSubscriptionAction::class,
             read: false,
-            // normalizationContext: [
-            //     'groups' => ['userdashboard:read']
-            //         ],
         ),
         new Get(
-            // provider: UserDashboardStateProvider::class,
-            // name: 'get_user_data',
             uriTemplate: '/user_subscription/{email}/dashboard/valid.{_format}',
             uriVariables: 'email',
             controller: UserDashBoardActiveSubscriptionAction::class,
@@ -43,17 +36,11 @@ use App\Controller\Api\UserDashBoardCollectionSubscriptionAction;
 class UserDashBoardApi // implements \Serializable
 {
     #[ApiProperty(identifier:true)]
-    #[Groups(['userdashboard:read'])]
     public $id;
 
     #[ApiProperty(readable:true)]
-    #[Groups(['userdashboard:read'])]
     public $status;
-
-    #[Groups(['userdashboard:read'])]
     protected $amount;
-
-    #[Groups(['userdashboard:read'])]
     protected $transferId;
     protected $duration ;
     protected $dateStart;

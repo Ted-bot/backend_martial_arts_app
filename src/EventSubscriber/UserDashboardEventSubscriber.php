@@ -85,7 +85,7 @@ final class UserDashboardEventSubscriber implements EventSubscriberInterface
 
         $dtoSubscriptions = array_map(function(Subscription $subscription) {
             return $this->microMapper->map($subscription, SubscriptionApi::class, [
-                MicroMapperInterface::MAX_DEPTH => 1
+                MicroMapperInterface::MAX_DEPTH => 2
             ]); 
             }, $subscriptions
         );

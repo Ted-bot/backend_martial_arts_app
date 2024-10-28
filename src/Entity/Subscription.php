@@ -22,7 +22,7 @@ use App\Enum\MolliePaymentStatusEnum;
 use ApiPlatform\Metadata\GetCollection;
 use App\Enum\SubscriptionLengthTypeEnum;
 use App\Repository\SubscriptionRepository;
-use Symfony\Component\Serializer\Attribute\Groups;
+// use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: SubscriptionRepository::class)]
 #[ApiResource(    
@@ -37,10 +37,10 @@ use Symfony\Component\Serializer\Attribute\Groups;
         new Patch(),
     ],
     normalizationContext: [
-        'groups' => ['subscription:read']
+        // 'groups' => ['subscription:read']
     ],
     denormalizationContext: [
-        'groups' => ['subscription:write']
+        // 'groups' => ['subscription:write']
     ],    
 )]
 #[ApiResource(
@@ -58,7 +58,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
         ),        
     ],
     normalizationContext: [
-        'groups' => ['subscription:read']
+        // 'groups' => ['subscription:read']
     ],
 )]
 class Subscription
@@ -75,56 +75,53 @@ class Subscription
     // note: set restriction for admin
     #[ORM\Column(type: 'uuid', unique:true)]
     #[ApiProperty(identifier: true)]
-    #[Groups(['tokenmanager:read', 'profile:read', 'user:read'])]
+    // #[Groups(['tokenmanager:read', 'profile:read', 'user:read'])]
     private ?Uuid $uuid = null;
 
     #[ORM\Column(enumType: MolliePaymentStatusEnum::class, length: 255)]
-    #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
+    // #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
     private ?MolliePaymentStatusEnum $status = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    #[Groups(['subscription:read', 'profile:read', 'user:read'])]
+    // #[Groups(['subscription:read', 'profile:read', 'user:read'])]
     // note: set restriction only accessable by admin
     private ?string $amount = null;
 
     #[ORM\Column(length: 30, nullable: true)]
-    #[Groups(['subscription:read', 'user:read'])]
+    // #[Groups(['subscription:read', 'user:read'])]
     private ?string $transferId = null;
 
     #[ORM\ManyToOne(inversedBy: 'relatedSubscriptions')]
     #[ORM\JoinColumn(nullable: false)]
     #[ORM\Column(enumType: SubscriptionTypeEnum::class)]
-    #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
+    // #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
     private ?SubscriptionLengthTypeEnum $duration = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['subscription:read', 'user:read','tokenmanager:read', 'profile:read'])]
+    // #[Groups(['subscription:read', 'user:read','tokenmanager:read', 'profile:read'])]
     private ?DateTimeInterface $dateStart = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
+    // #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
     private ?DateTimeInterface $dateEnd = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
+    // #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
     private ?DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    #[Groups(['subscription:read', 'user:read'])]
     private ?DateTimeInterface $updatedAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'subscriptions')]   
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['user:read'])]    // note: set restriction 
     private ?User $subscriptionOwnedBy = null;
 
-    #[ORM\ManyToOne(inversedBy: 'subscriptions')] // , fetch: "EAGER"
+    #[ORM\ManyToOne(inversedBy: 'subscriptions', fetch: "EAGER")] // , fetch: "EAGER"
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['tokenmanager:read', 'profile:read', 'user:read'])]
     private ?Product $subscribedProduct = null;
 
     #[ORM\OneToOne(mappedBy: 'relatedSubscription', cascade: ['persist', 'remove'])]
-    #[Groups(['user:read'])]
+    // #[Groups(['user:read'])]
     private ?TokenManager $tokenManager = null;
 
     // #[ORM\ManyToOne(inversedBy: 'relatedSubscription')]
@@ -196,7 +193,7 @@ class Subscription
         return $this->dateStart;
     }
     
-    #[Groups(['user:read', 'subscription:read'])]
+    // #[Groups(['user:read', 'subscription:read'])]
     public function getStartDate(): ?string
     {
         return Carbon::parse($this->dateStart)->format('d-m-Y');//->diffForHumans()
@@ -215,7 +212,7 @@ class Subscription
         return $this->dateEnd;
     }
 
-    #[Groups(['user:read', 'subscription:read'])]
+    // #[Groups(['user:read', 'subscription:read'])]
     public function getEndDate(): ?string
     {
         return Carbon::parse($this->dateEnd)->format('d-m-Y');

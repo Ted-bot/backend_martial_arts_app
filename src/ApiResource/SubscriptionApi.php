@@ -2,13 +2,7 @@
 
 namespace App\ApiResource;
 
-use App\Entity\User;
-use DateTimeImmutable;
 use DateTimeInterface;
-use App\Entity\Product;
-use App\Entity\ShopOrder;
-use App\Entity\UserAddress;
-use App\Entity\UserProfile;
 use App\Entity\Subscription;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
@@ -25,10 +19,6 @@ use App\State\EntityToDtoStateProvider;
 use App\Enum\SubscriptionLengthTypeEnum;
 use ApiPlatform\Doctrine\Orm\State\Options;
 use App\State\EntityClassDtoStateProcessor;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Validator\Constraints\NotBlank;
-use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
@@ -37,8 +27,6 @@ use Symfony\Component\Serializer\Attribute\Groups;
     provider: EntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
     paginationItemsPerPage: 10,
-    // normalizationContext: ['groups' => ['read_customer']],
-    // security: 'is_granted("ROLE_USER_STUDENT")',
     stateOptions: new Options(entityClass: Subscription::class),
     normalizationContext: [
         'groups' => ['subscription:read']
@@ -62,17 +50,13 @@ class SubscriptionApi
         $this->subscriptionOwnedBy = new UserApi();
     }
     
-    // #[Groups(["read_customer"])] // "write_customer", 
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
-    #[Groups(['subscription:read'])]
     #[ApiProperty(identifier:true)]
     public ?int $id = null;
     public ?Uuid $uuid = null;
 
-    #[Groups(['subscription:read'])]
     public ?MolliePaymentStatusEnum $status  = null;
 
-    // #[Groups('subscription:read')]
     public ?string $amount = null;
 
     #[Groups(['subscription:read'])]
