@@ -52,6 +52,7 @@ class PostEventApi
     }
 
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
+    #[ApiProperty(identifier:true)]
     public ?int $id = null;
     public ?string $title = null;
     public ?string $description = null;

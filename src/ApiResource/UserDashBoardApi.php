@@ -2,6 +2,7 @@
 
 namespace App\ApiResource;
 
+use ApiPlatform\Action\NotFoundAction;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
@@ -18,10 +19,14 @@ use App\Controller\Api\UserDashBoardCollectionSubscriptionAction;
     shortName: 'UserSubscription',
     operations: [
         new GetCollection(
+            controller: NotFoundAction::class
+        ),
+        new GetCollection(
             uriTemplate: '/user_subscriptions/{email}/dashboard.{_format}',
             uriVariables: 'email',
             controller: UserDashBoardCollectionSubscriptionAction::class,
             read: false,
+            normalizationContext: ['groups' => ['userdashboard:read']],
         ),
         new Get(
             uriTemplate: '/user_subscription/{email}/dashboard/valid.{_format}',
@@ -30,11 +35,11 @@ use App\Controller\Api\UserDashBoardCollectionSubscriptionAction;
             read: false,
             )
         ],
-        normalizationContext: ['groups' => ['userdashboard:read']],
         
 )]
 class UserDashBoardApi // implements \Serializable
 {
+    #[Groups(['userdashboard:read'])]
     #[ApiProperty(identifier:true)]
     public $id;
 

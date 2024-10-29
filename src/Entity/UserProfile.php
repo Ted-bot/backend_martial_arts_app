@@ -92,11 +92,12 @@ class UserProfile
     // #[ORM\OneToOne(mappedBy: 'userProfile', cascade: ['persist', 'remove'])]
     // private ?TokenManager $tokenManager = null;
 
-    public function __construct()
+    public function __construct(private PostEventRepository $postRepo)
     {
         $this->postEvents = new ArrayCollection();
         $this->subscribeToEvents = new ArrayCollection();
         $this->tokenManagers = new ArrayCollection();
+        // $this->postRepo = 
     }
 
     // #[ORM\ManyToOne(inversedBy: 'user_profile_create_post_event')]
@@ -176,6 +177,12 @@ class UserProfile
     {
         return $this->subscribeToEvents->matching(PostEventRepository::findUserSubscribedPublishedEventPostEvents());
     }
+    
+    // /** @return Collection<int, PostEvent> */
+    // public function getUserAllPublisedSubscribedEvents($id)
+    // {
+    //     return $this->postRepo->findUserAllUpcomingSubscribedAndPublishedEvent($id);
+    // }
 
     // public function getUserSubscribedToEvents($id)
     // {

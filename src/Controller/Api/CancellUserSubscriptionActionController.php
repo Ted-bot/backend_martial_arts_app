@@ -2,42 +2,27 @@
 
 namespace App\Controller\Api;
 
-use App\Entity\StatusTransfer;
-use Mollie\Api\MollieApiClient;
 use Throwable;
 use DateTimeZone;
 use App\Class\Role;
 use App\Entity\User;
 use DateTimeImmutable;
-use App\Entity\PostEvent;
-use Brick\Math\BigDecimal;
-use App\Entity\UserProfile;
 use App\Entity\Subscription;
 use App\Entity\TokenManager;
-use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use App\Dto\Main\ResponseDto;
-use App\ApiResource\AddressApi;
-use App\ApiResource\PostEventApi;
-use App\Dto\Event\CalendarItemDto;
-use App\Dto\Main\EventResponseDto;
+use App\Entity\StatusTransfer;
+use App\Service\MollieApiService;
 use App\Enum\MolliePaymentStatusEnum;
-use App\Repository\SubscriptionRepository;
-use App\Repository\UserProfileRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use App\Repository\SubscriptionRepository;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
-use App\Dto\UserDashboard\UpdateUserAddressDto;
 use App\Dto\UserSubscription\CancellSubscription;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfonycasts\MicroMapper\MicroMapperInterface;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use App\Service\MollieApiService;
 
 #[AsController]
 class CancellUserSubscriptionActionController extends AbstractController
@@ -63,22 +48,22 @@ class CancellUserSubscriptionActionController extends AbstractController
         $response  = new ResponseDto();
         $uuidSub = $request->uuid;
         
-        // /** @var User $currentUser */
+        /** @var User $currentUser */
         $currentUser = $this->getUser();
         
         $datetime = new DateTimeImmutable();
         $currentTimeEvent = $datetime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
         
         try {
-            $this->entityManager->beginTransaction();
-            // if(!$eventIsNumber) return $response;        
+            $this->entityManager->getConnection()->beginTransaction();
+            $this->entityManager->getConnection()->setAutoCommit(false);
+            $this->entityManager->wrapInTransaction();
             if(!$this->subscriptionRepo->findOneBy(['uuid' => $uuidSub])) return $response;
             
             /** @var Subscription $subscription */
             $subscription = $this->entityManager->getRepository(Subscription::class)
             ->findOneBy(['uuid' => $uuidSub]);
             
-            // dd('got uuid', $subscription);
             $subscription->setStatus(MolliePaymentStatusEnum::CANCELLED);
             $subscription->setUpdatedAt();
             $transferId = $subscription->getTransferId();
@@ -89,18 +74,22 @@ class CancellUserSubscriptionActionController extends AbstractController
             $customerId = $transaction->getCustomer();
 
         // try {            
-            $this->entityManager->persist($subscription);
+            // $this->entityManager->persist($subscription);
             $this->entityManager->flush();
             $this->entityManager->commit();
             
-            $this->mollieApiService->cancelUserSubscription($customerId);
+            $cancellSubscription = $this->mollieApiService->cancelUserSubscription($customerId, $transferId);
             
             $response->status = 201;
             $response->message = "You have Updated your address successfully !";
+            $response->body = $cancellSubscription;
+            // $response->message = "You have Updated your address successfully !";
+            // $response->message = "You have Updated your address successfully !";
             return $response;
     
         } catch (Throwable $e) {
 
+            // $this->entityManager->isTransactionActive();
             $this->entityManager->rollback();
             $this->managerRegister->resetManager();
             $this->entityManager->flush();

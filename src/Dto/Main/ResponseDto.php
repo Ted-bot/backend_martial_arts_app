@@ -10,6 +10,9 @@ class ResponseDto
         #[Assert\Type('string')]
         public string $message = 'Security: InValid Request Made!',
         
+        #[Assert\Valid]        
+        public $body = [],
+
         #[Assert\Type('int')]
         public int $status = 400,
     )

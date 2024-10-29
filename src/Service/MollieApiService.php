@@ -21,12 +21,12 @@ class MollieApiService
         $this->mollieApi = $this->mollieApiClient->setApiKey($apiTestKey);
     }
 
-    public function cancelUserSubscription(string $subscriptionId)
+    public function cancelUserSubscription(string $customerId, string $transferId): null
     {
-        $customer = $this->mollieApi->customers->get($subscriptionId);
+        $customer = $this->mollieApi->customers->get($customerId);
 
         // $canceledSubscription = 
-        $customer->cancelSubscription($subscriptionId);
+        return $customer->cancelSubscription($transferId);
 
         // dd('customer', $canceledSubscription);
     }

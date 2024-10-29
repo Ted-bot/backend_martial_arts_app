@@ -162,6 +162,24 @@ class PostEventRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    public function findUserAllUpcomingSubscribedAndPublishedEvent($id)
+    {
+        return $this->createQueryBuilder('p')
+            ->select('p.id')
+            ->addSelect('p.startDate AS start')
+            ->addSelect('p.endDate AS end')
+            ->addSelect('p.title')
+            ->addSelect('p.isPublished')
+            ->leftJoin('p.subscribe', 'userProfile')
+            ->where('userProfile.userUniq = :id')
+            ->addCriteria(self::findUserSubscribedPublishedEventPostEvents('gt'))
+            ->setParameter('id',$id)
+            ->orderBy('p.startDate','ASC')
+            ->getQuery()
+            ->getResult();
+            // ->setMaxResults(1)
+    }
     //    /**
     //     * @return PostEvent[] Returns an array of PostEvent objects
     //     */
