@@ -73,40 +73,40 @@ class Subscription
     private ?int $id;
     
     // note: set restriction for admin
+    // #[Groups(['tokenmanager:read', 'profile:read', 'user:read'])]
     #[ORM\Column(type: 'uuid', unique:true)]
     #[ApiProperty(identifier: true)]
-    // #[Groups(['tokenmanager:read', 'profile:read', 'user:read'])]
     private ?Uuid $uuid = null;
 
-    #[ORM\Column(enumType: MolliePaymentStatusEnum::class, length: 255)]
     // #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
+    #[ORM\Column(enumType: MolliePaymentStatusEnum::class, length: 255)]
     private ?MolliePaymentStatusEnum $status = null;
 
-    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     // #[Groups(['subscription:read', 'profile:read', 'user:read'])]
     // note: set restriction only accessable by admin
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     private ?string $amount = null;
 
-    #[ORM\Column(length: 30, nullable: true)]
     // #[Groups(['subscription:read', 'user:read'])]
+    #[ORM\Column(length: 30, nullable: true)]
     private ?string $transferId = null;
 
+    // #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
     #[ORM\ManyToOne(inversedBy: 'relatedSubscriptions')]
     #[ORM\JoinColumn(nullable: false)]
     #[ORM\Column(enumType: SubscriptionTypeEnum::class)]
-    // #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
     private ?SubscriptionLengthTypeEnum $duration = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
     // #[Groups(['subscription:read', 'user:read','tokenmanager:read', 'profile:read'])]
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?DateTimeInterface $dateStart = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
     // #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?DateTimeInterface $dateEnd = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     // #[Groups(['subscription:read', 'user:read', 'tokenmanager:read', 'profile:read'])]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]

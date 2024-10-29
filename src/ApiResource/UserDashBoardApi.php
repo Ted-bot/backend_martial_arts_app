@@ -15,7 +15,7 @@ use App\Controller\Api\UserDashBoardActiveSubscriptionAction;
 use App\Controller\Api\UserDashBoardCollectionSubscriptionAction;
 
 #[ApiResource(
-    shortName: 'UserSubscriptions',
+    shortName: 'UserSubscription',
     operations: [
         new GetCollection(
             uriTemplate: '/user_subscriptions/{email}/dashboard.{_format}',

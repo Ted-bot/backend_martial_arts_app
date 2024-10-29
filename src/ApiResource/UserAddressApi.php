@@ -28,12 +28,11 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
 use App\State\UserAdressEntityToDtoStateProvider;
 
 #[ApiResource(
-    shortName: 'userAddress',
+    shortName: 'UserAddress',
     provider: UserAdressEntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
     paginationItemsPerPage: 10,
     // normalizationContext: ['groups' =>  ['read_customer']],
-    // security: 'is_granted("ROLE_USER_STUDENT")',
     stateOptions: new Options(entityClass: UserAddress::class),
     operations: [
         new Get(
@@ -47,13 +46,6 @@ use App\State\UserAdressEntityToDtoStateProvider;
             filters: ['api_platform.doctrine.orm.boolean_filter']
         ),
         new GetCollection(),
-        // new Post(
-        //     security: 'is_granted("PUBLIC_ACCESS")',
-        //     validationContext:['groups' => ['Default', 'postValidation']]
-        // ),
-        new Patch(),
-        // new Put(),
-        new Delete(),
     ],
 )]
 #[ApiFilter(BooleanFilter::class, properties: ['isDefault',])]
@@ -63,8 +55,6 @@ class UserAddressApi
     public function __construct()
     {
         $this->shopOrders = new ArrayCollection();
-        // $this->addressUser = new UserApi();
-        // $this->address = new AddressApi();
     }
 
     // #[Groups(["read_customer"])] //, "write_customer"
