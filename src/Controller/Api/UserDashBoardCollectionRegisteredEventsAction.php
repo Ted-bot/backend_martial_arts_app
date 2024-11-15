@@ -17,8 +17,9 @@ use App\Repository\PostEventRepository;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\HttpFoundation\Request;
 use App\Dto\UserDashboard\UserDashBoardDtoDto;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 // use SerializerIn
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfonycasts\MicroMapper\MicroMapperInterface;
 use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
@@ -47,7 +48,9 @@ class UserDashBoardCollectionRegisteredEventsAction extends AbstractController
         $user = $this->getUser();
         
         if(empty($this->postRepo->findUserAllUpcomingSubscribedAndPublishedEvent($user->getId())[0])){
-            return ['error' =>'No Subscribed Events Available']; // create DTO
+            return new Response('No Subscribed Events Available!', Response::HTTP_EXPECTATION_FAILED);
+            // ['error' =>'No Subscribed Events Available']; // create DTO
+            
         }
 
         $getUserAllSubscribedPublishedEvents = $this->postRepo->findUserAllUpcomingSubscribedAndPublishedEvent($user->getId());

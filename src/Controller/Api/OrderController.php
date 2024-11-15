@@ -94,7 +94,7 @@ class OrderController extends AbstractController
                 return new JsonResponse(['message' => 'Your order is busy processing!'], 201);
             }
 
-            return new JsonResponse(['redirect' => '/payment'], 200);
+            return new JsonResponse(['redirect' => '/dashboard/payment'], 200);
 
             // dd(['foundProductInsidePreviousOrder'=>$foundProductInsidePreviousOrder]);
             // $newShopOrder = $userLatestOrder;
@@ -120,7 +120,7 @@ class OrderController extends AbstractController
         $this->entityManager->persist($newShopOrder);
         $this->entityManager->flush();
 
-        return new JsonResponse(['redirect' => '/payment'], 200);
+        return new JsonResponse(['redirect' => '/dashboard/payment'], 200);
     }
 
     #[Route('/api/v1/order/address', name: 'app_order_address', methods: ['POST'])]

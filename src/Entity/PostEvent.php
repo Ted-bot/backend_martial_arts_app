@@ -174,6 +174,10 @@ class PostEvent
     #[Groups('trainingsession:write')]
     public function setStartDate(?\DateTimeInterface $startDate): static
     {
+        // $correctTime = $startDate;
+        // $dateTime = new DateTimeImmutable();
+        // $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
+        // $this->startDate = $correctTime;
         $this->startDate = $startDate;
 
         return $this;
@@ -188,6 +192,7 @@ class PostEvent
     public function setEndDate(?\DateTimeInterface $endDate): static
     {
         $this->endDate = $endDate;
+        // $this->endDate = $endDate;
 
         return $this;
     }

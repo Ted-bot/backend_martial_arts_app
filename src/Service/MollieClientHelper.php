@@ -219,7 +219,7 @@ class MollieClientHelper extends AbstractController
             'quantity' => $order->getQty(),
             'vatRate' => $userProductTax->getVatRate()->getProcent(),
             'unitPrice' => [
-                'currency' => $exchangeToCountry ?? CurrencyTypeEnum::EUR,
+                'currency' => $exchangeToCountry ?: CurrencyTypeEnum::EUR,
                 'value' => $unitPrice
             ],
             'totalAmount' => [
@@ -227,7 +227,7 @@ class MollieClientHelper extends AbstractController
                 'value' => $selctedProductTotalPrice
             ],
             'vatAmount' => [
-                'currency' => $exchangeToCountry ?? CurrencyTypeEnum::EUR,
+                'currency' => $exchangeToCountry ?: CurrencyTypeEnum::EUR,
                 'value' => $taxAmountTimesQty,
             ],
             'productDetails' => [

@@ -81,8 +81,13 @@ class SubscribeEventActionController extends AbstractController
 
         if(!$subscription) new ResponseDto(message: 'No valid Subscription');
         
+        if(!$subscription?->getTokenManager()) throw new \Exception('no avaivailabe tokens', 401);
+        
         /** @var TokenManager $updateSubTokenManger */
-        $userSubscriptionTokenManager = $subscription->getTokenManager();
+        $userSubscriptionTokenManager = $subscription?->getTokenManager();
+
+        // check TokenManager 
+
         $userCurrentTokens = (int) $userSubscriptionTokenManager->getTokens();
 
         /** @var UserProfile $userProfile */

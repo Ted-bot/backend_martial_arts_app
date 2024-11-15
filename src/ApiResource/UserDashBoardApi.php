@@ -16,7 +16,7 @@ use App\Controller\Api\UserDashBoardActiveSubscriptionAction;
 use App\Controller\Api\UserDashBoardCollectionSubscriptionAction;
 
 #[ApiResource(
-    shortName: 'UserSubscription',
+    shortName: 'GetOneUserSubscription',
     operations: [
         new GetCollection(
             controller: NotFoundAction::class

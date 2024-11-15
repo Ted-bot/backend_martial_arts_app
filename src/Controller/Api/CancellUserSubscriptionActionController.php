@@ -57,7 +57,8 @@ class CancellUserSubscriptionActionController extends AbstractController
         try {
             $this->entityManager->getConnection()->beginTransaction();
             $this->entityManager->getConnection()->setAutoCommit(false);
-            $this->entityManager->wrapInTransaction();
+            // $this->entityManager->wrapInTransaction();
+            $this->entityManager->commit();
             if(!$this->subscriptionRepo->findOneBy(['uuid' => $uuidSub])) return $response;
             
             /** @var Subscription $subscription */

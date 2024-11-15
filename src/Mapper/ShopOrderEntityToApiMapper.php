@@ -48,9 +48,11 @@ class ShopOrderEntityToApiMapper implements MapperInterface
             MicroMapperInterface::MAX_DEPTH => 1
         ]);
 
-        $dto->shippingAddress = $this->microMapper->map($entity->getShippingAddress(), UserAddressApi::class, [
-            MicroMapperInterface::MAX_DEPTH => 1
-        ]);
+        if($entity->getShippingAddress()){
+            $dto->shippingAddress = $this->microMapper->map($entity->getShippingAddress(), UserAddressApi::class, [
+                MicroMapperInterface::MAX_DEPTH => 1
+            ]);
+        }
 
         return $dto;
     }

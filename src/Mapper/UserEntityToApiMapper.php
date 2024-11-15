@@ -77,11 +77,11 @@ class UserEntityToApiMapper implements MapperInterface
         $dto->libReactCity = $entity->getLibReactCity();
         $dto->libReactState = $entity->getLibReactState();
         
-        // if($entity->getUserProfile()){
+        if($entity->getUserProfile()){
             $dto->userProfile = $this->microMapper->map($entity->getUserProfile(), UserProfileApi::class, [
                 MicroMapperInterface::MAX_DEPTH => 0
             ]); // $this->microMapper->map()
-        // }
+        }
         
         // $dto->products = $entity->getProducts()->toArray();
         // if($entity->getUserProfile()){

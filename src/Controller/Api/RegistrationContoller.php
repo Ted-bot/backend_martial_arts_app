@@ -3,8 +3,9 @@
 namespace App\Controller\Api;
 
 use App\Entity\User;
-use App\Encoder\NixillaJWTEncoder;
+use App\Entity\UserProfile;
 use App\Dto\User\CreateUserDto;
+use App\Encoder\NixillaJWTEncoder;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -62,10 +63,14 @@ class RegistrationContoller extends AbstractController
             $user->getPassword()
         );
 
+        $userProfile = new UserProfile();
+        $userProfile->setUserUniq($user);
+
         $user->setPassword($hashedPassword);
 
         try{
             $entityManager->persist($user);
+            $entityManager->persist($userProfile);
             $entityManager->flush();
         } catch(UniqueConstraintViolationException $e){
             $sqlState = 0;

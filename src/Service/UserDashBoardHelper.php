@@ -34,9 +34,11 @@ class UserDashBoardHelper
         $userTrainingSession = $this->psRepo
             ->findUserUpcomingSubscribedAndPublishedEvent($id);
 
+            // dd("userTraining",$userTrainingSessions, 'single', $userTrainingSession);
+
         $userDashBoardData = new DashBoardDto();
         $next_traing_day = new NextTrainingSessionDto();
-        $tokenManager = $subscription->getTokenManager() ?? new TokenManager();
+        $tokenManager = $subscription?->getTokenManager() ?? new TokenManager();
         $userDashBoardData->tokens_owned = $tokenManager?->getTokens() ? $tokenManager?->getTokens() : 0;
         $userDashBoardData->name_subscription = is_null($subscription?->getStatus()) ? 'No valid subscription' : $subscription?->getSubscribedProduct()?->getName();
         $userDashBoardData->start = $subscription?->getDateStart()->format('d-m-Y') ?? 'No valid Subscription';
@@ -44,9 +46,15 @@ class UserDashBoardHelper
         $userDashBoardData->userFullName = $firstName . ' ' . $lastName;
         $userDashBoardData->sessions_followed = $userTrainingSessions[0][1];
 
-        $next_traing_day->next_training_day = $userTrainingSession["startDate"]->format('F jS, Y');
-        $next_traing_day->start = $userTrainingSession["startDate"]->format('H:i');
-        $next_traing_day->end = $userTrainingSession["endDate"]->format('H:i');
+        if($userTrainingSession != null){
+            $next_traing_day->next_training_day = $userTrainingSession["startDate"]->format('F jS, Y');
+            $next_traing_day->start = $userTrainingSession["startDate"]->format('H:i');
+            $next_traing_day->end = $userTrainingSession["endDate"]->format('H:i');
+        } else {
+            $next_traing_day->next_training_day = 'none selected';
+            $next_traing_day->start = 'select a day';
+            $next_traing_day->end = ' to train';
+        }
 
         $userDashBoardData->next_session = $next_traing_day;
 

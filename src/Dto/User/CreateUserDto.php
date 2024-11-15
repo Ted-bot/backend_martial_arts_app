@@ -43,14 +43,14 @@ class CreateUserDto extends AbstractJsonRequest
     #[Type('string')]
     #[Length(
         min: 10,
-        max: 13,
+        max: 20,
         minMessage: 'Your phone number must be at least {{ limit }} characters long!',
         maxMessage: 'Your phone number cannot be longer than {{ limit }} characters!',
     )]
     public readonly string $phoneNumber;
     
-    #[NotBlank(message: 'This field cannot be empty')]
     #[Date()]
+    #[NotBlank(message: 'This field cannot be empty')]
     public readonly string $dateOfBirth;
 
     #[NotBlank(message: 'This field cannot be empty')]

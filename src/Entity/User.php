@@ -100,12 +100,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var string Phonenumber of user
      */
-    #[ORM\Column(length: 15)]
+    #[ORM\Column(length: 20)]
     private ?string $phoneNumber = null;
 
     // #[Groups(['user:read', 'user:write','profile:read'])]
     /**
-     * @var string A "Y-m-d H:i:s" formatted value
+     * @var string A "d/m/Y" formatted value
      */
     #[ORM\Column(length: 10)]
     private ?string $dateOfBirth = null;

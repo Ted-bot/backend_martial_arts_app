@@ -3,16 +3,11 @@
 namespace App\Controller\Api;
 
 use App\Class\Role;
-use App\Entity\Product;
-use App\Entity\PostEvent;
-use App\ApiResource\UserApi;
+use App\Entity\User;
 use App\Entity\Subscription;
-use App\ApiResource\ProductApi;
 use App\Service\UserDashBoardHelper;
 use App\Enum\MolliePaymentStatusEnum;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
-use App\Dto\UserDashboard\UserDashBoardDtoDto;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -30,10 +25,12 @@ class UserDashBoardActiveSubscriptionAction extends AbstractController
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
 
+        /** @var User $user Object */
         $user = $this->getUser();
-        
-        if(empty($user->getSubscriptions()?->getValues()[0])){
-            return 'No Valid Subscription Available'; // create DTO
+        // dd(['check out' => $user->getSubscriptions()?->getValues()[0]]);
+        if(empty($user->getSubscriptions()?->getValues())){
+            // return 'No Valid Subscription Available'; // create DTO
+            return new Response('No Subscribed Events Available!', Response::HTTP_EXPECTATION_FAILED);
         }
 
         /** @var Subscription $subscription Object */
@@ -41,10 +38,15 @@ class UserDashBoardActiveSubscriptionAction extends AbstractController
             ['subscriptionOwnedBy' =>  $user->getId(), 'status' => MolliePaymentStatusEnum::PAID], 
             ['createdAt' => 'DESC']
         );
+
+        // dd(['check out' => $subscription]);
         
         if($subscription === null){
-            return 'No Valid Subscription Available'; // create DTO
+        return new Response('No Subscribed Events Available!', Response::HTTP_EXPECTATION_FAILED);
+            // return 'No Valid Subscription Available'; // create DTO
         }
+
+        // dd('isWorking', $user);
         
         $userDashBoard = $this->dashboardHelper->userSubscriptionToApiDto(
             $subscription, 
