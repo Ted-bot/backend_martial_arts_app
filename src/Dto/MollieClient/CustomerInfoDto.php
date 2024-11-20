@@ -7,7 +7,7 @@ namespace App\Dto\MollieClient;
 use App\Request\AbstractJsonRequest;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class CustomerInfoDto extends AbstractJsonRequest
+class CustomerInfoDto // extends AbstractJsonRequest
 {
     public function __construct(
 
@@ -32,29 +32,30 @@ class CustomerInfoDto extends AbstractJsonRequest
         #[Assert\Type('string')]
         #[Assert\Length(
             min: 10,
-            max: 13,
+            max: 20,
             minMessage: 'Your phone number must be at least {{ limit }} characters long',
             maxMessage: 'Your phone number cannot be longer than {{ limit }} characters',
         )]
         public readonly string $phoneNumber,
 
-        #[Assert\Type('string')]
+        // #[Assert\Type('string')]
+        #[Assert\NotBlank(allowNull: true)]
         #[Assert\Length(
             min: 0,
             max: 5,
             maxMessage: 'Your location cannot be longer than {{ limit }} characters',
         )]
-        public readonly string $unitNumber,
+        public $unitNumber,
 
         #[Assert\NotBlank]
-        #[Assert\Type('string')]
+        #[Assert\Type('int')]
         #[Assert\Length(
             min: 1,
             max: 6, //change to 6
             minMessage: 'Your street number cannot be empty',
             maxMessage: 'Your street number cannot be longer than {{ limit }} characters!',
         )]
-        public readonly string $streetNumber,
+        public int $streetNumber,
 
         #[Assert\NotBlank]
         #[Assert\Type('string')]
@@ -83,16 +84,16 @@ class CustomerInfoDto extends AbstractJsonRequest
             minMessage: 'Your given location {{ limit }} characters long',
             maxMessage: 'Your given location be longer than {{ limit }} characters',
         )]
-        public readonly string $location,
+        public readonly string $city,
 
-        #[Assert\NotBlank]
+        // #[Assert\Length(
+        //     min: 3,
+        //     max: 15,
+        //     minMessage: 'Your given state must be at least {{ limit }} characters long',
+        //     maxMessage: 'Your given state cannot be longer than {{ limit }} characters',
+        // )]
+        #[Assert\Blank]
         #[Assert\Type('string')]
-        #[Assert\Length(
-            min: 3,
-            max: 20,
-            minMessage: 'Your given state must be at least {{ limit }} characters long',
-            maxMessage: 'Your given state cannot be longer than {{ limit }} characters',
-        )]
         public readonly string $region,
 
 

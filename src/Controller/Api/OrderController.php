@@ -17,15 +17,16 @@ use App\Enum\CountryTypeEnum;
 use App\Entity\StatusTransfer;
 use App\Enum\CurrencyTypeEnum;
 use Mollie\Api\MollieApiClient;
-use App\Dto\MollieClient\CreateMollieOrderDto;
 use App\Service\SubscriptionUUID;
 use App\Service\MollieClientHelper;
-use App\Dto\MollieClient\CustomerInfoDto;
+use Mollie\Api\Types\MandateMethod;
 use App\Enum\MolliePaymentStatusEnum;
 use Symfony\Component\Intl\Currencies;
 use App\Enum\CountryToCurrencyTypeEnum;
 use App\Service\MollieClient as Mollie;
+use App\Dto\MollieClient\CustomerInfoDto;
 use Symfony\Component\HttpFoundation\Request;
+use App\Dto\MollieClient\CreateMollieOrderDto;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Dto\MollieClient\SubscriptionOrderLine;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -34,6 +35,7 @@ use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Doctrine\Persistence\ManagerRegistry;
 
 
 class OrderController extends AbstractController
@@ -43,6 +45,7 @@ class OrderController extends AbstractController
     public function __construct(
         private SubscriptionUUID $subscriptionUUID,
         private EntityManager $entityManager,
+        private ManagerRegistry $managerRegister,
     )
     {}
 
@@ -125,59 +128,77 @@ class OrderController extends AbstractController
 
     #[Route('/api/v1/order/address', name: 'app_order_address', methods: ['POST'])]
     public function orderAddress(
-        CustomerInfoDto $request,
-        // #[MapRequestPayload] CustomerInfoDto $request,
-        // EntityManager $entityManager,
-        Address $address,
+        #[MapRequestPayload] CustomerInfoDto $request,
+        EntityManager $entityManager,
     ): JsonResponse
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
         
-        $splitFirstAndLastName = explode(" ", $request->firstAndLastName);
-
-        /** @var User $user Object */
-        $user = $this->entityManager->getRepository(User::class)
-        ->findOneBy(['id' => $this->getUser()]);
-
-        /** @var UserAddress $adressId Object */
-        $addressId = $this->entityManager->getRepository(UserAddress::class)
-        ->findOneBy(['addressUser' => $user->getId(), 'isDefault' => 'true']);
-        
-        if($addressId){
-            $addressId->setDefault(false);
-        } 
-
-        $user->setFirstName($splitFirstAndLastName[0]);
-        $user->setLastName($splitFirstAndLastName[1]);
-        $user->setEmail($request->email);
-        $user->setPhoneNumber($request->phoneNumber);
-        $user->setLibReactCity($request->reactCityNr);
-        $user->setLibReactState($request->reactStateNr);
-        $user->setLocation($request->location);
-
-        $address->setUnitNumber($request->unitNumber);
-        $address->setStreetNumber($request->streetNumber);
-        $address->setAddressLine($request->addressLine);
-        $address->setCity($request->location); // set city
-        $address->setRegion($request->region); // set state
-        $address->setPostalCode($request->postalCode);
-        $address->setCountry(CountryTypeEnum::NL_CODE);
-
-        $newUserAddress = new UserAddress();
-        $newUserAddress->setAddress($address);
-        $newUserAddress->setAddressUser($user);
-        $newUserAddress->setDefault(true);
-
         try {
-            if($addressId){
-                $this->entityManager->persist($addressId);
-            }
-            $this->entityManager->persist($newUserAddress); // set prvious address Id on false
-            $this->entityManager->persist($user); // update user Data
-            $this->entityManager->persist($address); // update user Data            
+            $splitFirstAndLastName = explode(" ", $request->firstAndLastName);
+            $newUser = 0;
+            /** @var User $user Object */
+            $user = $this->entityManager->getRepository(User::class)
+            ->findOneBy(['id' => $this->getUser()]);
             
+            $user->setFirstName($splitFirstAndLastName[0]);
+            $user->setLastName($splitFirstAndLastName[1]);
+            $user->setEmail($request->email);
+            $user->setPhoneNumber($request->phoneNumber);
+
+            /** @var UserAddress $adressId Object */
+            $userAddress = $this->entityManager->getRepository(UserAddress::class)
+            ->findOneBy(['addressUser' => $this->getUser()->getId(), 'isDefault' => 'true']) ?? new UserAddress();
+
+            if(!$userAddress?->getId()){
+                $userAddress = new UserAddress();
+                $userAddress->setAddressUser($user);
+                
+                $newUser = 1;        
+                // dd("persisted");        
+            }
+            // dd("persisted", $userAddress);        
+
+            $userAddress->setAddressUser($user);
+            
+            /** @var Address $address Object */
+            $address = $userAddress->getAddress() ?? new Address();
+            
+            // if(!!$newUser) $address = new Address();   
+
+            if(isset($request->unitNumber)) $address->setUnitNumber($request->unitNumber);
+            $address->setStreetNumber($request->streetNumber);
+            $address->setAddressLine($request->addressLine);
+            $address->setLibReactCity($request->reactCityNr);
+            $address->setLibReactState($request->reactStateNr);
+            $address->setCity($request->city); // set city
+            if($request->region) $address->setRegion($request->region); // set state
+            $address->setPostalCode($request->postalCode);
+            $address->setCountry(CountryTypeEnum::NL_CODE);
+            $userAddress->setAddress($address);
+
+            $this->entityManager->getConnection()->setAutoCommit(false);
+            $this->entityManager->beginTransaction();
+
+            if($newUser === 1){
+                $this->entityManager->persist($address);
+                $userAddress->setDefault(true);
+                $this->entityManager->persist($userAddress);    
+                // dd("persisted");
+            }
+
+            
+            // if(!!$newUser) 
+        
+            // if(!!$newUser)$this->entityManager->persist($userAddress); // set prvious address Id on false
+
             $this->entityManager->flush(); // update user Data
+            $this->entityManager->commit();
         } catch(UniqueConstraintViolationException $e){
+            $this->entityManager->rollback();
+            // $this->managerRegister->resetManager();
+            $this->entityManager->flush();
+            $this->entityManager->commit();
 
             $message = 'Couldnt set new Address and Update User';
 
@@ -256,8 +277,11 @@ class OrderController extends AbstractController
                 'unitNumber' => $userAddress->getUnitNumber(),
                 'streetNumber' => $userAddress->getStreetNumber(),
                 'postalCode' => $userAddress->getPostalCode(),
-                'reactCityNr' => $user->getLibReactCity(),
-                'reactStateNr' => $user->getLibReactState(),
+                'city' => $userAddress->getCity(),
+                'city_id' => $userAddress->getLibReactCity() ?? $user->getLibReactCity(),
+                // 'reactCityNr' => $user->getLibReactCity(),
+                'state_id' => $userAddress->getLibReactState() ?? $user->getLibReactState(),
+                // 'reactStateNr' => $user->getLibReactState(),
                 'country' => $userCountry,
             ] : [],
             'orderId' => $userLatestOrder->getId(),

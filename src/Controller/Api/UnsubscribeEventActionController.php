@@ -76,7 +76,8 @@ class UnsubscribeEventActionController extends AbstractController
         $currentUser = $this->getUser();
         $userProfile = $userProfileRepository->find($currentUser->getId());
         $manageUpcomingEvent = $findEvent->addSubscribe($userProfile);
-
+        
+        $this->entityManager->getConnection()->setAutoCommit(false);
         $this->entityManager->beginTransaction();
         
         try {            
@@ -100,7 +101,7 @@ class UnsubscribeEventActionController extends AbstractController
                 'error' => $e->getMessage()
             ]);
 
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);    
+            return new JsonResponse(['message' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);    
         }        
     }
 

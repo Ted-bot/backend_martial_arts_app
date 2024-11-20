@@ -116,6 +116,7 @@ class SubscribeEventActionController extends AbstractController
         $responseMessage = $addOrRemoveEvent ? 'assigned to' : 'unscubsribed from';
         $responseEndMessage = $addOrRemoveEvent ? 'Cant wait to se you there' : 'We hope to see you another time!';
 
+        $this->entityManager->getConnection()->setAutoCommit(false);
         $this->entityManager->beginTransaction();
         
         try {            
@@ -141,8 +142,9 @@ class SubscribeEventActionController extends AbstractController
                 'error' => $e->getMessage()
             ]);
 
-            $response->message = 'Excuse use something went wrong from our side.., please try again later';
-            return $response;
+            // $response->message = 'Excuse us something went wrong from our side.., please try again later';
+            // return $response;
+            return new JsonResponse(['message' => $e->getMessage()],Response::HTTP_EXPECTATION_FAILED);
         }        
     }
 

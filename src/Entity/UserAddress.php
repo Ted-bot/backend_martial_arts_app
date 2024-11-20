@@ -21,7 +21,7 @@ class UserAddress
     #[ORM\JoinColumn(nullable: false)]
     private ?User $addressUser = null;
 
-    #[ORM\ManyToOne(inversedBy: 'userAddresses')]
+    #[ORM\ManyToOne(inversedBy: 'userAddresses', fetch: "EAGER")]
     #[ORM\JoinColumn(nullable: false)]
     private ?Address $address = null;
 

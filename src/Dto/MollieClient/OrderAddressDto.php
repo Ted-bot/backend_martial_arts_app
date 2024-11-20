@@ -61,22 +61,23 @@ class OrderAddressDto {
             max: 25,
             maxMessage: 'Your given name should contain max {{ limit }} characters'
         )]
-        public $givenName,
+        public string $givenName,
 
         #[Assert\NotBlank]
         #[Assert\Length(
             max: 25,
             maxMessage: 'Your given name should contain max {{ limit }} characters'
         )]
-        public $familyName,
+        public string $familyName,
         
         #[Assert\NotBlank]
         #[Assert\Length(
             max: 15,
             maxMessage: 'Your phone number should contain max {{ limit }} characters'
         )]
-        public $phone,
+        public string $phone,
         
+        #[Assert\NotBlank(allowNull: true)]
         #[Assert\Length(
             max: 25,
             maxMessage: 'Your region should contain max {{ limit }} characters'
@@ -87,6 +88,6 @@ class OrderAddressDto {
         #[Assert\Email(
             message: 'The email {{ value }} is not a valid email.',
         )]
-        public $email,
+        public string $email,
     ){}
 }

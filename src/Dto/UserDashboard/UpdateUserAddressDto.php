@@ -18,7 +18,7 @@ class UpdateUserAddressDto
             // address_line
             // postal_code        
     public function __construct(
-        #[Assert\NotBlank]
+        #[Assert\NotBlank(allowNull:true)]
         #[Assert\Type('int')]
         public $address_id,
 

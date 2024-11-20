@@ -2,20 +2,22 @@
 
 namespace App\Controller\Api;
 
-use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Throwable;
 use DateTimeZone;
 use App\Class\Role;
 use App\Entity\User;
 use DateTimeImmutable;
+use App\Entity\Address;
 use App\Entity\PostEvent;
 use Brick\Math\BigDecimal;
+use App\Entity\UserAddress;
 use App\Entity\UserProfile;
 use App\Entity\Subscription;
 use App\Entity\TokenManager;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use App\Dto\Main\ResponseDto;
+use App\Enum\CountryTypeEnum;
 use App\ApiResource\AddressApi;
 use App\ApiResource\PostEventApi;
 use App\Dto\Event\CalendarItemDto;
@@ -34,6 +36,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfonycasts\MicroMapper\MicroMapperInterface;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Doctrine\ORM\EntityManagerInterface as EntityManager;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 #[AsController]
@@ -55,39 +58,47 @@ class UpdateUserAddressActionController extends AbstractController
     public function __invoke(#[MapRequestPayload] UpdateUserAddressDto $request)
     {
         $this->denyAccessUnlessGranted(Role::ROLE_USER_STUDENT);
-
-        // dd(['got_requst_update' => $request]);
-        $response  = new ResponseDto();
-        $addressId = $request->address_id;
-            // unit_number
-            // street_number
-            // address_line
-            // postal_code        
-        /** @var User $currentUser */
-        $currentUser = $this->getUser();
-
-        $datetime = new DateTimeImmutable();
-        $currentTimeEvent = $datetime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
-
-        // if(!$eventIsNumber) return $response;        
-        if(!$this->addressRepo->findOneBy(['id' => $addressId])) return $response;
         
-        /**
-         * @var mixed
-         */
-        $updateAddress = $this->addressRepo->findOneBy(['id' => $addressId]);
-        if($request->address_line) $updateAddress->setAddressLine($request->address_line);
-        if($request->unit_number) $updateAddress->setUnitNumber($request->unit_number);
-        if($request->street_number) $updateAddress->setStreetNumber($request->street_number);
-        if($request->postal_code) $updateAddress->setPostalCode($request->postal_code);
-        if($request->city) $updateAddress->setCity($request->city);
-        if($request->state_id) $updateAddress->setLibReactState($request->state_id);
-        if($request->city_id) $updateAddress->setLibReactCity($request->city_id);
+        try { 
+            $this->entityManager->getConnection()->setAutoCommit(false);
+            $this->entityManager->beginTransaction();
+            $newUser = 0;
+            $response  = new ResponseDto();
+            $addressId = $request->address_id;
 
-        $this->entityManager->beginTransaction();
-        
-        try {            
-            // $this->entityManager->persist($manageUpcomingEvent);
+            /** @var User $currentUser */
+            $currentUser = $this->getUser();
+
+            $datetime = new DateTimeImmutable();
+            $currentTimeEvent = $datetime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
+            if($addressId === null){
+                // dd("got no address");
+                $userAddress = new UserAddress();
+                $updateAddress = new Address();
+                $updateAddress->setCountry(CountryTypeEnum::NL_CODE);
+                $newUser = 1;
+            } else {
+                /** @var Address $updateAddress */
+                $updateAddress = $this->addressRepo->findOneBy(['id' => $addressId]);
+            }
+            
+            if($request->address_line) $updateAddress->setAddressLine($request->address_line);
+            if($request->unit_number) $updateAddress->setUnitNumber($request->unit_number);
+            if($request->street_number) $updateAddress->setStreetNumber($request->street_number);
+            if($request->postal_code) $updateAddress->setPostalCode($request->postal_code);
+            if($request->city) $updateAddress->setCity($request->city);
+            if($request->state_id) $updateAddress->setLibReactState($request->state_id);
+            if($request->city_id) $updateAddress->setLibReactCity($request->city_id);
+            
+            if($newUser === 1){
+                // dd("got no address");
+                $userAddress->setAddress($updateAddress);
+                $userAddress->setAddressUser($currentUser);
+                $userAddress->setDefault(true);
+                $this->entityManager->persist($updateAddress);
+                $this->entityManager->persist($userAddress);
+            }        
+                   
             $this->entityManager->flush();
             $this->entityManager->commit();
 
@@ -108,8 +119,9 @@ class UpdateUserAddressActionController extends AbstractController
                 'error' => $e->getMessage()
             ]);
 
-            $response->message = 'Excuse use something went wrong from our side.., please try again later';
-            return $response;
+            $response->message = 'Excuse us something went wrong from our side.., please try again later';
+            // return $response;
+            return new JsonResponse(['message' => $e->getMessage()],$e->getCode());
         }        
     }
 

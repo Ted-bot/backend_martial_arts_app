@@ -33,6 +33,7 @@ class UserAddressRepository extends ServiceEntityRepository
             ->addSelect('address.addressLine')
             ->addSelect('address.postalCode')
             ->addSelect('address.libReactCity AS cityId')
+            ->addSelect('address.city AS city')
             ->addSelect('address.libReactState AS stateId')
             // ->addSelect('user.libReactCity')
             // ->addSelect('user.libReactState')

@@ -51,17 +51,23 @@ class SubscriptionEntityToApiMapper implements MapperInterface
         $dto->createdAt = $entity->getCreatedAt(); // check when updated the created at doesnt not update
         $dto->updatedAt = $entity->getUpdatedAt(); 
         
-        $dto->subscribedProduct = $this->microMapper->map($entity->getSubscribedProduct(), ProductApi::class, [
+        if($entity->getSubscribedProduct()){
+            $dto->subscribedProduct = $this->microMapper->map($entity->getSubscribedProduct(), ProductApi::class, [
             MicroMapperInterface::MAX_DEPTH => 1
-        ]);
+            ]);
+        }   
 
-        $dto->subscriptionOwnedBy = $this->microMapper->map($entity->getSubscriptionOwnedBy(), UserApi::class, [
-            MicroMapperInterface::MAX_DEPTH => 1
-        ]); // get user id
+        if($entity->getSubscriptionOwnedBy()){
+            $dto->subscriptionOwnedBy = $this->microMapper->map($entity->getSubscriptionOwnedBy(), UserApi::class, [
+                MicroMapperInterface::MAX_DEPTH => 1
+            ]); // get user id
+        }
 
-        $dto->tokenManager = $this->microMapper->map($entity->getTokenManager(), TokenManagerApi::class, [
-            MicroMapperInterface::MAX_DEPTH => 1
-        ]);
+        if($entity->getTokenManager()){
+            $dto->tokenManager = $this->microMapper->map($entity->getTokenManager(), TokenManagerApi::class, [
+                MicroMapperInterface::MAX_DEPTH => 1
+            ]);
+        }
 
         return $dto;
     }
