@@ -15,6 +15,9 @@ class CalendarItemDto
         #[Assert\Type('string')]
         public string $title = '';
         
+        #[Assert\Type('string')]
+        public string $description = '';
+        
         // /** @var DateTimeInterface $startDate*/
         #[Assert\Type('string')]
         public DateTimeInterface $startDate;

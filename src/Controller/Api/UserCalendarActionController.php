@@ -70,6 +70,7 @@ class UserCalendarActionController extends AbstractController
         foreach($publishedBlackDragonEvents as $publishedEvent){
             $response = new CalendarItemDto();
             $response->id = $publishedEvent->getId();
+            $response->description = $publishedEvent->getDescription();
             $response->title = $publishedEvent->getTitle();
             $response->startDate = $publishedEvent->getStartDate();
             $response->endDate = $publishedEvent->getEndDate();

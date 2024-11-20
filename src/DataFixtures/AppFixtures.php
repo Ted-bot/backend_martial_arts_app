@@ -86,7 +86,7 @@ class AppFixtures extends Fixture
         $user->setLocation("Amsterdam");
         $user->setDateOfBirth("1990-03-12");
         $user->setConversion("Ik ga iedereen slopen let maar op!");
-        $user->setRoles([Role::ROLE_USER_STUDENT]);
+        $user->setRoles([Role::ROLE_USER_STUDENT, Role::ROLE_USER_SIFU]);
         $user->setLibReactState(2612);
         $user->setLibReactCity(77340);
 

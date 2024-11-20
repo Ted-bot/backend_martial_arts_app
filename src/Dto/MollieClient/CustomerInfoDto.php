@@ -92,7 +92,7 @@ class CustomerInfoDto // extends AbstractJsonRequest
         //     minMessage: 'Your given state must be at least {{ limit }} characters long',
         //     maxMessage: 'Your given state cannot be longer than {{ limit }} characters',
         // )]
-        #[Assert\Blank]
+        #[Assert\NotBlank(allowNull:true)]
         #[Assert\Type('string')]
         public readonly string $region,
 

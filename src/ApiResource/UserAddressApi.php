@@ -45,7 +45,43 @@ use App\State\UserAdressEntityToDtoStateProvider;
             ],
             filters: ['api_platform.doctrine.orm.boolean_filter']
         ),
-        new GetCollection(),
+        new Post(
+            uriTemplate: '/user_address/{id}/id',
+            uriVariables: [
+                'id' => new Link(
+                    fromClass: UserAddressApi::class,
+                    toProperty: 'addressUser'
+                )
+            ],
+            filters: ['api_platform.doctrine.orm.boolean_filter']
+        ),
+        new GetCollection(
+            uriTemplate: '/user_address/id',
+            uriVariables: [
+                'id' => new Link(
+                    fromClass: UserAddressApi::class,
+                    toProperty: 'addressUser'
+                )
+            ],
+        ),
+        new Patch(
+            uriTemplate: '/user_address/{id}/id',
+            uriVariables: [
+                'id' => new Link(
+                    fromClass: UserAddressApi::class,
+                    toProperty: 'addressUser'
+                )
+            ],
+        ),
+        new Delete(
+            uriTemplate: '/user_address/{id}/id',
+            uriVariables: [
+                'id' => new Link(
+                    fromClass: UserAddressApi::class,
+                    toProperty: 'addressUser'
+                )
+            ],
+        ),
     ],
 )]
 #[ApiFilter(BooleanFilter::class, properties: ['isDefault',])]

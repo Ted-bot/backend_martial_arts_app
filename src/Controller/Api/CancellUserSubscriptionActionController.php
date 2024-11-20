@@ -24,6 +24,7 @@ use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
+
 #[AsController]
 class CancellUserSubscriptionActionController extends AbstractController
 {
