@@ -46,20 +46,26 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
     stateOptions: new Options(entityClass: User::class),
     operations: [
         new Get(    
+            security: 'is_granted("ROLE_USER_STUDENT")',     
             uriTemplate: '/user_by_email/{email}/email',
             uriVariables: 'email'
         ),
-        new GetCollection(),
+        new GetCollection(
+            security: 'is_granted("ROLE_USER_SIFU")',     
+        ),
         new Post(
             security: 'is_granted("PUBLIC_ACCESS")',
         ),
-        new Patch(    
+        new Patch(   
+            security: 'is_granted("ROLE_USER_SIFU")',  
             uriTemplate: '/user_by_email/{email}/email',
             uriVariables: 'email'
         ),
         // new Patch(),
         new Put(),
-        new Delete(),
+        new Delete(
+            security: 'is_granted("ROLE_USER_SIFU")', 
+        ),
     ],
 )]
 final class UserApi 
@@ -103,7 +109,7 @@ final class UserApi
 
     public ?string $gender = null;
 
-    /**  @var UserProfileApi Object  */
+    /**  @var UserProfileApi $userProfile Object  */
     public $userProfile;
 
     /** @var array<int, ProductApi > */

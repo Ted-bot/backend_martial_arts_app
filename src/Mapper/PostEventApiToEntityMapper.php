@@ -2,6 +2,8 @@
 
 namespace App\Mapper;
 
+use App\ApiResource\UserProfileApi;
+use App\Entity\User;
 use App\Entity\PostEvent;
 use App\Entity\UserProfile;
 use App\ApiResource\PostEventApi;
@@ -24,7 +26,7 @@ class PostEventApiToEntityMapper implements MapperInterface
     {
         $dto = $from;
         assert($dto instanceof PostEventApi);
-
+        
         $entity = $dto->id ? $this->postEventRepository->find($dto->id) : new PostEvent();
 
         if(!$entity) {
@@ -44,26 +46,29 @@ class PostEventApiToEntityMapper implements MapperInterface
         $entity->setTitle($dto->title);
         $entity->setDescription($dto->description);
         
-        if($dto->relatedUser){  
+        if($dto->relatedUser){              
             $entity->setRelatedUser($this->microMapper->map($dto->relatedUser, UserProfile::class, [
                 MicroMapperInterface::MAX_DEPTH => 0
             ]));
         } else {
-            $entity->setRelatedUser($this->security->getUser());
+            $user = $this->security->getUser();
+            assert($user instanceof User);
+            $entity->setRelatedUser($user->getUserProfile());
         } 
 
         $entity->setPublished($dto->isPublished);
-        $entity->setCreatedAt($dto->createdAt);
         $entity->setStartDate($dto->startDate);
         $entity->setEndDate($dto->endDate);
         $entity->setAllDay($dto->allDay);
 
-        if($dto->subscribedBy){
+        // dd(['get subscribedBy' => $dto->subscribedBy]);
+
+        if($dto->subscribedBy !== null){
             $entity->addSubscribe($this->microMapper->map($dto->subscribedBy, UserProfile::class, [
                 MicroMapperInterface::MAX_DEPTH => 0
             ]));
         }
 
-        return $entity; // return orderLine or upload
+        return $entity;
     }
 }

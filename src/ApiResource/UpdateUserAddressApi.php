@@ -40,6 +40,7 @@ use App\Mapper\AddressEntityToApiMapper;
     // stateOptions: new Options(entityClass: UserAddress::class),
     operations: [
         new Post(
+            security: 'is_granted("ROLE_USER_STUDENT")', 
             uriTemplate: '/user_address_dashboard/{email}/id/{id}',
             uriVariables: ['email', 'id'],
             // uriVariables: [
@@ -52,8 +53,12 @@ use App\Mapper\AddressEntityToApiMapper;
             read: false,
             status: 201
         ),
-        new GetCollection(),
-        new Get(),
+        new GetCollection(
+            security: 'is_granted("ROLE_USER_SIFU")', 
+        ),
+        new Get(
+            security: 'is_granted("ROLE_USER_STUDENT")', 
+        ),
         // new Put(),
         new Delete(),
     ],    

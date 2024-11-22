@@ -40,17 +40,25 @@ use Doctrine\ORM\Mapping as ORM;
     paginationItemsPerPage: 5,
     // security: 'is_granted("ROLE_USER_STUDENT")',
     stateOptions: new Options(entityClass: OrderLine::class),
-    // operations: [
-    //     new Get(),
-    //     new GetCollection(),
-    //     new Post(
-    //         security: 'is_granted("PUBLIC_ACCESS")',
-    //         validationContext:['groups' => ['Default', 'postValidation']]
-    //     ),
-    //     new Patch(),
-    //     // new Put(),
-    //     new Delete(),
-    // ],
+    operations: [
+        new Get(
+            security: 'is_granted("ROLE_USER_STUDENT")', 
+        ),
+        new GetCollection(
+            security: 'is_granted("ROLE_USER_STUDENT")', 
+        ),
+        new Post(
+            security: 'is_granted("ROLE_USER_STUDENT")', 
+            validationContext:['groups' => ['Default', 'postValidation']]
+        ),
+        new Patch(
+            security: 'is_granted("ROLE_USER_STUDENT")', 
+        ),
+        // new Put(),
+        new Delete(
+            security: 'is_granted("ROLE_USER_STUDENT")', 
+        ),
+    ],
 )]
 class OrderLineApi 
 {

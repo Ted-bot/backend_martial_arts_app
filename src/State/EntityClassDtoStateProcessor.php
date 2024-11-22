@@ -29,14 +29,14 @@ class EntityClassDtoStateProcessor implements ProcessorInterface
         $stateOptions = $operation->getStateOptions();
         assert($stateOptions instanceof Options);
         $entityClass = $stateOptions->getEntityClass();
-
+        
         $entity = $this->mapDtoToEntity($data, $entityClass);
         
         if ($operation instanceof DeleteOperationInterface) {
             $this->removeProcessor->process($entity, $operation, $uriVariables, $context);
             return null;
         }
-    
+        // dd(['created entity' => $entity]);
         $this->persistProcessor->process($entity, $operation, $uriVariables, $context);
         
         $data->id = $entity->getId();

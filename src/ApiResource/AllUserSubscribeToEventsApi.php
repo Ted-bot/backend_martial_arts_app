@@ -22,6 +22,7 @@ use ApiPlatform\Action\NotFoundAction;
             controller: NotFoundAction::class
         ),
         new GetCollection(
+            security: 'is_granted("ROLE_USER_STUDENT")', 
             // provider: UserDashboardStateProvider::class,
             // name: 'get_user_data',
             uriTemplate: '/user/{email}/registered_events/',

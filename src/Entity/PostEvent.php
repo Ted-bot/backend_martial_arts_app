@@ -2,89 +2,74 @@
 
 namespace App\Entity;
 
+use DateTime;
 use DateTimeZone;
 use DateTimeImmutable;
+use DateTimeInterface;
+use App\Entity\UserProfile;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post;
+use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use App\Repository\PostEventRepository;
-use Symfony\Component\Serializer\Attribute\Groups;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
+// use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: PostEventRepository::class)]
-#[ApiResource(
-    shortName: 'trainingsession',
-    description: 'Calendar Post Entity',
-    operations: [
-        new Get(),
-        new GetCollection(),
-        new Post(),
-        new Patch(),
-        new Put(),
-        new Delete(),
-    ],
-    normalizationContext: [
-        'groups' => ['trainingsession:read']
-    ],
-    denormalizationContext: [
-        'groups' => ['trainingsession:write']
-    ],
-    
-)]
 class PostEvent
 {
+    // #[Groups(['trainingsession:read', 'profile:read'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['trainingsession:read', 'profile:read'])]
     private ?int $id = null;
 
+    // #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
     #[ORM\Column(length: 50)]
-    #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
     public ?string $title = null;
 
+    // #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
     private ?string $description = null;
 
+    // #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
     #[ORM\Column]
-    #[Groups(['trainingsession:read', 'trainingsession:write','profile:read'])]
     private ?bool $isPublished = true;
 
-    #[ORM\ManyToOne(inversedBy: 'postEvents')]
-    #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['trainingsession:read', 'profile:read'])]
+    // #[Groups(['trainingsession:read', 'profile:read'])]
+    #[ORM\ManyToOne(inversedBy: 'postEvents', fetch: 'EAGER')]
+    #[ORM\JoinColumn(nullable: false,)]
     private ?UserProfile $relatedUser = null;
 
+    // #[Groups(['trainingsession:read', 'profile:read'])]
     #[ORM\Column]
-    #[Groups(['trainingsession:read', 'profile:read'])]
-    private ?DateTimeImmutable $createdAt = null;
+    private DateTimeImmutable $createdAt;
 
+    // #[Groups(['trainingsession:read', 'profile:read'])]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    #[Groups(['trainingsession:read', 'profile:read'])]
-    private ?\DateTimeInterface $startDate = null;
+    private DateTimeInterface|DateTime $startDate;
 
+    // #[Groups(['trainingsession:read', 'profile:read'])]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    #[Groups(['trainingsession:read', 'profile:read'])]
-    private ?\DateTimeInterface $endDate = null;
+    private DateTimeInterface|DateTime $endDate;
 
+    // #[Groups(['trainingsession:read', 'profile:read'])]
     #[ORM\Column(nullable: true)]
-    #[Groups(['trainingsession:read', 'profile:read'])]
     private ?bool $allDay = null;
 
+    // #[Groups(['trainingsession:read', 'profile:read'])]
+    //  * @var Collection<int, UserProfile>
     /**
-     * @var Collection<int, UserProfile>
+     * @var ArrayCollection<int, UserProfile>
      */
     #[ORM\ManyToMany(targetEntity: UserProfile::class, inversedBy: 'subscribeToEvents')]
-    #[Groups(['trainingsession:read', 'profile:read'])]
-    private Collection $subscribe;
+    private $subscribe;
 
     public function __construct()
     {
@@ -128,7 +113,7 @@ class PostEvent
         return $this->isPublished;
     }
 
-    #[Groups('trainingsession:write')]
+    // #[Groups('trainingsession:write')]
     public function setPublished(bool $isPublished): static
     {
         $this->isPublished = $isPublished;
@@ -146,7 +131,7 @@ class PostEvent
         return $this->relatedUser;
     }
 
-    #[Groups('trainingsession:write')]
+    // #[Groups('trainingsession:write')]
     public function setRelatedUser(?UserProfile $relatedUser): static
     {
         $this->relatedUser = $relatedUser;
@@ -159,40 +144,43 @@ class PostEvent
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    public function setCreatedAt(DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
 
         return $this;
     }
 
-    public function getStartDate(): ?\DateTimeInterface
+    public function getStartDate(): DateTimeInterface|DateTime
     {
         return $this->startDate;
     }
 
-    #[Groups('trainingsession:write')]
-    public function setStartDate(?\DateTimeInterface $startDate): static
+    // #[Groups('trainingsession:write')]
+    public function setStartDate(DateTimeInterface|DateTime $startDate): static
     {
-        // $correctTime = $startDate;
-        // $dateTime = new DateTimeImmutable();
-        // $dateTime->setTimezone(new DateTimeZone('Europe/Amsterdam'));
-        // $this->startDate = $correctTime;
+        $startDate = $startDate instanceof DateTime ?
+        $startDate :
+        DateTimeImmutable::createFromMutable($startDate);
+        
         $this->startDate = $startDate;
 
         return $this;
     }
 
-    public function getEndDate(): ?\DateTimeInterface
+    public function getEndDate(): DateTimeInterface|DateTime
     {
         return $this->endDate;
     }
 
-    #[Groups('trainingsession:write')]
-    public function setEndDate(?\DateTimeInterface $endDate): static
+    // #[Groups('trainingsession:write')]
+    public function setEndDate(DateTime $endDate): static
     {
+        $endDate = $endDate instanceof DateTime
+        ? $endDate 
+        : DateTimeImmutable::createFromMutable($endDate);   
+
         $this->endDate = $endDate;
-        // $this->endDate = $endDate;
 
         return $this;
     }
@@ -202,7 +190,7 @@ class PostEvent
         return $this->allDay;
     }
 
-    #[Groups('trainingsession:write')]
+    // #[Groups('trainingsession:write')]
     public function setAllDay(?bool $allDay): static
     {
         $this->allDay = $allDay;
@@ -239,8 +227,9 @@ class PostEvent
 
     public function removeSubscribe(UserProfile $subscribe): static
     {
-        $this->subscribe->removeElement($subscribe);
-
+        if (!$this->subscribe->contains($subscribe)) {
+            $this->subscribe->removeElement($subscribe);
+        }
         return $this;
     }
 }

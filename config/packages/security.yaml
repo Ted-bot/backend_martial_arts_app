@@ -2,7 +2,7 @@ security:
     hide_user_not_found: false
 
     role_hierarchy:
-        ROLE_ADMIN: [ROLE_USER_STUDENT]
+        ROLE_USER_SIFU: [ROLE_USER_STUDENT, ROLE_USER_SIFU]
 
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:

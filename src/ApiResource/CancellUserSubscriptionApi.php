@@ -41,6 +41,7 @@ use App\Controller\Api\CancellUserSubscriptionActionController;
     // stateOptions: new Options(entityClass: UserAddress::class),
     operations: [
         new Post(
+            security: 'is_granted("ROLE_USER_STUDENT")', 
             uriTemplate: '/cancel_user_subscription/{email}/id/{id}',
             uriVariables: ['email', 'id'],
             // uriVariables: [
@@ -54,8 +55,12 @@ use App\Controller\Api\CancellUserSubscriptionActionController;
             status: 201
         ),
         new GetCollection(),
-        new Get(),
-        new Patch(),
+        new Get(
+            security: 'is_granted("ROLE_USER_STUDENT")', 
+        ),
+        new Patch(
+            security: 'is_granted("ROLE_USER_STUDENT")', 
+        ),
     ],    
 )]
 class CancellUserSubscriptionApi 

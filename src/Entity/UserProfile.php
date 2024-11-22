@@ -17,25 +17,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Attribute\Groups;
 
-#[ApiResource(
-    shortName: 'profile',
-    description: 'Profile Entity',
-    operations: [
-        new Get(),
-        new GetCollection(),
-        new Post(),
-        new Patch(),
-        new Put(),
-        new Delete(),
-    ],
-    normalizationContext: [
-        'groups' => ['profile:read']
-    ],
-    denormalizationContext: [
-        'groups' => ['profile:write']
-    ],
-    
-)]
+
 // #[ApiResource(
 //     uriTemplate: '/profile/{profile_id}/trainingsession/.{_format}',
 //     operations: [new GetCollection]
@@ -81,7 +63,7 @@ class UserProfile
      * @var Collection<int, PostEvent>
      */
     #[ORM\ManyToMany(targetEntity: PostEvent::class, mappedBy: 'subscribe', fetch: 'EXTRA_LAZY')]    
-    private ?Collection $subscribeToEvents = null;
+    private ?Collection $subscribeToEvents; // = null
 
     /**
      * @var Collection<int, TokenManager>

@@ -34,7 +34,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ApiResource(
-    // shortName: 'profile',
+    shortName: 'profile',
     provider: EntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
     paginationItemsPerPage: 5,
@@ -42,12 +42,22 @@ use Doctrine\ORM\Mapping as ORM;
     stateOptions: new Options(entityClass: UserProfile::class),
     // normalizationContext: ['groups' => ['read_customer']],
     operations: [
-        new Get(),
-        new GetCollection(),
-        new Post(),
-        new Patch(),
+        new Get(
+            security: 'is_granted("ROLE_USER_STUDENT")', 
+        ),
+        new GetCollection(
+            security: 'is_granted("ROLE_USER_SIFU")', 
+        ),
+        new Post(
+            security: 'is_granted("ROLE_USER_STUDENT")', 
+        ),
+        new Patch(
+            security: 'is_granted("ROLE_USER_STUDENT")', 
+        ),
         // new Put(),
-        new Delete(),
+        new Delete(
+            security: 'is_granted("ROLE_USER_SIFU")', 
+        ),
     ],
 )]
 class UserProfileApi
