@@ -40,9 +40,6 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
         new GetCollection(),
         new Post(
             security: 'is_granted("ROLE_USER_SIFU")',
-            // validationContext:['groups' => ['Default', 'postValidation']],
-            // denormalizationContext:['groups' => ['trainingsession:write']],
-            // normalizationContext:['groups' => ['trainingsession:read']]
         ),
         new Patch(
             security: 'is_granted("ROLE_USER_SIFU")',
