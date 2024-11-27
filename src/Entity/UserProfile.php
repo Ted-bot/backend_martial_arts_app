@@ -17,11 +17,6 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Attribute\Groups;
 
-
-// #[ApiResource(
-//     uriTemplate: '/profile/{profile_id}/trainingsession/.{_format}',
-//     operations: [new GetCollection]
-// )]
 #[ORM\Entity(repositoryClass: UserProfileRepository::class)]
 class UserProfile
 {
@@ -30,35 +25,28 @@ class UserProfile
     #[ORM\Column]
     private ?int $id = null;
 
-    #[Groups(['profile:read','profile:write'])]
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $username = null;
 
-    #[Groups(['profile:read','profile:write'])]
     #[ORM\Column(length: 1024, nullable: true)]
     private ?string $description = null;
 
-    #[Groups(['profile:read','profile:write'])]
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $websiteUrl = null;
 
     #[ORM\OneToOne(inversedBy: 'userProfile', targetEntity: User::class, cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['profile:read'])]
     private ?User $userUniq = null;
 
-    #[Groups(['profile:read'])]
     #[ORM\ManyToOne(inversedBy: 'profileGroup')]
     private ?Group $groupStudent;
 
     /**
      * @var Collection<int, PostEvent>
      */
-    #[Groups(['profile:read'])]
     #[ORM\OneToMany(targetEntity: PostEvent::class, mappedBy: 'relatedUser')]
     private Collection $postEvents;
 
-    // #[Groups(['profile:read'])]
     /**
      * @var Collection<int, PostEvent>
      */
@@ -68,7 +56,6 @@ class UserProfile
     /**
      * @var Collection<int, TokenManager>
      */
-    #[Groups(['profile:read'])]
     #[ORM\OneToMany(targetEntity: TokenManager::class, mappedBy: 'userProfile')]
     private Collection $tokenManagers;
 
@@ -169,7 +156,6 @@ class UserProfile
     //     return $userSubscribedEvents;
     // }
 
-    // #[Groups('profile:write')] //? function might be removable
     // public function setAllPostEvents(?PostEvent $getAllPostEvents): static
     // {
     //     $this->getAllPostEvents = $getAllPostEvents;
@@ -177,13 +163,11 @@ class UserProfile
     //     return $this;
     // }
 
-    // #[Groups('profile:read')]
     // public function getSinglePostEvent(): ?PostEvent
     // {
     //     return $this->singlePostEvent;
     // }
 
-    // #[Groups('profile:write')]
     // public function setSinglePostEvent(PostEvent $singlePostEvent): static
     // {
     //     // set the owning side of the relation if necessary

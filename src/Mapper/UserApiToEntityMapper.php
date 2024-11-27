@@ -10,10 +10,11 @@ use App\Entity\UserProfile;
 use App\ApiResource\UserApi;
 use App\Entity\Subscription;
 use App\Repository\UserRepository;
-use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
+use App\ApiResource\UserProfileApi;
 use Symfonycasts\MicroMapper\AsMapper;
 use Symfonycasts\MicroMapper\MapperInterface;
 use Symfonycasts\MicroMapper\MicroMapperInterface;
+use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[AsMapper(from: UserApi::class, to: User::class)]
@@ -51,7 +52,8 @@ class UserApiToEntityMapper implements MapperInterface
         $entity = $to;
         assert($entity instanceof User);
 
-        // dd(['dto' => $dto,'entity' => $entity]);
+        // $existingPassword = $entity?->getPassword() ?? 'non-existing';
+        // dd(['context' => $existingPassword]);
         // $entity->setId(22);
         $entity->setFirstName($dto->firstName);
         
@@ -59,7 +61,8 @@ class UserApiToEntityMapper implements MapperInterface
         
         $entity->setEmail($dto->email);
         
-        if($dto->password !== null && $entity->getPassword() !== $dto->password){
+        if($dto->password !== null){
+        // if($dto->password !== null && $entity?->getPassword() !== $dto->password){
             $entity->setPassword(
                 $this->userPasswordHasher->hashPassword(
                     $entity, $dto->password
@@ -89,18 +92,31 @@ class UserApiToEntityMapper implements MapperInterface
             $entity->setRoles( $dto->roles);
         }
         
-        $userProfile = $this->microMapper->map($dto->userProfile, UserProfile::class,[
-            MicroMapperInterface::MAX_DEPTH => 0
-        ]);
-        $entity->setUserProfile($userProfile);
-
-        $products = [];
-        foreach($dto->products as $product){
-            $products[] = $this->microMapper->map( $product, Product::class,[
+        if($dto?->userProfile?->userUniq){
+            $userProfile = $this->microMapper->map($dto->userProfile, UserProfile::class,[
                 MicroMapperInterface::MAX_DEPTH => 0
             ]);
+            $entity->setUserProfile($userProfile);
+        } 
+        // else { eventListener create new profile after new user Created?
+        //     $newProfile = new UserProfileApi();
+        //     $getLatestUser = $this->userRepository->findOneBy([], ['id' => 'desc']);
+        //     $sequenceNr = $getLatestUser->getId() + 1;
+        //     $newProfile->userUniq = $sequenceNr;
+            
+        //     $userProfile = $this->microMapper->map($newProfile, UserProfile::class);
+        //     $entity->setUserProfile($userProfile);
+        // }
+
+        $products = [];
+        if(!empty($dto->products)){
+            foreach($dto->products as $product){
+                $products[] = $this->microMapper->map( $product, Product::class,[
+                    MicroMapperInterface::MAX_DEPTH => 0
+                ]);
+            }
+            $this->propertyAccessor->setValue($entity, 'products', $products);
         }
-        $this->propertyAccessor->setValue($entity, 'products', $products);
 
         $userAddresses = [];
         if(!empty($dto->userAddresses)){
@@ -113,20 +129,24 @@ class UserApiToEntityMapper implements MapperInterface
         }
 
         $shopOrders = [];
-        foreach($dto->shopOrders as $shopOrder){
-            $shopOrders[] = $this->microMapper->map( $shopOrder, ShopOrder::class,[
-                MicroMapperInterface::MAX_DEPTH => 0
-            ]);
+        if(!empty($dto->shopOrders)){
+            foreach($dto->shopOrders as $shopOrder){
+                $shopOrders[] = $this->microMapper->map( $shopOrder, ShopOrder::class,[
+                    MicroMapperInterface::MAX_DEPTH => 0
+                ]);
+            }
+            $this->propertyAccessor->setValue($entity, 'shopOrders', $shopOrders);
         }
-        $this->propertyAccessor->setValue($entity, 'shopOrders', $shopOrders);
-        
+
         $subscriptions = [];
-        foreach($dto->subscriptions as $subscription){
-            $subscription = $this->microMapper->map( $subscription, Subscription::class,[
-                MicroMapperInterface::MAX_DEPTH => 0
-            ]);
+        if(!empty($dto->subscriptions)){
+            foreach($dto->subscriptions as $subscription){
+                $subscription = $this->microMapper->map( $subscription, Subscription::class,[
+                    MicroMapperInterface::MAX_DEPTH => 0
+                ]);
+            }
+            $this->propertyAccessor->setValue( $entity, 'subscriptions', $subscriptions);
         }
-        $this->propertyAccessor->setValue( $entity, 'subscriptions', $subscriptions);
 
         return $entity;
     }

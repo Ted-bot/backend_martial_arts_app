@@ -65,7 +65,7 @@ class PostEventApi
         $this->subscribedTo = new ArrayCollection();
     }
 
-    #[Groups(['trainingsession:read', 'profile:read','trainingsession:write'])]
+    #[Groups(['trainingsession:read', 'profile:read','user:read'])]
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
     #[ApiProperty(identifier:true)]
     public ?int $id = null;

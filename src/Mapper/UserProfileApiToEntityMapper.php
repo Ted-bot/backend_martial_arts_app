@@ -34,8 +34,7 @@ class UserProfileApiToEntityMapper implements MapperInterface
         assert($dto instanceof UserProfileApi);
 
         $entity = $dto->id ? $this->userProfileRepository->find($dto->id) : new UserProfile();
-
-        // dd(['entity'=> $entity, 'dto' => $dto]);
+        
         if(!$entity) {
             throw new \Exception('UserProfile not found!');
         }
@@ -63,13 +62,13 @@ class UserProfileApiToEntityMapper implements MapperInterface
 
         $entity->setWebsiteUrl($dto->websiteUrl);
 
-        // if($dto->groupStudent){
-        $entity->setgroupStudent($this->microMapper->map($dto->groupStudent, Group::class,
-            [MicroMapperInterface::MAX_DEPTH => 0]
-        ));
-        // }
+        if($dto->groupStudent){
+            $entity->setgroupStudent($this->microMapper->map($dto->groupStudent, Group::class,
+                [MicroMapperInterface::MAX_DEPTH => 0]
+            ));
+        }
 
-        // if($dto->subscribeToEvents) {
+        if(!empty($dto->subscribeToEvents)) {
             $subscribeToEvents = [];
             foreach($dto->subscribeToEvents as $event){
                 $events = $this->microMapper->map($event, PostEvent::class, [
@@ -77,9 +76,9 @@ class UserProfileApiToEntityMapper implements MapperInterface
                 ]); // note: 
             }
             $this->propertyAccessor->setValue($entity, 'subscribeToEvents', $subscribeToEvents);
-        // }
+        }
 
-        // if($dto->postEvents) {
+        if(!empty($dto->postEvents)) {
             $postEvents = [];
             foreach($dto->postEvents as $event){
                 $postEvents = $this->microMapper->map($dto->postEvents, PostEvent::class, [
@@ -87,17 +86,17 @@ class UserProfileApiToEntityMapper implements MapperInterface
                 ]); // note: 
             }
             $this->propertyAccessor->setValue($entity, 'postEvents', $postEvents);
-        // }
+        }
 
-        // if($dto->tokenManagers){
-            $tokenMangers = [];
+        if(!empty($dto->tokenManagers)){
+            $tokenManagers = [];
             foreach($dto->tokenManagers as $tokenManager){
                 $entity->addTokenManager($this->microMapper->map($tokenManager, TokenManager::class, [
                     MicroMapperInterface::MAX_DEPTH => 0
                 ])); // note: delete not needed 
             }
-            $this->propertyAccessor->setValue($entity, 'tokenMangers', $tokenMangers);
-        // }
+            $this->propertyAccessor->setValue($entity, 'tokenManagers', $tokenManagers);
+        }
         // dd(['entity'=> $entity, 'dto' => $dto]);
 
         return $entity;

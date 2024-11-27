@@ -37,27 +37,33 @@ use Doctrine\ORM\Mapping as ORM;
     shortName: 'profile',
     provider: EntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
-    paginationItemsPerPage: 5,
-    // security: 'is_granted("ROLE_USER_STUDENT")',
+    paginationItemsPerPage: 10,
     stateOptions: new Options(entityClass: UserProfile::class),
-    // normalizationContext: ['groups' => ['read_customer']],
     operations: [
         new Get(
-            security: 'is_granted("ROLE_USER_STUDENT")', 
+            security: 'is_granted("ROLE_USER_STUDENT")' 
         ),
         new GetCollection(
-            security: 'is_granted("ROLE_USER_SIFU")', 
+            security: 'is_granted("ROLE_USER_SIFU")' 
         ),
         new Post(
-            security: 'is_granted("ROLE_USER_STUDENT")', 
+            security: 'is_granted("ROLE_USER_STUDENT")' 
         ),
         new Patch(
-            security: 'is_granted("ROLE_USER_STUDENT")', 
+            security: 'is_granted("ROLE_USER_STUDENT")' 
         ),
-        // new Put(),
+        new Put(
+            security: 'is_granted("ROLE_USER_SIFU")'
+        ),
         new Delete(
-            security: 'is_granted("ROLE_USER_SIFU")', 
+            security: 'is_granted("ROLE_USER_SIFU")' 
         ),
+    ],
+    normalizationContext: [
+        'groups' => ['profile:read']
+            ],
+    denormalizationContext: [
+        'groups' => ['profile:write']
     ],
 )]
 class UserProfileApi
@@ -71,20 +77,29 @@ class UserProfileApi
     }
 
     // #[Groups(["read_customer"])]
-    #[ApiProperty(identifier: true)] // readable:false, 
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
+    #[Groups(['profile:read'])]
+    #[ApiProperty(identifier: true)] // readable:false, 
     public ?int $id = null;
+
+    #[Groups(['profile:read'])]
     public ?string $username = null;
+
+    #[Groups(['profile:read'])]
     public ?string $description = null;
+
+    #[Groups(['profile:read'])]
     public ?string $websiteUrl = null;
-    
+
+    #[Groups(['profile:read'])]    
     /** @var UserApi $userUniq */
     public $userUniq = null;
     
     /** @var UserProfileApi Object > */    
     public $groupStudent;
     
-    // /** @var array<int, PostEventAp> */    
+    // /** @var array<int, PostEventAp> */  
+    #[Groups(['profile:read'])]  
     public $postEvents;
     
     /** @var PostEventApi Object */    

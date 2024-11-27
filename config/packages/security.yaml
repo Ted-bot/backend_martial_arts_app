@@ -30,14 +30,14 @@ security:
                 check_path: /api/login_check
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
-            logout: 
-                path: /api/logout
             jwt: ~
             refresh_jwt: 
                 check_path:  api_refresh_token
                 # provider:  app_user_provider
         
         main:
+            logout: 
+                path: /api/logout
             lazy: true
             provider: app_user_provider
 
@@ -65,6 +65,7 @@ security:
         - { path: ^/api/v1/order/payment, roles: ROLE_USER_STUDENT }
         - { path: ^/api/v1/order/create, roles: ROLE_USER_STUDENT }
         - { path: ^/api/subscribe/events, roles: ROLE_USER_STUDENT }
+        - { path: ^/api/user, roles: ROLE_USER_SIFU }
 
 when@test:
     security:

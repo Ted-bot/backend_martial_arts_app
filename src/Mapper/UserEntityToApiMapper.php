@@ -83,44 +83,42 @@ class UserEntityToApiMapper implements MapperInterface
             ]); // $this->microMapper->map()
         }
         
-        // $dto->products = $entity->getProducts()->toArray();
-        // if($entity->getUserProfile()){
+        if(count($entity->getProducts()) !== 0){
             $dto->products = array_map(function(Product $product) {
                 return $this->microMapper->map($product, ProductApi::class, [
                     MicroMapperInterface::MAX_DEPTH => 1
                 ]); 
                 },$entity->getProducts()->toArray()
             );
-        // }
+        }
 
-        // $dto->shopOrders = $entity->getShopOrders()->toArray();
-        // if($entity->getShopOrders()?->toArray()){
+        if(count($entity->getShopOrders()) !== 0){
             $dto->shopOrders = array_map(function(ShopOrder $shopOrder) {
                 return $this->microMapper->map($shopOrder, ShopOrderApi::class, [
                     MicroMapperInterface::MAX_DEPTH => 1
                 ]); 
                 }, $entity->getShopOrders()->toArray()
             );
-        // }
+        }
 
-        // $dto->subscriptions = $entity->getSubscriptions()->toArray();
-        // if($entity->getShopOrders()?->toArray()){
+        if(count($entity->getShopOrders()) !== 0){
             $dto->subscriptions = array_map(function(Subscription $subscription) {
                 return $this->microMapper->map($subscription, SubscriptionApi::class, [
                     MicroMapperInterface::MAX_DEPTH => 1
                 ]); 
                 }, $entity->getSubscriptions()->toArray()
             );
-        // }
+        }
 
-        $dto->userAddresses = array_map(function(UserAddress $userAddress) {
-            return $this->microMapper->map($userAddress, UserAddressApi::class, [
-                MicroMapperInterface::MAX_DEPTH => 0
-            ]); 
-            }, $entity->getUserAddresses()->toArray()
-        );
+        if(count($entity->getUserAddresses()) !== 0){
+            $dto->userAddresses = array_map(function(UserAddress $userAddress) {
+                return $this->microMapper->map($userAddress, UserAddressApi::class, [
+                    MicroMapperInterface::MAX_DEPTH => 0
+                ]); 
+                }, $entity->getUserAddresses()->toArray()
+            );
+        }
 
-        // dd(['dto' => $dto]);
         return $dto;
     }
 }
