@@ -1,8 +1,8 @@
 <?php
 
 namespace App\Event;
-use App\Entity\StatusTransfer;
 
+use App\Entity\StatusTransfer;
 
 class TransActionEvent
 {

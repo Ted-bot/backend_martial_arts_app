@@ -53,22 +53,13 @@ class EntityClassDtoStateProcessor implements ProcessorInterface
             // $context["previous_data"] = $this->mapDtoToEntity($context["previous_data"], User::class);
         }
 
-        // dd(['created entity' => $entity]);
         $this->persistProcessor->process($entity, $operation, $uriVariables, $context);
         
-        if($operation->getMethod() === "POST" && assert($entity instanceof User)){
-            // dd("it passes");
-            // $getLatestUser = $this->entityManager->getRepository(User::class)->findOneBy([], ['id' => 'desc']);
+        if($operation->getMethod() === "POST" && $entity instanceof User){
             $newProfile = new UserProfileApi();
-            // $sequenceUser = $getLatestUser->getId();
-            // $sequenceNr = $getLatestUser->getId() + 1;
-            $newProfile->userUniq =  $this->mapDtoToEntity($entity, UserApi::class);
-            // $newProfile->userUniq =  $this->mapDtoToEntity($entity, UserApi::class);/
-            // $newProfile->userUniq = $sequenceNr;
-            
+            $newProfile->userUniq =  $this->mapDtoToEntity($entity, UserApi::class);            
             $userProfile = $this->microMapper->map($newProfile, UserProfile::class);
             
-            // $userProfile->setUserUniq($entity);
             $this->entityManager->persist($userProfile);
             $this->entityManager->flush();
         }

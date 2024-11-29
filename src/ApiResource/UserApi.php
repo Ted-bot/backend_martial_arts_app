@@ -52,7 +52,6 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
             uriTemplate: '/user_by_email/{email}/email',
             uriVariables: 'email'
         ),
-        // new Patch(),
         new Put(
             security: 'is_granted("ROLE_USER_SIFU")',  
             uriTemplate: '/user_by_email/{email}/email',
@@ -73,7 +72,7 @@ final class UserApi
 {
     public function __construct()
     {
-        $this->userProfile = new UserProfileApi();
+        // $this->userProfile = new UserProfileApi();
         $this->products = new ArrayCollection();
         $this->userAddresses = new ArrayCollection();
         $this->shopOrders = new ArrayCollection();
@@ -125,9 +124,9 @@ final class UserApi
     public ?string $gender = null;
 
     // #[ApiProperty(uriTemplate: '/api/profile/{id}')]
-    /**  @var UserProfileApi $userProfile Object  */
+    // /**  @var UserProfileApi $userProfile Object  */
     #[Groups(['user:read', 'user:write'])]
-    public $userProfile;
+    public null|UserProfileApi $userProfile = null;
 
     #[Groups(['user:read'])]
     /** @var array<int, ProductApi > */
@@ -157,13 +156,4 @@ final class UserApi
     /** @var SubscriptionApi Object */
     public $subscription;
 
-    // public function getId()
-    // {
-    //     return $this->id;
-    // }
-
-    // public function setId(int $id): void
-    // {
-    //     $this->id = $id;
-    // }
 }

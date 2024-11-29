@@ -84,7 +84,7 @@ class PostEventApi
     public $relatedUser = null;
     
     /** @var DateTime $createdAt */
-    #[Groups(['trainingsession:read', 'profile:read','trainingsession:write'])]
+    #[Groups(['trainingsession:read', 'profile:read'])]
     public $createdAt = null;
     
     /** @var DateTime $startDate */
