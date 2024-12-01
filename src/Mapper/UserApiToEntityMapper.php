@@ -61,7 +61,7 @@ class UserApiToEntityMapper implements MapperInterface
         
         $entity->setEmail($dto->email);
         
-        if($dto->password !== null){
+        if($dto->password){
         // if($dto->password !== null && $entity?->getPassword() !== $dto->password){
             $entity->setPassword(
                 $this->userPasswordHasher->hashPassword(
@@ -88,7 +88,7 @@ class UserApiToEntityMapper implements MapperInterface
             $entity->setLibReactCity($dto->libReactCity); // 77340
         }
         
-        if($dto->roles){
+        if(!empty($dto->roles)){
             $entity->setRoles( $dto->roles);
         }
         

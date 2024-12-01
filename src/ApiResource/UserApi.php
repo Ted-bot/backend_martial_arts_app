@@ -4,7 +4,8 @@ namespace App\ApiResource;
 
 use App\Entity\User;
 use DateTimeImmutable;
-use Doctrine\ORM\Mapping as ORM;
+// use App\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Link;
@@ -12,7 +13,9 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use App\ApiResource\ProductApi;
 use ApiPlatform\Metadata\Delete;
+use Doctrine\ORM\Mapping as ORM;
 use App\ApiResource\ShopOrderApi;
+use ApiPlatform\Metadata\ApiFilter;
 use App\ApiResource\UserAddressApi;
 use App\ApiResource\UserProfileApi;
 use App\ApiResource\SubscriptionApi;
@@ -20,6 +23,7 @@ use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use App\State\EntityToDtoStateProvider;
+use ApiPlatform\Metadata\QueryParameter;
 use ApiPlatform\Doctrine\Orm\State\Options;
 use App\State\EntityClassDtoStateProcessor;
 use Doctrine\Common\Collections\Collection;
@@ -43,6 +47,7 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
         ),
         new GetCollection(
             security: 'is_granted("ROLE_USER_SIFU")',     
+            filters: ['api_platform.doctrine.orm.boolean_filter']
         ),
         new Post(
             security: 'is_granted("PUBLIC_ACCESS")',
@@ -59,6 +64,8 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
         ),
         new Delete(
             security: 'is_granted("ROLE_USER_SIFU")', 
+            uriTemplate: '/user_by_email/{email}/email',
+            uriVariables: 'email'
         ),
     ],
     normalizationContext: [
@@ -67,7 +74,8 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
     denormalizationContext: [
         'groups' => ['user:write']
     ],
-)]
+)]// 
+#[ApiFilter(SearchFilter::class, properties: ['firstName', 'lastName', 'email', 'dateOfBirth','roles', 'gender', 'phoneNumber', 'location'])] // #[QueryParameter(key: ':firstName', filter: SearchFilter::class)]
 final class UserApi 
 {
     public function __construct()
@@ -92,7 +100,7 @@ final class UserApi
     public ?string $email = null;
 
     #[ApiProperty(readable: false)]
-    #[Groups(['user:write'])]
+    #[Groups(['user:read','user:write'])]
     public ?string $password = "";
     
     #[Groups(['user:read', 'user:write'])]

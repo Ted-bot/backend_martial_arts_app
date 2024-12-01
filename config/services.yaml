@@ -91,6 +91,18 @@ services:
         class: App\EventSubscriber\HttpKernel\CorsSubscriber
         tags:
             - { name: kernel.event_subscriber }
+            
+    offer.order_filter:
+        parent: 'api_platform.doctrine.orm.order_filter'
+        arguments:
+            $properties: { id: ~, firstName: ~ }
+            $orderParameterName: order
+        tags: ['api_platform.filter']
+
+    App\http_kernel\Authorization_subscriber: #delete this
+        class: App\EventSubscriber\HttpKernel\AuthorizationSubscriber
+        tags:
+            - { name: kernel.event_subscriber }
     
     App\http_kernel\forgot_password_event_subscriber:
         class: App\EventSubscriber\ForgotPasswordEventSubscriber

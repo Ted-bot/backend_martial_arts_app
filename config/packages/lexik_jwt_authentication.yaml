@@ -17,8 +17,9 @@ lexik_jwt_authentication:
     #     # look for a token as Authorization Header
         authorization_header:
             enabled: true
-            prefix:
-            name:    X-Authorization
+            prefix: Bearer
+            name:   X-Authorization
+
     # set_cookies:
     #     BEARER:
             # Update here to set strict, lax or none

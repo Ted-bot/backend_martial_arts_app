@@ -1,14 +1,56 @@
-{
-    # Debug
-    {$DEBUG}
+# {
+#     # Debug
+#     {$DEBUG}
+# }
+
+
+(cors) {
+        @cors_preflight{args.0} method OPTIONS
+        @cors{args.0} header Origin {args.0}
+
+        handle @cors_preflight{args.0} {
+                header {
+                        Access-Control-Allow-Origin "{args.0}"
+                        Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+                        Access-Control-Allow-Headers *
+                        Access-Control-Max-Age "3600"
+                        defer   #turn on defer on your header directive to make sure the new header values are set after proxying
+                }
+                respond "" 204
+        }
+
+        handle @cors{args.0} {
+                header {
+                        Access-Control-Allow-Origin "{args.0}"
+                        Access-Control-Expose-Headers *
+                        Access-Control-Allow-Headers *
+                        defer
+                }
+        }
 }
+	# handle @cors_preflight {
+	# 	header {
+    #         Access-Control-Expose-Headers "Authorization, Content-Type, Origin, Accept"
+	# 		Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE"
+	# 		Access-Control-Max-Age "3600"
+	# 	}
+	# 	respond "" 204
+	# }
+# }
+
 
 {$SERVER_NAME}
 
-# log
+# header / {
+#         Access-Control-Allow-Origin *
+#         Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+#         Access-Control-Allow-Headers "Authorization"
+#         Access-Control-Expose-Headers "Content-Length,Content-Range"
+# }
+
+import cors {header.origin}
 
 route {
-    # revers_proxy locahost:80
     root * /app/public
     mercure {
         # Transport to use (default to Bolt)
@@ -29,4 +71,6 @@ route {
     php_fastcgi unix//var/run/php/php-fpm.sock
     encode zstd gzip
     file_server
+
+    # import cors {header.origin}
 }

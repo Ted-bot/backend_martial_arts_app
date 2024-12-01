@@ -12,6 +12,7 @@ api_platform:
         # jsonapi:  ['application/vnd.api+json']
     docs_formats:
         jsonld: ['application/ld+json']
+        json: ['application/json']
         jsonopenapi: ['application/vnd.openapi+json']
         html: ['text/html']
     # http_cache:
@@ -23,7 +24,7 @@ api_platform:
     defaults:
         stateless: false
         cache_headers:
-            vary: ['Content-Type', 'X-Authorization', 'Origin']
+            vary: ['Content-Type', 'X-Authorization', 'Authorization', 'Origin']
         extra_properties:
             standard_put: true
             rfc_7807_compliant_errors: true
@@ -35,6 +36,7 @@ api_platform:
         # force_eager: false
     swagger:
          api_keys:
+            # overriden in api OpenApiFactoryDecorator.php
              access_token:
-                name: Authorization
+                name: X-Authorization
                 type: header

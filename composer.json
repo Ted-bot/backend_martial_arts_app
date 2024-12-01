@@ -19,6 +19,7 @@
         "jms/serializer-bundle": "^5.4",
         "lexik/jwt-authentication-bundle": "^3.0",
         "mollie/mollie-api-php": "^2.70",
+        "nelmio/api-doc-bundle": "^4.33",
         "nelmio/cors-bundle": "^2.4",
         "nesbot/carbon": "^3.4",
         "nixilla/php-jwt": "dev-master",

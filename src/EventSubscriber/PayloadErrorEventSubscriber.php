@@ -8,6 +8,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Routing\Exception\ResourceNotFoundException;
+// use ExceptionInterface
 
 class PayloadErrorEventSubscriber implements EventSubscriberInterface
 {
@@ -20,23 +23,30 @@ class PayloadErrorEventSubscriber implements EventSubscriberInterface
 
     public function onExceptionEvent(ExceptionEvent $event): void
     {
-        $isHttpEvent = $event->getThrowable() instanceof HttpExceptionInterface;
-        $isValidationEvent = $event->getThrowable()->getPrevious() instanceof ValidationFailedException;
+        $isHttpEvent = $event->getThrowable() instanceof HttpExceptionInterface || $event->getThrowable() instanceof ResourceNotFoundException;
+        $isValidationEvent = $event->getThrowable()->getPrevious() instanceof ValidationFailedException || $event->getThrowable()->getPrevious() instanceof ResourceNotFoundException;
 
         // We are only interested in validation errors in an httpException context
         if (!$isHttpEvent || !$isValidationEvent) {
             return;
         }
 
-        /**
-         * @var ValidationFailedException $validationException
-         */
-        $validationException = $event->getThrowable()->getPrevious();
-        $errorMessages = [];
-        foreach ($validationException->getViolations() as $violation) {
-            $errorMessages[$violation->getPropertyPath()] = $violation->getMessage();
+        if($event->getThrowable()->getPrevious() instanceof ResourceNotFoundException){
+            $event->setResponse(new JsonResponse(['message' => $event->getThrowable()->getPrevious()->getMessage()], Response::HTTP_NOT_FOUND));
         }
 
-        $event->setResponse(new JsonResponse(['errors' => $errorMessages], Response::HTTP_UNPROCESSABLE_ENTITY));
+        if($event->getThrowable()->getPrevious() instanceof HttpExceptionInterface)
+        {
+            /**
+             * @var ValidationFailedException $validationException
+             */
+            $validationException = $event->getThrowable()->getPrevious();
+            $errorMessages = [];
+            foreach ($validationException->getViolations() as $violation) {
+                $errorMessages[$violation->getPropertyPath()] = $violation->getMessage();
+            }
+    
+            $event->setResponse(new JsonResponse(['errors' => $errorMessages], Response::HTTP_UNPROCESSABLE_ENTITY));
+        }
     }
 }
