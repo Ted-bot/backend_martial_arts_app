@@ -49,32 +49,40 @@ services:
         autowire: true
             
     #api platform service
-    app.product.search_filter:
-        parent:         'api_platform.doctrine.orm.search_filter'
-        arguments:      [ { duration: ~ } ]
-        tags:           [{name: 'api_platform.filter' }]
+    # app.product.search_filter:
+    #     parent:         'api_platform.doctrine.orm.search_filter'
+    #     arguments:      [ { duration: ~ } ]
+    #     tags:           [{name: 'api_platform.filter' }]
     
-    app.user.search_filter:
-        parent:         'api_platform.doctrine.orm.search_filter'
-        arguments:      [{ id: 'exact' , subscriptions.transferId: 'exact'}]
-        # arguments:      [{ id: 'exact' , subscriptions.status: 'exact'}]
-        tags:           [{ name: 'api_platform.filter'}]
-        autowire:       false # required, explained below
-        autoconfigure:  false # required, explained below
-        public:         false
+    # app.user.search_filter:
+    #     parent:         'api_platform.doctrine.orm.search_filter'
+    #     arguments:      [{ id: 'exact' , subscriptions.transferId: 'exact'}]
+    #     # arguments:      [{ id: 'exact' , subscriptions.status: 'exact'}]
+    #     tags:           [{ name: 'api_platform.filter'}]
+    #     autowire:       false # required, explained below
+    #     autoconfigure:  false # required, explained below
+    #     public:         false
 
-    app.user.property_filter:
-        parent:         'api_platform.serializer.property_filter'
-        tags:           [{name: 'api_platform.filter'}]
-        autowire:       false # required, explained below
-        autoconfigure:  false # required, explained below
-        public:         false
+    # app.user.property_filter:
+    #     parent:         'api_platform.serializer.property_filter'
+    #     tags:           [{name: 'api_platform.filter'}]
+    #     autowire:       false # required, explained below
+    #     autoconfigure:  false # required, explained below
+    #     public:         false
     
-    app.subscription.property_filter:
-        parent:     'api_platform.doctrine.orm.search_filter'
-        # parent: 'api_platform.serializer.property_filter'
-        arguments:  [ { status: 'exact' } ]
-        tags:       [{name: 'api_platform.filter'} ]
+    # app.subscription.property_filter:
+    #     parent:     'api_platform.doctrine.orm.search_filter'
+    #     # parent: 'api_platform.serializer.property_filter'
+    #     arguments:  [ { status: 'exact' } ]
+    #     tags:       [{name: 'api_platform.filter'} ]
+
+    # offer.order_filter:
+    #     parent: 'api_platform.doctrine.orm.order_filter'
+    #     arguments:
+    #         $properties: { id: ~, firstName: ~ }
+    #         $orderParameterName: order
+    #     tags: ['api_platform.filter']
+    
         # The following are mandatory only if a _defaults section is defined with inverted values.
         # You may want to isolate filters in a dedicated file to avoid adding the following lines.
         # autowire: false
@@ -92,12 +100,6 @@ services:
         tags:
             - { name: kernel.event_subscriber }
             
-    offer.order_filter:
-        parent: 'api_platform.doctrine.orm.order_filter'
-        arguments:
-            $properties: { id: ~, firstName: ~ }
-            $orderParameterName: order
-        tags: ['api_platform.filter']
 
     App\http_kernel\Authorization_subscriber: #delete this
         class: App\EventSubscriber\HttpKernel\AuthorizationSubscriber

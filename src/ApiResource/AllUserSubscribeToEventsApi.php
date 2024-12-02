@@ -14,12 +14,12 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use App\Controller\Api\SubscribeEventActionController;
 use Symfony\Component\Validator\Constraints as Assert;
 use App\Controller\Api\UserDashBoardCollectionRegisteredEventsAction;
-use ApiPlatform\Action\NotFoundAction;
+// use ApiPlatform\Action\NotFoundAction;
 
 #[ApiResource(
     operations: [
         new GetCollection(
-            controller: NotFoundAction::class
+            // controller: NotFoundAction::class
         ),
         new GetCollection(
             security: 'is_granted("ROLE_USER_STUDENT")', 

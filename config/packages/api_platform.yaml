@@ -2,6 +2,8 @@ api_platform:
     title: Amsterdam Martial Arts API Platform
     description: API for martial arts school
     version: 1.0.0
+    # validator:
+    #     legacy_validation_exception: true
     formats:
         jsonld: ['application/ld+json']
         json: ['application/json']
@@ -26,8 +28,8 @@ api_platform:
         cache_headers:
             vary: ['Content-Type', 'X-Authorization', 'Authorization', 'Origin']
         extra_properties:
-            standard_put: true
-            rfc_7807_compliant_errors: true
+            # standard_put: true
+            # rfc_7807_compliant_errors: true
     # keep_legacy_inflector: false
     use_symfony_listeners: true
     eager_loading:

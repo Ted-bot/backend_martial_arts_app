@@ -2,7 +2,7 @@
 
 namespace App\ApiResource;
 
-use ApiPlatform\Action\NotFoundAction;
+// use ApiPlatform\Action\NotFoundAction;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
@@ -19,7 +19,7 @@ use App\Controller\Api\UserDashBoardCollectionSubscriptionAction;
     shortName: 'GetOneUserSubscription',
     operations: [
         new GetCollection(
-            controller: NotFoundAction::class
+            // controller: NotFoundAction::class
         ),
         new GetCollection(
             uriTemplate: '/user_subscriptions/{email}/dashboard.{_format}',

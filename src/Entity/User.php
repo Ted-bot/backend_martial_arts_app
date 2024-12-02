@@ -2,30 +2,18 @@
 
 namespace App\Entity;
 
-// use ApiPlatform\Metadata\ApiProperty;
 use DateTimeZone;
 use Carbon\Carbon;
 use App\Class\Role;
 use DateTimeImmutable;
 use App\Entity\Product;
 use App\Entity\UserProfile;
-use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Link;
-use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Patch;
-use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
 use App\Dto\User\CreateUserDto;
-use ApiPlatform\Metadata\ApiFilter;
-use ApiPlatform\Metadata\ApiProperty;
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\GetCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
-// use Symfony\Component\Serializer\Attribute\Groups;
-use ApiPlatform\Elasticsearch\Filter\OrderFilter;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
