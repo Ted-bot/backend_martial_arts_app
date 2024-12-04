@@ -5,8 +5,8 @@ api_platform:
     # validator:
     #     legacy_validation_exception: true
     formats:
-        jsonld: ['application/ld+json']
-        json: ['application/json']
+        jsonld:   ['application/ld+json']
+        json:     ['application/json']
         jsonapi:  ['application/vnd.api+json']
         html:     ['text/html']
     messenger:
@@ -28,8 +28,8 @@ api_platform:
         cache_headers:
             vary: ['Content-Type', 'X-Authorization', 'Authorization', 'Origin']
         extra_properties:
+            rfc_7807_compliant_errors: false
             # standard_put: true
-            # rfc_7807_compliant_errors: true
     # keep_legacy_inflector: false
     use_symfony_listeners: true
     eager_loading:

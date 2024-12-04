@@ -57,6 +57,7 @@ class OrderController extends AbstractController
         $shoppingCart = $this->entityManager->getRepository(Product::class)
         ->findOneBy(['sku' => $request->getPayload()->get('sku')]);
 
+        // dd(['shoppingCart' => $shoppingCart]);
         $user = $this->getUser();
 
         $userLatestOrder = $this->entityManager->getRepository(ShopOrder::class)

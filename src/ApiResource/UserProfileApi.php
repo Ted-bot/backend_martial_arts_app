@@ -18,7 +18,9 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use App\ApiResource\ProductApi;
 use ApiPlatform\Metadata\Delete;
+use Doctrine\ORM\Mapping as ORM;
 use App\ApiResource\ShopOrderApi;
+use ApiPlatform\Metadata\ApiFilter;
 use App\ApiResource\UserAddressApi;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
@@ -28,10 +30,11 @@ use ApiPlatform\Doctrine\Orm\State\Options;
 use App\State\EntityClassDtoStateProcessor;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
-use Symfony\Component\Serializer\Attribute\Groups;
-use Doctrine\ORM\Mapping as ORM;
 
 #[ApiResource(
     shortName: 'profile',
@@ -44,7 +47,8 @@ use Doctrine\ORM\Mapping as ORM;
             security: 'is_granted("ROLE_USER_STUDENT")' 
         ),
         new GetCollection(
-            security: 'is_granted("ROLE_USER_SIFU")' 
+            security: 'is_granted("ROLE_USER_SIFU")',
+            filters: ['api_platform.doctrine.orm.order_filter', 'api_platform.doctrine.orm.search_filter']
         ),
         new Post(
             security: 'is_granted("ROLE_USER_STUDENT")' 
@@ -66,6 +70,8 @@ use Doctrine\ORM\Mapping as ORM;
         'groups' => ['profile:write']
     ],
 )]
+#[ApiFilter(SearchFilter::class, properties: ['userUniq', 'userName'])]
+#[ApiFilter(OrderFilter::class, properties: ['id'])]
 class UserProfileApi
 {
     public function __construct()
@@ -78,11 +84,11 @@ class UserProfileApi
 
     // #[Groups(["read_customer"])]
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
-    #[Groups(['profile:read'])]
+    #[Groups(['profile:read', 'trainingsession:read'])]
     #[ApiProperty(identifier: true)] // readable:false, 
     public ?int $id = null;
 
-    #[Groups(['profile:read'])]
+    #[Groups(['profile:read', 'trainingsession:read'])]
     public ?string $username = null;
 
     #[Groups(['profile:read'])]

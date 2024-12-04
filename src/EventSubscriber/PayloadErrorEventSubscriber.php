@@ -2,14 +2,17 @@
 
 namespace App\EventSubscriber;
 
-use Symfony\Component\HttpKernel\Event\ExceptionEvent;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
-use Symfony\Component\Validator\Exception\ValidationFailedException;
+use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use ApiPlatform\Symfony\EventListener\EventPriorities;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
+use Symfony\Component\Validator\Exception\ValidationFailedException;
 // use ExceptionInterface
 
 class PayloadErrorEventSubscriber implements EventSubscriberInterface
@@ -17,7 +20,7 @@ class PayloadErrorEventSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            ExceptionEvent::class => 'onExceptionEvent'
+            ExceptionEvent::class => 'onExceptionEvent',
         ];
     }
 

@@ -26,7 +26,7 @@ services:
             $transferEventLogger: '@monolog.logger.TransferEvent'
             $subscriptionEventLogger: '@monolog.logger.SubscriptionEvent'
 
-
+    
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -36,6 +36,13 @@ services:
             - '../src/DependencyInjection/'
             # - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\EventListener\ExceptionListener:
+        tags:
+            - { 
+                name:   kernel.event_listener,
+                event:  kernel.exception
+            }
 
     Lexik\Bundle\JWTAuthenticationBundle\Security\Authenticator\JWTAuthenticator:
         autowire: true
@@ -98,8 +105,7 @@ services:
     App\http_kernel\cors_subscriber:
         class: App\EventSubscriber\HttpKernel\CorsSubscriber
         tags:
-            - { name: kernel.event_subscriber }
-            
+            - { name: kernel.event_subscriber }            
 
     App\http_kernel\Authorization_subscriber: #delete this
         class: App\EventSubscriber\HttpKernel\AuthorizationSubscriber

@@ -72,6 +72,7 @@ security:
         - { path: ^/api/v1/order/payment, roles: ROLE_USER_STUDENT }
         - { path: ^/api/v1/order/create, roles: ROLE_USER_STUDENT }
         - { path: ^/api/subscribe/events, roles: ROLE_USER_STUDENT }
+        - { path: ^/api/users_subscribed_to_events', roles: ROLE_USER_SIFU }
         # - { path: ^/api/user, roles: ROLE_USER_SIFU }
 
 when@test:

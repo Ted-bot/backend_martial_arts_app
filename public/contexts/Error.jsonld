@@ -1,0 +1,11 @@
+{
+    "@context": {
+        "hydra": "http://www.w3.org/ns/hydra/core#",
+        "hydra:Error": {
+            "@id": "hydra:Error",
+            "@type": "@id"
+        },
+        "hydra:title" : "hydra:title",
+        "hydra:description": "hydra:description"
+    }
+}
