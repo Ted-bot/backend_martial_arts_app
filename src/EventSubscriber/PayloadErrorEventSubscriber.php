@@ -15,7 +15,8 @@ use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 // use ExceptionInterface
 
-class PayloadErrorEventSubscriber implements EventSubscriberInterface
+// note:delete this already created listener for api-platform V4
+class PayloadErrorEventSubscriber implements EventSubscriberInterface 
 {
     public static function getSubscribedEvents(): array
     {

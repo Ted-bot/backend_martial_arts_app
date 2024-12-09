@@ -49,6 +49,11 @@ class ExceptionListener
         //     $event->setResponse($response);
         // }
 
+        
+        if($event->getThrowable()->getPrevious() instanceof ResourceNotFoundException){
+            $event->setResponse(new JsonResponse(['message' => $exception->getPrevious()->getMessage()], JsonResponse::HTTP_NOT_FOUND));
+        }
+        
         if($exception instanceof HttpExceptionInterface)
         {
             $statusCode = $exception instanceof HttpExceptionInterface ? $exception->getStatusCode() : JsonResponse::HTTP_INTERNAL_SERVER_ERROR; 
@@ -77,11 +82,6 @@ class ExceptionListener
     
             $event->setResponse($response, JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
-
-        if($event->getThrowable()->getPrevious() instanceof ResourceNotFoundException){
-            $event->setResponse(new JsonResponse(['message' => $exception->getPrevious()->getMessage()], JsonResponse::HTTP_NOT_FOUND));
-        }
-        
         // dd(["errorMessages" => $errorMessages, "event" => $event]);        
     }
 }

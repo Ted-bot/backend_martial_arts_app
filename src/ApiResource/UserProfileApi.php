@@ -105,7 +105,7 @@ class UserProfileApi
     public $groupStudent;
     
     // /** @var array<int, PostEventAp> */  
-    #[Groups(['profile:read'])]  
+    // #[Groups(['profile:read'])]  
     public $postEvents;
     
     /** @var PostEventApi Object */    

@@ -87,7 +87,7 @@ final class UserApi
         $this->subscriptions = new ArrayCollection();
     }
 
-    #[Groups(['user:read', 'profile:read'])]
+    #[Groups(['user:read'])]
     public ?int $id = null;
     
     #[Groups(['user:read', 'user:write'])]
