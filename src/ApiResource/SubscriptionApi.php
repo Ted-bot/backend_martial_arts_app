@@ -26,7 +26,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
     shortName: 'subscription',
     provider: EntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
-    paginationItemsPerPage: 10,
+    paginationClientItemsPerPage: true,
+    // paginationItemsPerPage: 10,
     stateOptions: new Options(entityClass: Subscription::class),
     normalizationContext: [
         'groups' => ['subscription:read']

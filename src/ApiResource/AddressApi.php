@@ -2,24 +2,18 @@
 
 namespace App\ApiResource;
 
-use App\Entity\User;
 use App\Entity\Address;
 use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\Put;
 use App\Enum\CountryTypeEnum;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
 use App\ApiResource\UserAddressApi;
-use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use App\State\EntityToDtoStateProvider;
 use ApiPlatform\Doctrine\Orm\State\Options;
 use App\State\EntityClassDtoStateProcessor;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\Common\Collections\ArrayCollection;
-use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
 use Doctrine\ORM\Mapping as ORM;
 
 

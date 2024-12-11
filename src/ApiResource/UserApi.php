@@ -5,7 +5,6 @@ namespace App\ApiResource;
 use App\Entity\User;
 use DateTimeImmutable;
 // use App\Filter\SearchFilter;
-use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Link;
@@ -27,7 +26,9 @@ use ApiPlatform\Metadata\QueryParameter;
 use ApiPlatform\Doctrine\Orm\State\Options;
 use App\State\EntityClassDtoStateProcessor;
 use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use Doctrine\Common\Collections\ArrayCollection;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
@@ -37,7 +38,8 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
     shortName: 'User',
     provider: EntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
-    paginationItemsPerPage: 10,
+    paginationClientItemsPerPage: true,
+    // paginationItemsPerPage: 10,
     stateOptions: new Options(entityClass: User::class),
     operations: [
         new Get(    
@@ -47,7 +49,7 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
         ),
         new GetCollection(
             security: 'is_granted("ROLE_USER_SIFU")',     
-            filters: ['api_platform.doctrine.orm.boolean_filter']
+            filters: ['api_platform.doctrine.orm.order_filter', 'api_platform.doctrine.orm.search_filter'] //  'api_platform.doctrine.orm.boolean_filter',
         ),
         new Post(
             security: 'is_granted("PUBLIC_ACCESS")',
@@ -75,7 +77,8 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
         'groups' => ['user:write']
     ],
 )]// 
-#[ApiFilter(SearchFilter::class, properties: ['firstName', 'lastName', 'email', 'dateOfBirth','roles', 'gender', 'phoneNumber', 'location'])] // #[QueryParameter(key: ':firstName', filter: SearchFilter::class)]
+#[ApiFilter(OrderFilter::class, properties: ['id'])] //
+#[ApiFilter(SearchFilter::class, properties: ['firstName' => 'partial', 'lastName' => 'partial', 'email' => 'partial', 'dateOfBirth' => 'partial','roles' => 'partial', 'gender' => 'partial', 'phoneNumber' => 'partial', 'location' => 'partial'])] // #[QueryParameter(key: ':firstName', filter: SearchFilter::class)]
 final class UserApi 
 {
     public function __construct()

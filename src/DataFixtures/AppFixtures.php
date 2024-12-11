@@ -117,6 +117,7 @@ class AppFixtures extends Fixture
 
         $testuserProfile = new UserProfile();
         $testuserProfile->setUserUniq($user);
+        $testuserProfile->setUserName($user->getFirstName());
         $manager->persist($testuserProfile);
         $manager->flush();        
 

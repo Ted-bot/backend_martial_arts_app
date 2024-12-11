@@ -24,9 +24,10 @@ use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ApiResource(
     shortName: 'profile',
+    paginationClientItemsPerPage: true,
     provider: EntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
-    paginationItemsPerPage: 10,
+    // paginationItemsPerPage: 10,
     stateOptions: new Options(entityClass: UserProfile::class),
     operations: [
         new Get(

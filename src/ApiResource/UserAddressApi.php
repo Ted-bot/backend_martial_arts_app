@@ -31,7 +31,8 @@ use App\State\UserAdressEntityToDtoStateProvider;
     shortName: 'UserAddress',
     provider: UserAdressEntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
-    paginationItemsPerPage: 10,
+    paginationClientItemsPerPage: true,
+    // paginationItemsPerPage: 10,
     // normalizationContext: ['groups' =>  ['read_customer']],
     stateOptions: new Options(entityClass: UserAddress::class),
     operations: [

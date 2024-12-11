@@ -3,17 +3,14 @@
 namespace App\ApiResource;
 
 use DateTime;
-use App\Entity\User;
-use DateTimeImmutable;
-use DateTimeInterface;
 use App\Entity\PostEvent;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
-use App\Enum\CountryTypeEnum;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiFilter;
 use App\ApiResource\UserProfileApi;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
@@ -21,10 +18,13 @@ use ApiPlatform\Metadata\GetCollection;
 use App\State\EntityToDtoStateProvider;
 use ApiPlatform\Doctrine\Orm\State\Options;
 use App\State\EntityClassDtoStateProcessor;
-use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use Doctrine\Common\Collections\ArrayCollection;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
 use Symfony\Component\Serializer\Attribute\Groups;
-use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
+use ApiPlatform\Doctrine\Common\Filter\DateFilterInterface;
 
 
 #[ApiResource(
@@ -32,12 +32,15 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
     description: 'Calendar Post Entity',
     provider: EntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
-    paginationItemsPerPage: 10,
+    paginationClientItemsPerPage: true,
+    // paginationItemsPerPage: 10,
     // security: 'is_granted("ROLE_USER_STUDENT")',
     stateOptions: new Options(entityClass: PostEvent::class),
     operations: [
         new Get(),
-        new GetCollection(),
+        new GetCollection(
+            filters: ['api_platform.doctrine.orm.date_filter','api_platform.doctrine.orm.order_filter', 'api_platform.doctrine.orm.boolean_filter', 'api_platform.doctrine.orm.search_filter'] //  'api_platform.doctrine.orm.boolean_filter',
+        ),
         new Post(
             security: 'is_granted("ROLE_USER_SIFU")',
         ),
@@ -58,6 +61,10 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
         'groups' => ['trainingsession:write']
     ],
 )]
+#[ApiFilter(OrderFilter::class, properties: ['id'])] //
+#[ApiFilter(SearchFilter::class, properties: ['title' => 'partial', 'description' => 'partial', 'relatedUser' => 'partial'])] // #[QueryParameter(key: ':firstName', filter: SearchFilter::class)]
+#[ApiFilter(BooleanFilter::class, properties: ['isPublished', 'allDay'])]
+#[ApiFilter(DateFilter::class, properties: ['startDate' => 'partial','endDate' => 'partial', 'createdAt' => 'exact'] )] //,strategy: DateFilterInterface::EXCLUDE_NULL
 class PostEventApi 
 {
     public function __construct()
@@ -96,7 +103,7 @@ class PostEventApi
     public $endDate = null;
 
     #[Groups(['trainingsession:read', 'profile:read','trainingsession:write'])]
-    public ?bool $allDay = null;
+    public ?bool $allDay = false;
     
     #[Groups(['trainingsession:read', 'profile:read','trainingsession:write'])]
     /**  @var array<int, UserProfileApi> */

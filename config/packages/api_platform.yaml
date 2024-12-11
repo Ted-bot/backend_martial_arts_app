@@ -35,6 +35,11 @@ api_platform:
             rfc_7807_compliant_errors: false
             # standard_put: true
     # keep_legacy_inflector: false
+        pagination_client_enabled: true
+    collection:
+        pagination:
+            items_per_page_parameter_name: itemsPerPage
+            enabled_parameter_name: pagination
     use_symfony_listeners: true
     eager_loading:
         enabled: false

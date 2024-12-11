@@ -2,34 +2,21 @@
 
 namespace App\Controller\Api;
 
-use Throwable;
 use DateTimeZone;
 use App\Class\Role;
 use App\Entity\User;
-use DateTimeImmutable;
 use App\Entity\PostEvent;
-use Brick\Math\BigDecimal;
-use App\Entity\UserProfile;
-use App\Entity\Subscription;
-use App\Entity\TokenManager;
-use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
-use App\Dto\Main\ResponseDto;
 use App\Dto\Event\CalendarItemDto;
-use App\Enum\MolliePaymentStatusEnum;
 use App\Repository\PostEventRepository;
 use App\Repository\UserProfileRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use function PHPUnit\Framework\assertInstanceOf;
 
 #[AsController]
 class UserCalendarActionController extends AbstractController
