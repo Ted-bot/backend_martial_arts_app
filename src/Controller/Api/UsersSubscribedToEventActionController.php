@@ -55,7 +55,7 @@ class UsersSubscribedToEventActionController extends AbstractController
         $this->denyAccessUnlessGranted(Role::ROLE_USER_SIFU);
 
 
-        dd(['request' => $request, 'server' => $_SERVER]);
+        // dd(['request' => $request, 'server' => $_SERVER]);
         $eventId = $request->getPayload()->get('event_id');        
         $addOrRemoveEvent = $request->getPayload()->get('select');  
         $eventIsNumber = is_numeric($eventId);

@@ -9,6 +9,7 @@ parameters:
     mollie.key: '%env(MOLLIE_WEBHOOK_SECRET)%'
     'string $apiTestKey': '%mollie.test%'
     'string $apiLiveKey': '%mollie.live%'
+    elasticsearch.host : '%env(ELASTICSEARCH_HOST)%'
 
 when@dev:
     parameters:

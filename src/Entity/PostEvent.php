@@ -53,11 +53,11 @@ class PostEvent
 
     // #[Groups(['trainingsession:read', 'profile:read'])]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private DateTimeInterface|DateTime $startDate;
+    private DateTime $startDate; //DateTimeInterface|
 
     // #[Groups(['trainingsession:read', 'profile:read'])]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private DateTimeInterface|DateTime $endDate;
+    private DateTime $endDate; //DateTimeInterface|
 
     // #[Groups(['trainingsession:read', 'profile:read'])]
     #[ORM\Column(nullable: true)]
@@ -157,14 +157,14 @@ class PostEvent
     }
 
     // #[Groups('trainingsession:write')]
-    public function setStartDate(DateTimeInterface|DateTime $startDate): static
+    public function setStartDate(DateTime $startDate): static
     {
-        $startDate = $startDate instanceof DateTime ?
-        $startDate :
-        DateTimeImmutable::createFromMutable($startDate);
+        $startDate = $startDate instanceof DateTime
+        ? $startDate 
+        : DateTimeImmutable::createFromMutable($startDate);  
         
         $this->startDate = $startDate;
-
+        // $this->startDate = $startDate->setTimezone(new DateTimeZone('Europe/Amsterdam'));
         return $this;
     }
 

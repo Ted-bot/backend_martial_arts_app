@@ -29,6 +29,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Doctrine\ORM\EntityManagerInterface as EntityManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use function PHPUnit\Framework\assertInstanceOf;
 
 #[AsController]
 class UserCalendarActionController extends AbstractController
@@ -67,20 +68,26 @@ class UserCalendarActionController extends AbstractController
         
         $responseArray = [];
 
+        /** @var $publishedEvent PostEvent */
         foreach($publishedBlackDragonEvents as $publishedEvent){
-            $response = new CalendarItemDto();
-            $response->id = $publishedEvent->getId();
-            $response->description = $publishedEvent->getDescription();
-            $response->title = $publishedEvent->getTitle();
-            $response->startDate = $publishedEvent->getStartDate();
-            $response->endDate = $publishedEvent->getEndDate();
-            $response->resource = $publishedEvent->getDescription();
+            if($publishedEvent instanceof PostEvent) {
+                
+                $date_gmt = clone $publishedEvent->getStartDate();
+                $date_gmt->setTimezone(new DateTimeZone('Europe/Amsterdam'));
 
-            foreach($userSubcribedEvents as $userScribedEvent){
-                if($publishedEvent->getId() === $userScribedEvent->getId()) $response->selectedEvent = $publishedEvent->getId(); 
+                $response = new CalendarItemDto();
+                $response->id = $publishedEvent->getId();
+                $response->description = $publishedEvent->getDescription();
+                $response->title = $publishedEvent->getTitle();
+                $response->startDate = $date_gmt;
+                $response->endDate = $publishedEvent->getEndDate();
+                $response->resource = $publishedEvent->getDescription();
+
+                foreach($userSubcribedEvents as $userScribedEvent){
+                    if($publishedEvent->getId() === $userScribedEvent->getId()) $response->selectedEvent = $publishedEvent->getId(); 
+                }
+                $responseArray[] = $response;
             }
-
-            $responseArray[] = $response;
         }
 
         // dd(['userAgenda' => $responseArray]);

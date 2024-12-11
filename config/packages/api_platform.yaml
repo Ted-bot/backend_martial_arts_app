@@ -2,6 +2,10 @@ api_platform:
     title: Amsterdam Martial Arts API Platform
     description: API for martial arts school
     version: 1.0.0
+    mapping:
+        paths: ['%kernel.project_dir%/src/ApiResource']
+    elasticsearch:
+        hosts: ['%env(ELASTICSEARCH_HOST)%']
     # validator:
     #     legacy_validation_exception: true
     formats:

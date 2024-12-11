@@ -2,39 +2,25 @@
 
 namespace App\ApiResource;
 
-use App\Entity\User;
-use DateTimeImmutable;
-use App\Entity\Product;
-use App\Entity\ShopOrder;
-use App\Entity\UserAddress;
 use App\Entity\UserProfile;
 use App\ApiResource\UserApi;
-use App\Entity\Subscription;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
-use App\ApiResource\GroupApi;
-use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
-use App\ApiResource\ProductApi;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
-use App\ApiResource\ShopOrderApi;
 use ApiPlatform\Metadata\ApiFilter;
-use App\ApiResource\UserAddressApi;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use App\State\EntityToDtoStateProvider;
 use ApiPlatform\Doctrine\Orm\State\Options;
 use App\State\EntityClassDtoStateProcessor;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use Symfony\Component\Serializer\Attribute\Groups;
-use Symfony\Component\Validator\Constraints\NotBlank;
-use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
 
 #[ApiResource(
     shortName: 'profile',
@@ -54,7 +40,9 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
             security: 'is_granted("ROLE_USER_STUDENT")' 
         ),
         new Patch(
-            security: 'is_granted("ROLE_USER_STUDENT")' 
+            security: 'is_granted("ROLE_USER_STUDENT")',
+            // uriTemplate: '/trainingsessions/{id}',
+            // uriVariables: 'id'
         ),
         new Put(
             security: 'is_granted("ROLE_USER_SIFU")'
@@ -70,7 +58,7 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
         'groups' => ['profile:write']
     ],
 )]
-#[ApiFilter(SearchFilter::class, properties: ['userUniq', 'userName'])]
+#[ApiFilter(SearchFilter::class, properties: ['userUniq' => 'exact', 'username' => 'partial'])]
 #[ApiFilter(OrderFilter::class, properties: ['id'])]
 class UserProfileApi
 {
@@ -88,16 +76,16 @@ class UserProfileApi
     #[ApiProperty(identifier: true)] // readable:false, 
     public ?int $id = null;
 
-    #[Groups(['profile:read', 'trainingsession:read'])]
+    #[Groups(['profile:read', 'profile:write', 'trainingsession:read'])]
     public ?string $username = null;
 
-    #[Groups(['profile:read'])]
+    #[Groups(['profile:read', 'profile:write'])]
     public ?string $description = null;
 
-    #[Groups(['profile:read'])]
+    #[Groups(['profile:read', 'profile:write'])]
     public ?string $websiteUrl = null;
 
-    #[Groups(['profile:read'])]    
+    #[Groups(['profile:read', 'profile:write'])]    
     /** @var UserApi $userUniq */
     public $userUniq = null;
     
@@ -112,6 +100,7 @@ class UserProfileApi
     public $postEvent;
     
     /** @var array<int, PostEventApi> */
+    #[Groups(['profile:read', 'profile:write'])]   
     public $subscribeToEvents;
     
     /** @var PostEventApi Object */    
