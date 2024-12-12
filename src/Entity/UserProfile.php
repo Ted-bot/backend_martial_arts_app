@@ -44,7 +44,7 @@ class UserProfile
     /**
      * @var Collection<int, PostEvent>
      */
-    #[ORM\OneToMany(targetEntity: PostEvent::class, mappedBy: 'relatedUser')]
+    #[ORM\OneToMany(targetEntity: PostEvent::class, mappedBy: 'relatedUser')] //, cascade: ['persist', 'remove'], orphanRemoval: true
     private Collection $postEvents;
 
     /**

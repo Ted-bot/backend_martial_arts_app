@@ -6,7 +6,6 @@ use App\Entity\User;
 use App\Entity\Group;
 use App\Entity\PostEvent;
 use App\Entity\UserProfile;
-use App\ApiResource\UserApi;
 use App\Entity\TokenManager;
 use App\Repository\UserProfileRepository;
 use App\ApiResource\UserProfileApi;
@@ -15,7 +14,6 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfonycasts\MicroMapper\MapperInterface;
 use Symfonycasts\MicroMapper\MicroMapperInterface;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
-
 
 #[AsMapper(from: UserProfileApi::class, to: UserProfile::class)]
 class UserProfileApiToEntityMapper implements MapperInterface
@@ -69,35 +67,42 @@ class UserProfileApiToEntityMapper implements MapperInterface
         }
 
         if(!empty($dto->subscribeToEvents)) {
+            
             $subscribeToEvents = [];
             foreach($dto->subscribeToEvents as $event){
-                $events = $this->microMapper->map($event, PostEvent::class, [
-                    MicroMapperInterface::MAX_DEPTH => 0
+                $subscribeToEvents[] = $this->microMapper->map($event, PostEvent::class, [
+                    MicroMapperInterface::MAX_DEPTH => 1
                 ]); // note: 
             }
+            // dd(['subscribeToEvents' => $subscribeToEvents]);
             $this->propertyAccessor->setValue($entity, 'subscribeToEvents', $subscribeToEvents);
         }
 
-        if(!empty($dto->postEvents)) {
-            $postEvents = [];
-            foreach($dto->postEvents as $event){
-                $postEvents = $this->microMapper->map($dto->postEvents, PostEvent::class, [
-                    MicroMapperInterface::MAX_DEPTH => 0
-                ]); // note: 
-            }
-            $this->propertyAccessor->setValue($entity, 'postEvents', $postEvents);
-        }
+        // note: $dto->postEvents conflicts with $dto->subscribeToEvents because both related to same resource PostEvents
+        // disable code to : (1 - prevent error because relatedUser in not allowd to bu null and prevent), (2 - set empty all subscribed (post)events user subscribed) 
+        // if(!empty($dto->postEvents)) {
+        //     $postEvents = [];
+        //     foreach($dto->postEvents as $event){
+        //         $postEvents[] = $this->microMapper->map($event, PostEvent::class, [
+        //             MicroMapperInterface::MAX_DEPTH => 0
+        //         ]); // note: 
+        //     }
+        //     $this->propertyAccessor->setValue($entity, 'postEvents', $postEvents);
+        // }
 
         if(!empty($dto->tokenManagers)){
             $tokenManagers = [];
             foreach($dto->tokenManagers as $tokenManager){
-                $entity->addTokenManager($this->microMapper->map($tokenManager, TokenManager::class, [
+                $tokenManagers[] = $this->microMapper->map($tokenManager, TokenManager::class, [
                     MicroMapperInterface::MAX_DEPTH => 0
-                ])); // note: delete not needed 
+                ]);
+
+                // $entity->addTokenManager($this->microMapper->map($tokenManager, TokenManager::class, [
+                //     MicroMapperInterface::MAX_DEPTH => 0
+                // ])); // note: delete not needed 
             }
             $this->propertyAccessor->setValue($entity, 'tokenManagers', $tokenManagers);
         }
-        // dd(['entity'=> $entity, 'dto' => $dto]);
 
         return $entity;
     }

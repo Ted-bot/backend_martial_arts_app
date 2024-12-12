@@ -59,7 +59,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
         'groups' => ['profile:write']
     ],
 )]
-#[ApiFilter(SearchFilter::class, properties: ['userUniq' => 'exact', 'username' => 'partial'])]
+#[ApiFilter(SearchFilter::class, properties: ['userUniq' => 'exact', 'username' => 'partial', 'description' => 'partial'])]
 #[ApiFilter(OrderFilter::class, properties: ['id'])]
 class UserProfileApi
 {
@@ -93,15 +93,15 @@ class UserProfileApi
     /** @var UserProfileApi Object > */    
     public $groupStudent;
     
-    // /** @var array<int, PostEventAp> */  
-    // #[Groups(['profile:read'])]  
+    /** @var array<int, PostEventApi> */  
+    #[Groups(['profile:read'])]  
     public $postEvents;
     
     /** @var PostEventApi Object */    
     public $postEvent;
     
     /** @var array<int, PostEventApi> */
-    #[Groups(['profile:read', 'profile:write'])]   
+    #[Groups(['profile:read'])]   
     public $subscribeToEvents;
     
     /** @var PostEventApi Object */    

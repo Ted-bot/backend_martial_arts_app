@@ -15,7 +15,6 @@ use App\ApiResource\UserProfileApi;
 use App\ApiResource\SubscriptionApi;
 use Symfonycasts\MicroMapper\AsMapper;
 use App\Repository\UserAddressRepository;
-use Doctrine\Common\Collections\Criteria;
 use Symfonycasts\MicroMapper\MapperInterface;
 use Symfonycasts\MicroMapper\MicroMapperInterface;
 

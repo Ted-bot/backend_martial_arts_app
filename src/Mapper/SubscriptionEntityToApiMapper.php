@@ -2,10 +2,8 @@
 
 namespace App\Mapper;
 
-use App\Entity\Product;
 use App\ApiResource\UserApi;
 use App\Entity\Subscription;
-use App\Entity\TokenManager;
 use App\ApiResource\ProductApi;
 use App\ApiResource\SubscriptionApi;
 use App\ApiResource\TokenManagerApi;

@@ -43,8 +43,8 @@ class PostEvent
     private ?bool $isPublished = true;
 
     // #[Groups(['trainingsession:read', 'profile:read'])]
-    #[ORM\ManyToOne(inversedBy: 'postEvents', fetch: 'EAGER')]
-    #[ORM\JoinColumn(nullable: false,)]
+    #[ORM\ManyToOne(inversedBy: 'postEvents')] // , fetch: 'EAGER'
+    #[ORM\JoinColumn(nullable: false)]
     private ?UserProfile $relatedUser = null;
 
     // #[Groups(['trainingsession:read', 'profile:read'])]

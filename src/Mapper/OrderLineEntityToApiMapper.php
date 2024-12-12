@@ -2,9 +2,7 @@
 
 namespace App\Mapper;
 
-use App\Entity\Product;
 use App\Entity\OrderLine;
-use App\Entity\ShopOrder;
 use App\ApiResource\ProductApi;
 use App\ApiResource\OrderLineApi;
 use App\ApiResource\ShopOrderApi;

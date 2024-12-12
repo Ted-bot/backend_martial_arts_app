@@ -2,7 +2,6 @@
 
 namespace App\Mapper;
 
-use App\Entity\User;
 use App\Entity\PostEvent;
 use App\Entity\UserProfile;
 use App\ApiResource\PostEventApi;

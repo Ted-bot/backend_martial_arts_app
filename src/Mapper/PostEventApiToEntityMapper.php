@@ -2,7 +2,6 @@
 
 namespace App\Mapper;
 
-use App\ApiResource\UserProfileApi;
 use App\Entity\User;
 use App\Entity\PostEvent;
 use App\Entity\UserProfile;
@@ -60,8 +59,6 @@ class PostEventApiToEntityMapper implements MapperInterface
         $entity->setStartDate($dto->startDate);
         $entity->setEndDate($dto->endDate);
         $entity->setAllDay($dto->allDay);
-
-        // dd(['get subscribedBy' => $dto->subscribedBy]);
 
         if($dto->subscribedBy !== null){
             $entity->addSubscribe($this->microMapper->map($dto->subscribedBy, UserProfile::class, [

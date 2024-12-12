@@ -2,9 +2,7 @@
 
 namespace App\Mapper;
 
-use App\Entity\User;
 use App\Entity\ShopOrder;
-use App\Entity\UserAddress;
 use App\ApiResource\UserApi;
 use App\ApiResource\ShopOrderApi;
 use App\ApiResource\UserAddressApi;

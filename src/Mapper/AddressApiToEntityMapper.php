@@ -2,10 +2,8 @@
 
 namespace App\Mapper;
 
-use App\Entity\User;
 use App\Entity\Address;
 use App\Entity\UserAddress;
-use App\Enum\CountryTypeEnum;
 use App\ApiResource\AddressApi;
 use App\Repository\AddressRepository;
 use Symfonycasts\MicroMapper\AsMapper;

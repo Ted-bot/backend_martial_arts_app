@@ -2,14 +2,11 @@
 
 namespace App\Mapper;
 
-use App\Entity\Product;
-use App\Entity\VatRate;
 use App\Entity\ProductVat;
 use App\ApiResource\ProductApi;
 use App\ApiResource\VatRateApi;
 use App\ApiResource\ProductVatApi;
 use Symfonycasts\MicroMapper\AsMapper;
-use App\Repository\ProductVatRepository;
 use Symfonycasts\MicroMapper\MapperInterface;
 use Symfonycasts\MicroMapper\MicroMapperInterface;
 
