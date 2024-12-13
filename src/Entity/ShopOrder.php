@@ -22,23 +22,6 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Doctrine\Common\Collections\Criteria;
 
 #[ORM\Entity(repositoryClass: ShopOrderRepository::class)]
-#[ApiResource(
-    shortName: 'shopOrder',
-    description: 'User ShopOrder',
-    operations: [
-        new Get(),
-        new GetCollection(),
-        new Post(),
-        new Put(),
-        new Patch(),
-    ],
-    normalizationContext: [
-        'groups' => ['shopOrder:read']
-    ],
-    denormalizationContext: [
-        'groups' => ['traishopOrder:write']
-    ],
-)]
 class ShopOrder
 {
     #[ORM\Id]

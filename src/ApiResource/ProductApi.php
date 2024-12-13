@@ -7,16 +7,17 @@ use App\Entity\Product;
 use App\ApiResource\UserApi;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\GetCollection;
 use App\Enum\CategoryTypeEnum;
 use App\Enum\CurrencyTypeEnum;
-use ApiPlatform\Metadata\Patch;
-use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use App\ApiResource\OrderLineApi;
 use App\Enum\SubscriptionTypeEnum;
 use App\ApiResource\SubscriptionApi;
 use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\GetCollection;
 use App\State\EntityToDtoStateProvider;
 use App\Enum\SubscriptionLengthTypeEnum;
 use ApiPlatform\Doctrine\Orm\State\Options;
@@ -26,7 +27,9 @@ use Symfony\Component\Serializer\Attribute\Groups;
 
 
 #[ApiResource(
-    // shortName: 'product',
+    shortName: 'product',
+    description: 'Available Products',
+    // filters: ['app.product.search_filter'],
     provider: EntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
     paginationClientItemsPerPage: true,
@@ -43,7 +46,10 @@ use Symfony\Component\Serializer\Attribute\Groups;
     ],
     // normalizationContext: [
     //     'groups' => ['product:read']
-    //         ],
+    // ],
+    // denormalizationContext: [
+    //     'groups' => ['product:write']
+    // ],
 )]
 class ProductApi 
 {

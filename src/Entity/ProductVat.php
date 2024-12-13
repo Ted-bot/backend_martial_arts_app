@@ -9,7 +9,6 @@ use App\Repository\ProductVatRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ProductVatRepository::class)]
-#[ApiResource]
 class ProductVat
 {
     #[ORM\Id]

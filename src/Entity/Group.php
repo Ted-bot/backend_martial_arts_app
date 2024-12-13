@@ -17,25 +17,6 @@ use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: GroupRepository::class)]
 #[ORM\Table(name: '`group`')]
-#[ApiResource(
-    shortName: 'class',
-    description: 'Group Entity',
-    operations: [
-        new Get(),
-        new GetCollection(),
-        new Post(),
-        new Patch(),
-        new Put(),
-        new Delete(),
-    ],
-    normalizationContext: [
-        'groups' => ['class:read']
-    ],
-    denormalizationContext: [
-        'groups' => ['class:write']
-    ],
-    
-)]
 class Group
 {
     #[ORM\Id]

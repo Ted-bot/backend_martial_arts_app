@@ -79,6 +79,7 @@ class UserProfileApiToEntityMapper implements MapperInterface
         }
 
         // note: $dto->postEvents conflicts with $dto->subscribeToEvents because both related to same resource PostEvents
+        // solution make IRI of every postEvent, tricky is making sure if oke to casade delete object -> orpanRemoval
         // disable code to : (1 - prevent error because relatedUser in not allowd to bu null and prevent), (2 - set empty all subscribed (post)events user subscribed) 
         // if(!empty($dto->postEvents)) {
         //     $postEvents = [];
@@ -90,19 +91,21 @@ class UserProfileApiToEntityMapper implements MapperInterface
         //     $this->propertyAccessor->setValue($entity, 'postEvents', $postEvents);
         // }
 
-        if(!empty($dto->tokenManagers)){
-            $tokenManagers = [];
-            foreach($dto->tokenManagers as $tokenManager){
-                $tokenManagers[] = $this->microMapper->map($tokenManager, TokenManager::class, [
-                    MicroMapperInterface::MAX_DEPTH => 0
-                ]);
+        // note: by commenting this out will prevent tokenManagers to cause error because it tries to give empty [] need to fix this somehow
+        // solution make IRI of every TokenManager, tricky is making sure if oke to casade delete object -> orpanRemoval
+        // if(!empty($dto->tokenManagers)){
+        //     $tokenManagers = [];
+        //     foreach($dto->tokenManagers as $tokenManager){
+        //         $tokenManagers[] = $this->microMapper->map($tokenManager, TokenManager::class, [
+        //             MicroMapperInterface::MAX_DEPTH => 0
+        //         ]);
 
-                // $entity->addTokenManager($this->microMapper->map($tokenManager, TokenManager::class, [
-                //     MicroMapperInterface::MAX_DEPTH => 0
-                // ])); // note: delete not needed 
-            }
-            $this->propertyAccessor->setValue($entity, 'tokenManagers', $tokenManagers);
-        }
+        //         // $entity->addTokenManager($this->microMapper->map($tokenManager, TokenManager::class, [
+        //         //     MicroMapperInterface::MAX_DEPTH => 0
+        //         // ])); // note: delete not needed 
+        //     }
+        //     $this->propertyAccessor->setValue($entity, 'tokenManagers', $tokenManagers);
+        // }
 
         return $entity;
     }

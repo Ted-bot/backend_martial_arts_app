@@ -13,7 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 
 #[ApiResource(
-    // shortName: 'vatrate',
+    shortName: 'VatRate',
     provider: EntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
     paginationItemsPerPage: 10,

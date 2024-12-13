@@ -153,7 +153,9 @@ class PostEventRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('p')
             ->select('p.startDate')
             ->addSelect('p.endDate')
+            ->addSelect('ownerProfile.username AS trainerName') //get id trainer/ owner
             ->leftJoin('p.subscribe', 'userProfile')
+            ->leftJoin('p.relatedUser', 'ownerProfile')
             ->where('userProfile.userUniq = :id')
             ->addCriteria(self::findUserSubscribedPublishedEventPostEvents('gt'))
             ->setParameter('id',$id)

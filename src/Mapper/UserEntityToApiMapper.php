@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Entity\Product;
 use App\Entity\ShopOrder;
 use App\Entity\UserAddress;
+use App\Entity\UserProfile;
 use App\ApiResource\UserApi;
 use App\Entity\Subscription;
 use App\ApiResource\ProductApi;
@@ -15,6 +16,7 @@ use App\ApiResource\UserProfileApi;
 use App\ApiResource\SubscriptionApi;
 use Symfonycasts\MicroMapper\AsMapper;
 use App\Repository\UserAddressRepository;
+use App\Repository\UserProfileRepository;
 use Symfonycasts\MicroMapper\MapperInterface;
 use Symfonycasts\MicroMapper\MicroMapperInterface;
 
@@ -24,6 +26,7 @@ class UserEntityToApiMapper implements MapperInterface
     public function __construct(
         private MicroMapperInterface $microMapper,
         private UserAddressRepository $uAddressRepo,
+        private UserProfileRepository $profileRepo,
     ){}
 
     public function load(object $from, string $toClass, array $context): object
@@ -34,7 +37,7 @@ class UserEntityToApiMapper implements MapperInterface
         $dto = new UserApi();
         $dto->id = $entity->getId();
 
-        $userAddresses = $entity->getUserAddresses();
+        // $userAddresses = $entity->getUserAddresses();
 
 //         $criteria = Criteria::create()
 //             ->where(Criteria::expr()->eq("isDefault", "true"))
@@ -65,7 +68,7 @@ class UserEntityToApiMapper implements MapperInterface
         $dto->firstName = $entity->getFirstName();
         $dto->lastName = $entity->getLastName();
         $dto->email = $entity->getEmail();
-        // $dto->password = $entity->getPassword();
+        $dto->password = $entity->getPassword();
         $dto->phoneNumber = $entity->getPhoneNumber();
         $dto->gender = $entity->getGender();
         $dto->dateOfBirth = $entity->getDateOfBirth();
@@ -75,6 +78,13 @@ class UserEntityToApiMapper implements MapperInterface
         $dto->createdAt = $entity->getCreatedAt();
         $dto->libReactCity = $entity->getLibReactCity();
         $dto->libReactState = $entity->getLibReactState();
+        
+        /**
+         * @var UserProfile $profile
+         */
+        $username = $this->profileRepo->findOneBy(['userUniq' => $entity->getId()]);
+
+        $dto->username = $username?->getUserName() ?? $dto->firstName;
         
         if($entity->getUserProfile()){
             $dto->userProfile = $this->microMapper->map($entity->getUserProfile(), UserProfileApi::class, [

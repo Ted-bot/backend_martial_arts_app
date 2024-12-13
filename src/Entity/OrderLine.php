@@ -14,23 +14,6 @@ use App\Repository\OrderLineRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: OrderLineRepository::class)]
-#[ApiResource(
-    shortName: 'orderline',
-    description: 'User ShopOrder',
-    operations: [
-        new Get(),
-        new GetCollection(),
-        new Post(),
-        new Put(),
-        new Patch(),
-    ],
-    normalizationContext: [
-        'groups' => ['orderline:read']
-    ],
-    denormalizationContext: [
-        'groups' => ['orderline:write']
-    ],
-)]
 class OrderLine
 {
     #[ORM\Id]

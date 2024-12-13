@@ -43,8 +43,7 @@ class VatRateApiToEntityMapper implements MapperInterface
 
         $entity->setProcent($dto->procent);
         
-        if(!empty($dto->relatedProductVat)) {
-            
+        if(!empty($dto->relatedProductVat)) {            
             $productVatArray = [];
             foreach($dto->relatedProductVat as $event){
                 $productVatArray[] = $this->microMapper->map($event, ProductVat::class, [

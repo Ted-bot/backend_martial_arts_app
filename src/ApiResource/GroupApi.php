@@ -3,6 +3,12 @@
 namespace App\ApiResource;
 
 use App\Entity\Group;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\GetCollection;
 use App\ApiResource\UserProfileApi;
 use ApiPlatform\Metadata\ApiResource;
 use App\State\EntityToDtoStateProvider;
@@ -13,24 +19,27 @@ use Doctrine\ORM\Mapping as ORM;
 
 
 #[ApiResource(
-    // shortName: 'address',
+    shortName: 'Class',
+    description: 'Group Entity',
     provider: EntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
     paginationClientItemsPerPage: true,
-    // paginationItemsPerPage: 10,
-    // security: 'is_granted("ROLE_USER_STUDENT")',
     stateOptions: new Options(entityClass: Group::class),
-    // operations: [
-    //     new Get(),
-    //     new GetCollection(),
-    //     new Post(
-    //         security: 'is_granted("PUBLIC_ACCESS")',
-    //         validationContext:['groups' => ['Default', 'postValidation']]
-    //     ),
-    //     new Patch(),
-    //     // new Put(),
-    //     new Delete(),
-    // ],
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(),
+        new Patch(),
+        new Put(),
+        new Delete(),
+    ],
+    normalizationContext: [
+        'groups' => ['class:read']
+    ],
+    denormalizationContext: [
+        'groups' => ['class:write']
+    ],
+    
 )]
 class GroupApi 
 {

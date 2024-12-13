@@ -27,9 +27,8 @@ class UserDashBoardActiveSubscriptionAction extends AbstractController
 
         /** @var User $user Object */
         $user = $this->getUser();
-        // dd(['check out' => $user->getSubscriptions()?->getValues()[0]]);
+
         if(empty($user->getSubscriptions()?->getValues())){
-            // return 'No Valid Subscription Available'; // create DTO
             return new Response('No Subscribed Events Available!', Response::HTTP_EXPECTATION_FAILED);
         }
 
@@ -38,15 +37,10 @@ class UserDashBoardActiveSubscriptionAction extends AbstractController
             ['subscriptionOwnedBy' =>  $user->getId(), 'status' => MolliePaymentStatusEnum::PAID], 
             ['createdAt' => 'DESC']
         );
-
-        // dd(['check out' => $subscription]);
         
         if($subscription === null){
         return new Response('No Subscribed Events Available!', Response::HTTP_EXPECTATION_FAILED);
-            // return 'No Valid Subscription Available'; // create DTO
         }
-
-        // dd('isWorking', $user);
         
         $userDashBoard = $this->dashboardHelper->userSubscriptionToApiDto(
             $subscription, 
@@ -55,10 +49,7 @@ class UserDashBoardActiveSubscriptionAction extends AbstractController
             $user->getLastName()            
         );
 
-        // dd('isWorking', $userDashBoard);
-
-        return $userDashBoard;        
-        // return new JsonResponse($userDashBoard);        
+        return $userDashBoard;            
     }
 }
 

@@ -7,9 +7,9 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\GetCollection;
 use App\ApiResource\ShopOrderApi;
 use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\GetCollection;
 use App\State\EntityToDtoStateProvider;
 use ApiPlatform\Doctrine\Orm\State\Options;
 use App\State\EntityClassDtoStateProcessor;
@@ -18,7 +18,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 
 #[ApiResource(
-    // shortName: 'orderline',
+    shortName: 'Orderline',
+    description: 'User ShopOrder',
     provider: EntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
     paginationClientItemsPerPage: true,
@@ -43,6 +44,12 @@ use Doctrine\ORM\Mapping as ORM;
         new Delete(
             security: 'is_granted("ROLE_USER_STUDENT")', 
         ),
+    ],
+    normalizationContext: [
+        'groups' => ['orderline:read']
+    ],
+    denormalizationContext: [
+        'groups' => ['orderline:write']
     ],
 )]
 class OrderLineApi 

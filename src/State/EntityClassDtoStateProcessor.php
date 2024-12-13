@@ -36,6 +36,12 @@ class EntityClassDtoStateProcessor implements ProcessorInterface
         assert($stateOptions instanceof Options);
         $entityClass = $stateOptions->getEntityClass();
         
+        // dd(['checkData' => $data, 'entityClass' => $entityClass]);
+        // if($operation->getMethod() === "PATCH" && $entityClass === 'App\Entity\UserProfile'){
+        //     unset($data->subscription);
+        //     // dd(['checkData' => $data]);
+        // }
+
         $entity = $this->mapDtoToEntity($data, $entityClass);
         
         if ($operation instanceof DeleteOperationInterface) {
@@ -57,7 +63,9 @@ class EntityClassDtoStateProcessor implements ProcessorInterface
         
         if($operation->getMethod() === "POST" && $entity instanceof User){
             $newProfile = new UserProfileApi();
+            $newProfile->username =  $entity->getFirstName() . '_blackdragon_student';            
             $newProfile->userUniq =  $this->mapDtoToEntity($entity, UserApi::class);            
+            // dd(['entity new User' => $entity, 'profile' => $newProfile ]);
             $userProfile = $this->microMapper->map($newProfile, UserProfile::class);
             
             $this->entityManager->persist($userProfile);

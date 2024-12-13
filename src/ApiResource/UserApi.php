@@ -99,10 +99,13 @@ final class UserApi
     #[Groups(['user:read', 'user:write'])]
     public ?string $lastName = null;
     
+    #[Groups(['user:read'])]
+    public ?string $username = null;
+    
     #[Groups(['user:read', 'user:write'])]
     public ?string $email = null;
 
-    #[ApiProperty(readable: false)]
+    // #[ApiProperty(readable: false)]
     #[Groups(['user:read','user:write'])]
     public ?string $password = "";
     

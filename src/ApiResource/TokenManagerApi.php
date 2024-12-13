@@ -9,6 +9,7 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use Symfony\Component\Uid\Uuid;
 use ApiPlatform\Metadata\Delete;
+use Doctrine\ORM\Mapping as ORM;
 use App\ApiResource\UserProfileApi;
 use App\ApiResource\SubscriptionApi;
 use ApiPlatform\Metadata\ApiResource;
@@ -16,31 +17,38 @@ use ApiPlatform\Metadata\GetCollection;
 use App\State\EntityToDtoStateProvider;
 use ApiPlatform\Doctrine\Orm\State\Options;
 use App\State\EntityClassDtoStateProcessor;
-use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
+
 
 #[ApiResource(
+    shortName: 'TokenManager',
+    description: 'Keeps Track of user spending',
+    stateOptions: new Options(entityClass: TokenManager::class),
     provider: EntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
     paginationClientItemsPerPage: true,
-    // paginationItemsPerPage: 10,
-    // security: 'is_granted("ROLE_USER_STUDENT")',
-    stateOptions: new Options(entityClass: TokenManager::class),
     operations: [
-            new Get(
-                security: 'is_granted("ROLE_USER_STUDENT")',
-            ),
-            new GetCollection(
-                security: 'is_granted("ROLE_USER_STUDENT")',
-            ),
-            new Post(
-                security: 'is_granted("ROLE_USER_STUDENT")',
-            ),
-            new Patch(
-                security: 'is_granted("ROLE_USER_STUDENT")',                
-                // validationContext:['groups' => ['Default', 'postValidation']]
-            ),
-            new Delete(),
-        ],
+        new Get(
+            security: 'is_granted("ROLE_USER_STUDENT")',
+        ),
+        new GetCollection(
+            security: 'is_granted("ROLE_USER_STUDENT")',
+        ),
+        new Post(
+            security: 'is_granted("ROLE_USER_STUDENT")',
+        ),
+        new Patch(
+            security: 'is_granted("ROLE_USER_STUDENT")',                
+            // validationContext:['groups' => ['Default', 'postValidation']]
+        ),
+        new Delete(),
+    ],
+    normalizationContext: [
+        'groups' => ['tokenmanager:read']
+    ],
+    denormalizationContext: [
+        'groups' => ['tokenmanager:write']
+    ],  
 )]
 class TokenManagerApi 
 {
@@ -53,11 +61,13 @@ class TokenManagerApi
     }
                     
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
+    #[Groups(['tokenmanager:read', 'profile:read', 'subscription:read'])]
     public ?int $id = null;
     
     /** @var Uuid $uuid */
     public $uuid = null;
     
+    #[Groups(['tokenmanager:read', 'profile:read', 'subscription:read'])]
     public ?int $tokens = null;
     
    /** @var UserProfileApi $userProfile */ 

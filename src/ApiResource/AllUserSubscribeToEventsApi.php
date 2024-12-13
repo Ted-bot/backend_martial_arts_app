@@ -8,7 +8,10 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use Symfony\Component\Serializer\Attribute\Groups;
 use App\Controller\Api\UserDashBoardCollectionRegisteredEventsAction;
-// use ApiPlatform\Action\NotFoundAction;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Delete;
 
 #[ApiResource(
     operations: [

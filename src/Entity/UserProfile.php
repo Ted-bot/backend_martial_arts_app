@@ -2,20 +2,14 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\Put;
-use ApiPlatform\Metadata\Post;
-use Doctrine\DBAL\Types\Types;
-use ApiPlatform\Metadata\Patch;
-use ApiPlatform\Metadata\Delete;
+
+use App\Entity\Subscription;
 use Doctrine\ORM\Mapping as ORM;
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\GetCollection;
 use App\Repository\PostEventRepository;
 use App\Repository\UserProfileRepository;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Annotation\SerializedName;
 
 #[ORM\Entity(repositoryClass: UserProfileRepository::class)]
 class UserProfile
@@ -40,7 +34,7 @@ class UserProfile
 
     #[ORM\ManyToOne(inversedBy: 'profileGroup')]
     private ?Group $groupStudent;
-
+    
     /**
      * @var Collection<int, PostEvent>
      */
@@ -59,8 +53,15 @@ class UserProfile
     #[ORM\OneToMany(targetEntity: TokenManager::class, mappedBy: 'userProfile')]
     private Collection $tokenManagers;
 
-    // #[ORM\OneToOne(mappedBy: 'userProfile', cascade: ['persist', 'remove'])]
+    // note: could cause weird issues with logging in, try removing #[ORM\OneToOne(targetEntity:...
+    // #[ORM\OneToOne(targetEntity: TokenManager::class, mappedBy: 'userProfile', cascade: ['persist', 'remove'])]
     // private ?TokenManager $tokenManager = null;
+
+    // property subscription is defined in UserProfile, currently commented out #UserProfileEntityToDtoStateProvider
+    // /** @var Subscription Non-persisted property */
+    // private ?Subscription $subscription = null;
+    
+    private ?int $tokens = null;
 
     public function __construct()
     {
@@ -237,19 +238,24 @@ class UserProfile
         return $this;
     }
 
-    // public function getTokenManager(): ?TokenManager
+    // property subscription is defined in UserProfile, currently commented out #UserProfileEntityToDtoStateProvider
+    // example from SymfonyCast api 3 but it fixxed by using $token to get tokens
+    // public function getSubscription(): ?Subscription
     // {
-    //     return $this->tokenManager;
+    //     return $this->subscription;
     // }
-
-    // public function setTokenManager(TokenManager $tokenManager): static
+    // // #[SerializedName('tokenManager')]
+    // public function setSubscription(Subscription $subscription): static
     // {
     //     // set the owning side of the relation if necessary
-    //     if ($tokenManager->getUserProfile() !== $this) {
-    //         $tokenManager->setUserProfile($this);
-    //     }
+    //     // if ($tokenManager->getUserProfile() !== $this) {
+    //     //     $tokenManager->setUserProfile($this);
+    //     // }
+    //     // if (!isset($this->tokenManager)) {
+    //     //     throw new \LogicException("You must call setTokenManger() before is getTokenManger");
+    //     // }
 
-    //     $this->tokenManager = $tokenManager;
+    //     $this->subscription = $subscription;
 
     //     return $this;
     // }
@@ -280,6 +286,26 @@ class UserProfile
                 $tokenManager->setUserProfile(null);
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * Get the value of tokens
+     */ 
+    public function getTokens()
+    {
+        return $this->tokens;
+    }
+
+    /**
+     * Set the value of tokens
+     *
+     * @return  self
+     */ 
+    public function setTokens($tokens)
+    {
+        $this->tokens = $tokens;
 
         return $this;
     }

@@ -16,23 +16,6 @@ use App\Repository\TokenManagerRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: TokenManagerRepository::class)]
-#[ApiResource(
-    shortName: 'TokenManager',
-    description: 'Keeps Track of user spending',
-    operations: [
-        new Get(),
-        new GetCollection(),
-        new Post(),
-        new Put(),
-        new Patch(),
-    ],
-    normalizationContext: [
-        'groups' => ['tokenmanager:read']
-    ],
-    denormalizationContext: [
-        'groups' => ['tokenmanager:write']
-    ],  
-)]
 class TokenManager
 {
     #[ORM\Id]

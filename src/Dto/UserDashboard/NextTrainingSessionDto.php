@@ -16,6 +16,9 @@ class NextTrainingSessionDto
 
         #[Assert\Type('string')]
         public $end = '',
+        
+        #[Assert\Type('string')]
+        public $trainerName = '',
     )
     {}
 }

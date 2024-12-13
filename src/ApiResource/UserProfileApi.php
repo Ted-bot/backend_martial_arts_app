@@ -11,15 +11,18 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiFilter;
+use App\ApiResource\SubscriptionApi;
+use App\ApiResource\TokenManagerApi;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use App\State\EntityToDtoStateProvider;
 use ApiPlatform\Doctrine\Orm\State\Options;
 use App\State\EntityClassDtoStateProcessor;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use Doctrine\Common\Collections\ArrayCollection;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
-use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use App\State\UserProfileEntityToDtoStateProvider;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ApiResource(
@@ -110,6 +113,7 @@ class UserProfileApi
     /** @var array<int, TokenManagerApi> */
     public $tokenManagers;
     
-    /** @var TokenManagerApi Object */
-    public $tokenManager;
+    // property subscription is defined in UserProfile, currently commented out #UserProfileEntityToDtoStateProvider
+    #[Groups(['profile:read'])]  
+    public $tokens;
 }

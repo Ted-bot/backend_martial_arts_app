@@ -12,7 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 
 #[ApiResource(
-    // shortName: 'address',
+    shortName: 'productVat',
     provider: EntityToDtoStateProvider::class,
     processor: EntityClassDtoStateProcessor::class,
     paginationClientItemsPerPage: true,

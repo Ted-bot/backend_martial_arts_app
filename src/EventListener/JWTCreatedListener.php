@@ -39,7 +39,7 @@ class JWTCreatedListener {
         // dd(['user' => $user,'data' => $event->getData(), 'request' => $request]);
         $payload       = $event->getData();
         $payload['ip'] = $request->getClientIp();
-        $payload['id'] = $user->getId();
+        $payload['id'] = $user ? $user?->getId() : null; // will cause issue when user sign up temporaly -> ?? null
     
         $event->setData($payload);
     

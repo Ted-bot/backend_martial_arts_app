@@ -2,13 +2,16 @@
 
 namespace App\Mapper;
 
+use App\ApiResource\SubscriptionApi;
 use App\Entity\PostEvent;
 use App\Entity\UserProfile;
 use App\ApiResource\UserApi;
 use App\ApiResource\GroupApi;
 use App\ApiResource\PostEventApi;
 use App\ApiResource\UserProfileApi;
+use App\Enum\MolliePaymentStatusEnum;
 use Symfonycasts\MicroMapper\AsMapper;
+use App\Repository\SubscriptionRepository;
 use Symfonycasts\MicroMapper\MapperInterface;
 use Symfonycasts\MicroMapper\MicroMapperInterface;
 
@@ -17,6 +20,7 @@ class UserProfileEntityToApiMapper implements MapperInterface
 {
     public function __construct(
         private MicroMapperInterface $microMapper,
+        private SubscriptionRepository $subscriptionRepository,
     ){}
 
     public function load(object $from, string $toClass, array $context): object
@@ -47,11 +51,21 @@ class UserProfileEntityToApiMapper implements MapperInterface
                 MicroMapperInterface::MAX_DEPTH => 1
             ]);
         }
-
+        
         // $dto->groupStudent = $this->microMapper->map($entity->getGroupStudent(), GroupApi::class, [
         //     MicroMapperInterface::MAX_DEPTH => 0
         // ] ); // note: when users are set in groups uncomment else it will give error :set on null
+
         
+        $subscription = $this->subscriptionRepository->findOneBy(
+                ['subscriptionOwnedBy' =>  $entity->getId(), 'status' => MolliePaymentStatusEnum::PAID], 
+                ['createdAt' => 'DESC']
+            );     
+
+        if($subscription){
+            $dto->tokens = $subscription->getTokenManager()->getTokens();
+        }
+
         if($entity->getGroupStudent()){
             $dto->groupStudent = $entity->getGroupStudent();
         }

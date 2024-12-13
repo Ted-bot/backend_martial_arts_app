@@ -29,26 +29,8 @@ use ApiPlatform\Doctrine\Orm\Filter\NumericFilter;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 
-#[ORM\Entity(repositoryClass: ProductRepository::class)]
 // #[ApiResource]
-#[ApiResource(
-    shortName: 'Product',
-    filters: ['app.product.search_filter'],
-    description: 'Available Products',
-    operations: [
-        new Get(),
-        new GetCollection(),
-        new Post(),
-        new Put(),
-        new Patch(),
-    ],
-    normalizationContext: [
-        'groups' => ['product:read']
-    ],
-    denormalizationContext: [
-        'groups' => ['product:write']
-    ],
-)]
+#[ORM\Entity(repositoryClass: ProductRepository::class)]
 class Product
 {
     #[ORM\Id]

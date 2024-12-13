@@ -59,6 +59,7 @@ class SubscriptionApi
         $this->subscriptionOwnedBy = new UserApi();
     }
     
+    #[Groups(['profile:read'])]
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
     #[ApiProperty(identifier:true)]
     public ?int $id = null;
@@ -92,7 +93,9 @@ class SubscriptionApi
      /** @var ProductApi $subscribedProduct */
     public $subscribedProduct = null;
      
+
      /** @var TokenManagerApi $tokenManager */
+     #[Groups(['profile:read'])]
     public $tokenManager = null;
 // public ?TokenManager $tokenManager = null;
 }

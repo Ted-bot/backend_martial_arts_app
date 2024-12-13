@@ -50,6 +50,7 @@ class UserDashBoardHelper
             $next_traing_day->next_training_day = $userTrainingSession["startDate"]->format('F jS, Y');
             $next_traing_day->start = $userTrainingSession["startDate"]->format('H:i');
             $next_traing_day->end = $userTrainingSession["endDate"]->format('H:i');
+            $next_traing_day->trainerName = $userTrainingSession["trainerName"];
         } else {
             $next_traing_day->next_training_day = 'none selected';
             $next_traing_day->start = 'select a day';
