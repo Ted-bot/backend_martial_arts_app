@@ -139,11 +139,20 @@ class UserApiToEntityMapper implements MapperInterface
         }
 
         $subscriptions = [];
+        // dd(["subscriptions" => $dto->subscriptions]);
         if(!empty($dto->subscriptions)){
             foreach($dto->subscriptions as $subscription){
-                $subscription = $this->microMapper->map( $subscription, Subscription::class,[
+                // if (is_object($subscription)) {
+                    // dd([ 'subscription' => $subscription]);
+                    // echo get_class($subscription);
+                // }
+                $addSubscription = $this->microMapper->map( $subscription, Subscription::class,[
                     MicroMapperInterface::MAX_DEPTH => 0
                 ]);
+
+                dd(['got subscription' => $addSubscription]);
+
+                $subscriptions[] = $addSubscription;
             }
             $this->propertyAccessor->setValue( $entity, 'subscriptions', $subscriptions);
         }

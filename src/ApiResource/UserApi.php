@@ -55,12 +55,12 @@ use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
             security: 'is_granted("PUBLIC_ACCESS")',
         ),
         new Patch(   
-            security: 'is_granted("ROLE_USER_SIFU")',  
+            security: 'is_granted("ROLE_USER_STUDENT")',  
             uriTemplate: '/user_by_email/{email}/email',
             uriVariables: 'email'
         ),
         new Put(
-            security: 'is_granted("ROLE_USER_SIFU")',  
+            security: 'is_granted("ROLE_USER_STUDENT")',  
             uriTemplate: '/user_by_email/{email}/email',
             uriVariables: 'email'
         ),
@@ -90,7 +90,7 @@ final class UserApi
         $this->subscriptions = new ArrayCollection();
     }
 
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', 'subscription:read'])]
     public ?int $id = null;
     
     #[Groups(['user:read', 'user:write'])]

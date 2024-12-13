@@ -24,43 +24,44 @@ use App\Enum\SubscriptionLengthTypeEnum;
 use App\Repository\SubscriptionRepository;
 // use Symfony\Component\Serializer\Attribute\Groups;
 
+
+// #[ApiResource(    
+//     shortName: 'Subscription',
+//     filters: ['app.subscription.property_filter'],
+//     description: 'Subscriptions of Users',
+//     operations: [
+//         new Get(),
+//         new GetCollection(),
+//         new Post(),
+//         new Put(),
+//         new Patch(),
+//     ],
+//     normalizationContext: [
+//         // 'groups' => ['subscription:read']
+//     ],
+//     denormalizationContext: [
+//         // 'groups' => ['subscription:write']
+//     ],    
+// )]
+// #[ApiResource(
+//     uriTemplate: '/users/{email}/subscriptions/{status}.{_format}',
+//     shortName: 'Subscription',
+//     operations: [new Get()],
+//     uriVariables: [
+//         'email' => new Link(
+//             identifiers: ['email'],
+//             fromProperty: 'subscriptions',
+//             fromClass: User::class
+//         ),
+//         'status' => new Link(
+//             identifiers: ['status']
+//         ),        
+//     ],
+//     normalizationContext: [
+//         'groups' => ['subscription:read']
+//     ],
+// )]
 #[ORM\Entity(repositoryClass: SubscriptionRepository::class)]
-#[ApiResource(    
-    shortName: 'Subscription',
-    filters: ['app.subscription.property_filter'],
-    description: 'Subscriptions of Users',
-    operations: [
-        new Get(),
-        new GetCollection(),
-        new Post(),
-        new Put(),
-        new Patch(),
-    ],
-    normalizationContext: [
-        // 'groups' => ['subscription:read']
-    ],
-    denormalizationContext: [
-        // 'groups' => ['subscription:write']
-    ],    
-)]
-#[ApiResource(
-    uriTemplate: '/users/{email}/subscriptions/{status}.{_format}',
-    shortName: 'Subscription',
-    operations: [new Get()],
-    uriVariables: [
-        'email' => new Link(
-            identifiers: ['email'],
-            fromProperty: 'subscriptions',
-            fromClass: User::class
-        ),
-        'status' => new Link(
-            identifiers: ['status']
-        ),        
-    ],
-    normalizationContext: [
-        // 'groups' => ['subscription:read']
-    ],
-)]
 class Subscription
 {
     // #[ApiProperty(identifier: false)]
@@ -323,5 +324,9 @@ class Subscription
 
         return $this;
     }
+    // public function __toString()
+    // {
+    //     return (string)$this->status;
+    // }
 
 }
