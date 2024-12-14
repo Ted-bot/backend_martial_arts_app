@@ -138,24 +138,24 @@ class UserApiToEntityMapper implements MapperInterface
             $this->propertyAccessor->setValue($entity, 'shopOrders', $shopOrders);
         }
 
-        $subscriptions = [];
-        // dd(["subscriptions" => $dto->subscriptions]);
-        if(!empty($dto->subscriptions)){
-            foreach($dto->subscriptions as $subscription){
-                // if (is_object($subscription)) {
-                    // dd([ 'subscription' => $subscription]);
-                    // echo get_class($subscription);
-                // }
-                $addSubscription = $this->microMapper->map( $subscription, Subscription::class,[
-                    MicroMapperInterface::MAX_DEPTH => 0
-                ]);
+        // causes confilt when using patch method for user // configuring like this (hopefully) still only allow 1 subscription at the time to be edited 
+        // $subscriptions = [];
+        // if(!empty($dto->subscriptions)){
+        //     foreach($dto->subscriptions as $subscription){
+        //         // if (is_object($subscription)) {
+        //             // dd([ 'subscription' => $subscription]);
+        //             // echo get_class($subscription);
+        //         // }
+        //         $addSubscription = $this->microMapper->map( $subscription, Subscription::class,[
+        //             MicroMapperInterface::MAX_DEPTH => 0
+        //         ]);
 
-                dd(['got subscription' => $addSubscription]);
+        //         dd(['got subscription' => $addSubscription]);
 
-                $subscriptions[] = $addSubscription;
-            }
-            $this->propertyAccessor->setValue( $entity, 'subscriptions', $subscriptions);
-        }
+        //         $subscriptions[] = $addSubscription;
+        //     }
+        //     $this->propertyAccessor->setValue( $entity, 'subscriptions', $subscriptions);
+        // }
 
         return $entity;
     }
